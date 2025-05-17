@@ -1,0 +1,56 @@
+:root {
+    --dark-square: black;
+    --light-square: white;
+    --player-1: brown;
+    --player-2: beige;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Poppins", sans-serif;
+}
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #dfdfdf;
+}
+.board{
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(8, 1fr);
+  width: 800px;
+  height: 800px;
+}
+
+.cell{
+  border: 1px solid black;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.light{
+  background-color: var(--light-square) ;
+}
+.dark{
+  background-color: var(--dark-square) ;
+}
+.piece{
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+}
+.one{
+  background-color: var(--player-1);
+}
+
+.two{
+  background-color: var(--player-2);
+}
+
+
+

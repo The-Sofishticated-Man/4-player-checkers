@@ -1,0 +1,27 @@
+{
+  "name": "checkers",
+  "version": "1.0.0",
+  "description": "4 player checkers (does anybody even read this?)",
+  "main": "logic.js",
+  "scripts": {
+    "test": "echo hiii"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/The-Sofishticated-Man/4-player-checkers.git"
+  },
+  "keywords": [
+    "checkers",
+    "chess",
+    "game",
+    "board",
+    "boardgame",
+    "4players"
+  ],
+  "author": "islam :)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/The-Sofishticated-Man/4-player-checkers/issues"
+  },
+  "homepage": "https://github.com/The-Sofishticated-Man/4-player-checkers#readme"
+}
