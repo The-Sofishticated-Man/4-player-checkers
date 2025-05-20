@@ -1,8 +1,8 @@
 :root {
-    --dark-square: black;
-    --light-square: white;
-    --player-1: brown;
-    --player-2: beige;
+  --dark-square: black;
+  --light-square: white;
+  --player-1: brown;
+  --player-2: beige;
 }
 
 * {
@@ -18,7 +18,7 @@ body {
   min-height: 100vh;
   background-color: #dfdfdf;
 }
-.board{
+.board {
   display: grid;
   grid-template-columns: repeat(8, 1fr);
   grid-template-rows: repeat(8, 1fr);
@@ -26,31 +26,31 @@ body {
   height: 800px;
 }
 
-.cell{
+.cell {
   border: 1px solid black;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
 }
-.light{
-  background-color: var(--light-square) ;
+.light {
+  background-color: var(--light-square);
 }
-.dark{
-  background-color: var(--dark-square) ;
+.dark {
+  background-color: var(--dark-square);
 }
-.piece{
-  width: 50px;
-  height: 50px;
+.piece {
+  width: 70px;
+  height: 70px;
   border-radius: 50%;
 }
-.one{
+.dragging {
+  opacity: 50%;
+}
+.one {
   background-color: var(--player-1);
 }
 
-.two{
+.two {
   background-color: var(--player-2);
 }
-
-
-

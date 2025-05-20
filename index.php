@@ -18,6 +18,6 @@
             }
         ?>
     </div>
-    <script src="logic.js"></script>
   </body>
+  <script src="logic.js"></script>
 </html>
