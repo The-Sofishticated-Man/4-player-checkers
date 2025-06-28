@@ -1,13 +1,6 @@
-import Board from "./components/Board"
+import Board from "./components/Board";
 
 function App() {
-
-  return (
-    <div>
-      <Board/>
-    </div>
-    
-  )
+  return <Board/>;
 }
-
-export default App
+export default App;
