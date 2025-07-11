@@ -7,7 +7,7 @@ const Board = () => {
     for (let col = 0; col < 8; col++) {
       // Alternate color: true for dark, false for light
       const isDark = (row + col) % 2 === 1;
-      cells.push(<Cell key={`${row}-${col}`} isDark={isDark}>{row ==5 && <Piece/> }</Cell>);
+      cells.push(<Cell key={`${row}-${col}`} row={row} column={col} isDark={isDark}>{row ==5 && <Piece pieceID={`${row}-${col}`} player={1} /> }</Cell>);
     }
   }
   return (

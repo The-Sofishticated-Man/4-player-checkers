@@ -1,9 +1,13 @@
 const Cell = ({
   isDark,
   children,
+  row,
+  column,
 }: {
   isDark: boolean;
   children: React.ReactNode;
+  row: number;
+  column: number;
 }) => {
   return (
     <div
