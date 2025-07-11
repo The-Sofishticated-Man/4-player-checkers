@@ -1,6 +1,5 @@
 import Cell from "./Cell";
 import Piece from "./Piece";
-
 const Board = () => {
   // Generate an 8x8 chessboard
   const cells = [];
@@ -12,7 +11,9 @@ const Board = () => {
     }
   }
   return (
-    <div className="grid grid-cols-8 w-fit border-4 border-black">{cells}</div>
+    <div>
+      <div className="grid grid-cols-8 w-fit border-4 border-black ">{cells}</div>
+    </div>
   );
 };
 
