@@ -6,7 +6,7 @@ import { boardReducer } from "../utils/boardReducer";
 
 // Context provider component for the board
 // Wraps children with board context
-const BoardContext = ({ children }: { children: React.ReactNode }) => {
+const BoardContextProvider = ({ children }: { children: React.ReactNode }) => {
   // useReducer hook to manage board state
   const [state, dispatch] = useReducer(boardReducer, initialBoard);
   return (
@@ -17,4 +17,4 @@ const BoardContext = ({ children }: { children: React.ReactNode }) => {
 };
 
 // Export the provider for use in the app
-export default BoardContext;
+export default BoardContextProvider;

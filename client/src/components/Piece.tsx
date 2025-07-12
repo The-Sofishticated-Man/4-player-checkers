@@ -1,13 +1,15 @@
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
+
 const Piece = ({ pieceID, player }: { pieceID: string; player: number }) => {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: pieceID,
   });
+
   const style = {
     transform: CSS.Translate.toString(transform),
   };
-  const playerColor = player === 1 ? "bg-red-500" : "bg-black-500";
+  const playerColor = player === 1 ? "bg-red-500" : "bg-blue-500";
   return (
     <div
       ref={setNodeRef}

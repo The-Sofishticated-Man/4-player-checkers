@@ -2,10 +2,23 @@
 // Each number can represent a piece, empty cell, etc.
 export type checkersBoardState = number[][];
 
+// Type for board actions
+export type BoardAction =
+  | {
+      type: "MOVE_PIECE";
+      payload: {
+        fromRow: number;
+        fromCol: number;
+        toRow: number;
+        toCol: number;
+      };
+    }
+  | { type: string; payload?: never };
+
 // Type for the context value: contains board state and dispatch function
 // state: current board state
 // dispatch: function to update board state
 export type boardContextType = {
   state: checkersBoardState; // 2D array representing the board
-  dispatch: React.Dispatch<{ type: string; payload?: object }>; // Dispatch function for actions
+  dispatch: React.Dispatch<BoardAction>; // Dispatch function for actions
 };

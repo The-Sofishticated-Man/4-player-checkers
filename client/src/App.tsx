@@ -1,10 +1,11 @@
 import Board from "./components/Board";
-import { DndContext } from "@dnd-kit/core";
+import BoardContextProvider from "./context/BoardContextProvider";
+
 function App() {
   return (
-    <DndContext>
+    <BoardContextProvider>
       <Board />
-    </DndContext>
+    </BoardContextProvider>
   );
 }
 export default App;
