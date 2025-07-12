@@ -13,6 +13,17 @@ export type BoardAction =
         toCol: number;
       };
     }
+  | {
+      type: "CAPTURE_PIECE";
+      payload: {
+        fromRow: number;
+        fromCol: number;
+        toRow: number;
+        toCol: number;
+        capturedRow: number;
+        capturedCol: number;
+      };
+    }
   | { type: string; payload?: never };
 
 // Type for the context value: contains board state and dispatch function

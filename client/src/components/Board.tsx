@@ -1,6 +1,7 @@
 import { DndContext } from "@dnd-kit/core";
 import type { DragEndEvent } from "@dnd-kit/core";
 import useBoard from "../hooks/useBoard";
+import { isCapture, getCapturedPosition } from "../logic/boardLogic";
 import Cell from "./Cell";
 import Piece from "./Piece";
 
@@ -22,11 +23,34 @@ const Board = () => {
     const [, toRow, toCol] = cellId.split("-").map(Number);
 
     // Only move if the position actually changed
-    if (dispatch) {
-      dispatch({
-        type: "MOVE_PIECE",
-        payload: { fromRow, fromCol, toRow, toCol },
-      });
+    if (fromRow !== toRow || fromCol !== toCol) {
+      if (dispatch) {
+        // Check if this is a capture move
+        if (isCapture(fromRow, fromCol, toRow, toCol)) {
+          const { capturedRow, capturedCol } = getCapturedPosition(
+            fromRow,
+            fromCol,
+            toRow,
+            toCol
+          );
+          dispatch({
+            type: "CAPTURE_PIECE",
+            payload: {
+              fromRow,
+              fromCol,
+              toRow,
+              toCol,
+              capturedRow,
+              capturedCol,
+            },
+          });
+        } else {
+          dispatch({
+            type: "MOVE_PIECE",
+            payload: { fromRow, fromCol, toRow, toCol },
+          });
+        }
+      }
     }
   };
 
