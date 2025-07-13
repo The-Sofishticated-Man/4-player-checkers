@@ -128,6 +128,43 @@ export function isPlayersTurn(
   return piece === currentPlayer;
 }
 
+export function hasValidCapture(
+  board: checkersBoardState,
+  fromRow: number,
+  fromCol: number
+): boolean {
+  // Check all four diagonal directions for potential captures
+  const directions = [
+    [-2, -2], // up-left
+    [-2, 2], // up-right
+    [2, -2], // down-left
+    [2, 2], // down-right
+  ];
+
+  for (const [rowOffset, colOffset] of directions) {
+    const toRow = fromRow + rowOffset;
+    const toCol = fromCol + colOffset;
+
+    // Check if the destination is within bounds
+    if (
+      toRow >= 0 &&
+      toRow < board.length &&
+      toCol >= 0 &&
+      toCol < board[0].length
+    ) {
+      // Check if this would be a valid capture move
+      if (
+        isValidCaptureForPlayer(board, fromRow, fromCol, toRow, toCol) &&
+        !isOccupied(board, toRow, toCol)
+      ) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
 export default function isValidMove(
   board: checkersBoardState,
   fromRow: number,

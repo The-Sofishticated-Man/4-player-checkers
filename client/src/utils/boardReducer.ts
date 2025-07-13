@@ -1,5 +1,8 @@
 import type { BoardAction, gameState } from "../types/boardTypes";
-import isValidMove, { isPlayersTurn } from "../logic/boardLogic";
+import isValidMove, {
+  hasValidCapture,
+  isPlayersTurn,
+} from "../logic/boardLogic";
 
 // Reducer function to handle board actions
 // Accepts current state and an action, returns new state
@@ -43,6 +46,9 @@ export const boardReducer = (
       const { fromRow, fromCol, toRow, toCol, capturedRow, capturedCol } =
         action.payload;
 
+      if (!isPlayersTurn(checkersBoardState, fromRow, fromCol, currentPlayer)) {
+        return state;
+      }
       // Validate the capture move using game logic
       if (!isValidMove(checkersBoardState, fromRow, fromCol, toRow, toCol)) {
         return state; // Invalid capture, don't change state
@@ -59,9 +65,18 @@ export const boardReducer = (
       // Remove the captured piece
       newBoard[capturedRow][capturedCol] = 0;
 
+      // Check if the same piece has another valid capture available
+      const hasMoreCaptures = hasValidCapture(newBoard, toRow, toCol);
+
       return {
         ...state,
         checkersBoardState: newBoard,
+        // Only switch players if no more captures are available
+        currentPlayer: hasMoreCaptures
+          ? currentPlayer
+          : currentPlayer === 1
+          ? 2
+          : 1,
       };
     }
 
