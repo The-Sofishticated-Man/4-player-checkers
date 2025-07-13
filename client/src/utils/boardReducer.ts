@@ -1,31 +1,36 @@
-import type { checkersBoardState, BoardAction } from "../types/boardTypes";
+import type { BoardAction, gameState } from "../types/boardTypes";
 import isValidMove from "../logic/boardLogic";
 
 // Reducer function to handle board actions
 // Accepts current state and an action, returns new state
 export const boardReducer = (
-  state: checkersBoardState,
+  state: gameState,
   action: BoardAction
-): checkersBoardState => {
+): gameState => {
   switch (action.type) {
     case "MOVE_PIECE": {
       if (!action.payload) return state;
       const { fromRow, fromCol, toRow, toCol } = action.payload;
 
       // Validate the move using game logic (should only be regular moves, not captures)
-      if (!isValidMove(state, fromRow, fromCol, toRow, toCol)) {
+      if (
+        !isValidMove(state.checkersBoardState, fromRow, fromCol, toRow, toCol)
+      ) {
         return state; // Invalid move, don't change state
       }
 
       // Create a new board state (immutable update)
-      const newState = state.map((row) => [...row]);
+      const newBoard = state.checkersBoardState.map((row) => [...row]);
 
       // Move the piece from source to destination
-      const piece = newState[fromRow][fromCol];
-      newState[toRow][toCol] = piece;
-      newState[fromRow][fromCol] = 0; // Clear the source cell
+      const piece = newBoard[fromRow][fromCol];
+      newBoard[toRow][toCol] = piece;
+      newBoard[fromRow][fromCol] = 0; // Clear the source cell
 
-      return newState;
+      return {
+        ...state,
+        checkersBoardState: newBoard,
+      };
     }
 
     case "CAPTURE_PIECE": {
@@ -34,22 +39,27 @@ export const boardReducer = (
         action.payload;
 
       // Validate the capture move using game logic
-      if (!isValidMove(state, fromRow, fromCol, toRow, toCol)) {
+      if (
+        !isValidMove(state.checkersBoardState, fromRow, fromCol, toRow, toCol)
+      ) {
         return state; // Invalid capture, don't change state
       }
 
       // Create a new board state (immutable update)
-      const newState = state.map((row) => [...row]);
+      const newBoard = state.checkersBoardState.map((row) => [...row]);
 
       // Move the piece from source to destination
-      const piece = newState[fromRow][fromCol];
-      newState[toRow][toCol] = piece;
-      newState[fromRow][fromCol] = 0; // Clear the source cell
+      const piece = newBoard[fromRow][fromCol];
+      newBoard[toRow][toCol] = piece;
+      newBoard[fromRow][fromCol] = 0; // Clear the source cell
 
       // Remove the captured piece
-      newState[capturedRow][capturedCol] = 0;
+      newBoard[capturedRow][capturedCol] = 0;
 
-      return newState;
+      return {
+        ...state,
+        checkersBoardState: newBoard,
+      };
     }
 
     default:

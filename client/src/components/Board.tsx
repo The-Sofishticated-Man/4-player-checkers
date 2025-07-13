@@ -7,7 +7,10 @@ import Piece from "./Piece";
 
 const Board = () => {
   // Generate an 8x8 chessboard
-  const { state, dispatch } = useBoard();
+  const {
+    state: { checkersBoardState },
+    dispatch,
+  } = useBoard();
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -61,8 +64,11 @@ const Board = () => {
       const isDark = (row + col) % 2 === 1;
       cells.push(
         <Cell key={`${row}-${col}`} row={row} column={col} isDark={isDark}>
-          {state[row][col] !== 0 && (
-            <Piece pieceID={`piece-${row}-${col}`} player={state[row][col]} />
+          {checkersBoardState[row][col] !== 0 && (
+            <Piece
+              pieceID={`piece-${row}-${col}`}
+              player={checkersBoardState[row][col]}
+            />
           )}
         </Cell>
       );

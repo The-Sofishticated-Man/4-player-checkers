@@ -1,7 +1,11 @@
-import type { checkersBoardState } from "../types/boardTypes";
+import type {
+  checkersBoardState,
+  currentPlayerState,
+  gameState,
+} from "../types/boardTypes";
 
 // Initial board setup: 8x8 grid filled with 0s (empty cells)
-export const initialBoard: checkersBoardState = [
+const initialBoard: checkersBoardState = [
   [0, 1, 0, 1, 0, 1, 0, 1],
   [1, 0, 1, 0, 1, 0, 1, 0],
   [0, 1, 0, 1, 0, 1, 0, 1],
@@ -11,3 +15,12 @@ export const initialBoard: checkersBoardState = [
   [0, 2, 0, 2, 0, 2, 0, 2],
   [2, 0, 2, 0, 2, 0, 2, 0],
 ];
+
+const initialPlayer: currentPlayerState = 1; // Red starts first
+
+const initialState: gameState = {
+  checkersBoardState: initialBoard,
+  currentPlayer: initialPlayer,
+};
+
+export default initialState;
