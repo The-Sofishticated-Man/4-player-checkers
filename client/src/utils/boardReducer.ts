@@ -1,5 +1,5 @@
 import type { BoardAction, gameState } from "../types/boardTypes";
-import isValidMove from "../logic/boardLogic";
+import isValidMove, { isPlayersTurn } from "../logic/boardLogic";
 
 // Reducer function to handle board actions
 // Accepts current state and an action, returns new state
@@ -7,20 +7,24 @@ export const boardReducer = (
   state: gameState,
   action: BoardAction
 ): gameState => {
+  const { checkersBoardState, currentPlayer } = state;
+
   switch (action.type) {
     case "MOVE_PIECE": {
       if (!action.payload) return state;
       const { fromRow, fromCol, toRow, toCol } = action.payload;
+      // if it's not the player's turn, return current state
+      if (!isPlayersTurn(checkersBoardState, fromRow, fromCol, currentPlayer)) {
+        return state;
+      }
 
       // Validate the move using game logic (should only be regular moves, not captures)
-      if (
-        !isValidMove(state.checkersBoardState, fromRow, fromCol, toRow, toCol)
-      ) {
+      if (!isValidMove(checkersBoardState, fromRow, fromCol, toRow, toCol)) {
         return state; // Invalid move, don't change state
       }
 
       // Create a new board state (immutable update)
-      const newBoard = state.checkersBoardState.map((row) => [...row]);
+      const newBoard = checkersBoardState.map((row) => [...row]);
 
       // Move the piece from source to destination
       const piece = newBoard[fromRow][fromCol];
@@ -30,6 +34,7 @@ export const boardReducer = (
       return {
         ...state,
         checkersBoardState: newBoard,
+        currentPlayer: currentPlayer === 1 ? 2 : 1, // Switch players
       };
     }
 
@@ -39,14 +44,12 @@ export const boardReducer = (
         action.payload;
 
       // Validate the capture move using game logic
-      if (
-        !isValidMove(state.checkersBoardState, fromRow, fromCol, toRow, toCol)
-      ) {
+      if (!isValidMove(checkersBoardState, fromRow, fromCol, toRow, toCol)) {
         return state; // Invalid capture, don't change state
       }
 
       // Create a new board state (immutable update)
-      const newBoard = state.checkersBoardState.map((row) => [...row]);
+      const newBoard = checkersBoardState.map((row) => [...row]);
 
       // Move the piece from source to destination
       const piece = newBoard[fromRow][fromCol];

@@ -117,6 +117,16 @@ export function getCapturedPosition(
     capturedCol: (fromCol + toCol) / 2,
   };
 }
+export function isPlayersTurn(
+  board: checkersBoardState,
+  fromRow: number,
+  fromCol: number,
+  currentPlayer: number
+): boolean {
+  // Check if the piece belongs to the current player
+  const piece = board[fromRow][fromCol];
+  return piece === currentPlayer;
+}
 
 export default function isValidMove(
   board: checkersBoardState,
