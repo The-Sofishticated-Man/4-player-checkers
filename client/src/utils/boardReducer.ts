@@ -36,7 +36,7 @@ export const boardReducer = (
       newBoard[fromRow][fromCol] = 0; // Clear the source cell
 
       // Check for king promotion
-      if (shouldPromoteToKing(piece, toRow, newBoard.length)) {
+      if (shouldPromoteToKing(piece, toRow, toCol, newBoard.length)) {
         piece = promoteToKing(piece);
       }
 
@@ -45,7 +45,7 @@ export const boardReducer = (
       return {
         ...state,
         checkersBoardState: newBoard,
-        currentPlayer: currentPlayer === 1 ? 2 : 1, // Switch players
+        currentPlayer: ((currentPlayer % 4) + 1) as 1 | 2 | 3 | 4, // Cycle through players 1->2->3->4->1
       };
     }
 
@@ -73,7 +73,7 @@ export const boardReducer = (
       newBoard[capturedRow][capturedCol] = 0;
 
       // Check for king promotion
-      if (shouldPromoteToKing(piece, toRow, newBoard.length)) {
+      if (shouldPromoteToKing(piece, toRow, toCol, newBoard.length)) {
         piece = promoteToKing(piece);
       }
 
@@ -88,9 +88,7 @@ export const boardReducer = (
         // Only switch players if no more captures are available
         currentPlayer: hasMoreCaptures
           ? currentPlayer
-          : currentPlayer === 1
-          ? 2
-          : 1,
+          : (((currentPlayer % 4) + 1) as 1 | 2 | 3 | 4),
       };
     }
 

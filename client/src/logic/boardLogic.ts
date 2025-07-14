@@ -36,10 +36,14 @@ function isValidDiagonalMoveForPlayer(
 
   // Regular pieces have direction restrictions
   switch (player) {
-    case 1: // Red player moves up (decreasing row numbers)
+    case 1: // Player 1 moves up (decreasing row numbers)
       return fromRow - toRow === 1 && Math.abs(fromCol - toCol) === 1;
-    case 2: // Blue player moves down (increasing row numbers)
+    case 2: // Player 2 moves right (increasing col numbers)
+      return Math.abs(fromRow - toRow) === 1 && toCol - fromCol === 1;
+    case 3: // Player 3 moves down (increasing row numbers)
       return toRow - fromRow === 1 && Math.abs(fromCol - toCol) === 1;
+    case 4: // Player 4 moves left (decreasing col numbers)
+      return Math.abs(fromRow - toRow) === 1 && fromCol - toCol === 1;
     default:
       return false;
   }
@@ -89,13 +93,21 @@ function isValidCaptureForPlayer(
 
   // Regular pieces have direction restrictions for captures
   switch (player) {
-    case 1: // Blue player moves up (decreasing row numbers)
+    case 1: // Player 1 moves up (decreasing row numbers)
       // Can capture diagonally up (toRow < fromRow)
       return fromRow - toRow === 2;
 
-    case 2: // Red player moves down (increasing row numbers)
+    case 2: // Player 2 moves right (increasing col numbers)
+      // Can capture diagonally right (toCol > fromCol)
+      return toCol - fromCol === 2;
+
+    case 3: // Player 3 moves down (increasing row numbers)
       // Can capture diagonally down (toRow > fromRow)
       return toRow - fromRow === 2;
+
+    case 4: // Player 4 moves left (decreasing col numbers)
+      // Can capture diagonally left (toCol < fromCol)
+      return fromCol - toCol === 2;
 
     default:
       return false;
@@ -200,6 +212,7 @@ function getPlayerFromPiece(piece: number): number {
 export function shouldPromoteToKing(
   piece: number,
   toRow: number,
+  toCol: number,
   boardSize: number
 ): boolean {
   // Only regular pieces can be promoted (not already kings)
@@ -207,12 +220,12 @@ export function shouldPromoteToKing(
 
   // Player 1 pieces promote when reaching top row (row 0)
   if (piece === 1 && toRow === 0) return true;
-  // Player 2 pieces promote when reaching bottom row (boardSize - 1)
-  if (piece === 2 && toRow === boardSize - 1) return true;
-  // Player 3 pieces would promote when reaching left side (future implementation)
-  if (piece === 3 && toRow === 0) return true; // Placeholder for now
-  // Player 4 pieces would promote when reaching right side (future implementation)
-  if (piece === 4 && toRow === boardSize - 1) return true; // Placeholder for now
+  // Player 2 pieces promote when reaching right edge (col = boardSize - 1)
+  if (piece === 2 && toCol === boardSize - 1) return true;
+  // Player 3 pieces promote when reaching bottom row (row = boardSize - 1)
+  if (piece === 3 && toRow === boardSize - 1) return true;
+  // Player 4 pieces promote when reaching left edge (col = 0)
+  if (piece === 4 && toCol === 0) return true;
 
   return false;
 }
