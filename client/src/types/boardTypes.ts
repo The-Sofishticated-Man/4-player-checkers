@@ -1,7 +1,11 @@
 // Type for the board state: 2D array of numbers
-// Each number can represent a piece, empty cell, etc.
+// Piece numbering system:
+// 0 = empty cell
+// -1 = inaccessible cell (e.g., for non-square boards)
+// 1, 2, 3, 4 = regular pieces for players 1, 2, 3, 4
+// 10, 20, 30, 40 = king pieces for players 1, 2, 3, 4
 export type checkersBoardState = number[][];
-export type currentPlayerState = 1 | 2; // Represents the current player (1 for Red, 2 for Blue)
+export type currentPlayerState = 1 | 2 | 3 | 4; // Represents the current player (1-4)
 export interface gameState {
   checkersBoardState: checkersBoardState; // 2D array representing the board
   currentPlayer: currentPlayerState; // Current player (1 or 2)

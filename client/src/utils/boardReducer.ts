@@ -2,6 +2,8 @@ import type { BoardAction, gameState } from "../types/boardTypes";
 import isValidMove, {
   hasValidCapture,
   isPlayersTurn,
+  shouldPromoteToKing,
+  promoteToKing,
 } from "../logic/boardLogic";
 
 // Reducer function to handle board actions
@@ -30,9 +32,15 @@ export const boardReducer = (
       const newBoard = checkersBoardState.map((row) => [...row]);
 
       // Move the piece from source to destination
-      const piece = newBoard[fromRow][fromCol];
-      newBoard[toRow][toCol] = piece;
+      let piece = newBoard[fromRow][fromCol];
       newBoard[fromRow][fromCol] = 0; // Clear the source cell
+
+      // Check for king promotion
+      if (shouldPromoteToKing(piece, toRow, newBoard.length)) {
+        piece = promoteToKing(piece);
+      }
+
+      newBoard[toRow][toCol] = piece;
 
       return {
         ...state,
@@ -58,12 +66,18 @@ export const boardReducer = (
       const newBoard = checkersBoardState.map((row) => [...row]);
 
       // Move the piece from source to destination
-      const piece = newBoard[fromRow][fromCol];
-      newBoard[toRow][toCol] = piece;
+      let piece = newBoard[fromRow][fromCol];
       newBoard[fromRow][fromCol] = 0; // Clear the source cell
 
       // Remove the captured piece
       newBoard[capturedRow][capturedCol] = 0;
+
+      // Check for king promotion
+      if (shouldPromoteToKing(piece, toRow, newBoard.length)) {
+        piece = promoteToKing(piece);
+      }
+
+      newBoard[toRow][toCol] = piece;
 
       // Check if the same piece has another valid capture available
       const hasMoreCaptures = hasValidCapture(newBoard, toRow, toCol);
