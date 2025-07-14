@@ -36,10 +36,10 @@ function isValidDiagonalMoveForPlayer(
 
   // Regular pieces have direction restrictions
   switch (player) {
-    case 1: // Red pieces move down (increasing row)
-      return toRow - fromRow === 1 && Math.abs(fromCol - toCol) === 1;
-    case 2: // Blue pieces move up (decreasing row)
+    case 1: // Red player moves up (decreasing row numbers)
       return fromRow - toRow === 1 && Math.abs(fromCol - toCol) === 1;
+    case 2: // Blue player moves down (increasing row numbers)
+      return toRow - fromRow === 1 && Math.abs(fromCol - toCol) === 1;
     default:
       return false;
   }
@@ -68,7 +68,8 @@ function isValidCaptureForPlayer(
     middleRow < 0 ||
     middleRow >= board.length ||
     middleCol < 0 ||
-    middleCol >= board[0].length
+    middleCol >= board[0].length ||
+    board[middleRow][middleCol] === -1 // Check if middle position is inaccessible
   ) {
     return false;
   }
@@ -88,13 +89,13 @@ function isValidCaptureForPlayer(
 
   // Regular pieces have direction restrictions for captures
   switch (player) {
-    case 1: // Red player moves down (increasing row numbers)
-      // Can capture diagonally down (toRow > fromRow)
-      return toRow - fromRow === 2;
-
-    case 2: // Blue player moves up (decreasing row numbers)
+    case 1: // Blue player moves up (decreasing row numbers)
       // Can capture diagonally up (toRow < fromRow)
       return fromRow - toRow === 2;
+
+    case 2: // Red player moves down (increasing row numbers)
+      // Can capture diagonally down (toRow > fromRow)
+      return toRow - fromRow === 2;
 
     default:
       return false;
@@ -108,7 +109,11 @@ function moveIsOutOfBounds(
 ) {
   // Return true if the move IS out of bounds
   return (
-    toRow < 0 || toRow >= board.length || toCol < 0 || toCol >= board[0].length
+    toRow < 0 || // Out of upper bounds
+    toRow >= board.length || // Out of lower bounds
+    toCol < 0 || // Out of left bounds
+    toCol >= board[0].length || // Out of right bounds
+    board[toRow][toCol] == -1 // Out of bounds for non-square boards
   );
 }
 
@@ -200,10 +205,10 @@ export function shouldPromoteToKing(
   // Only regular pieces can be promoted (not already kings)
   if (piece >= 10) return false;
 
-  // Player 1 pieces promote when reaching bottom row (row 7)
-  if (piece === 1 && toRow === boardSize - 1) return true;
-  // Player 2 pieces promote when reaching top row (row 0)
-  if (piece === 2 && toRow === 0) return true;
+  // Player 1 pieces promote when reaching top row (row 0)
+  if (piece === 1 && toRow === 0) return true;
+  // Player 2 pieces promote when reaching bottom row (boardSize - 1)
+  if (piece === 2 && toRow === boardSize - 1) return true;
   // Player 3 pieces would promote when reaching left side (future implementation)
   if (piece === 3 && toRow === 0) return true; // Placeholder for now
   // Player 4 pieces would promote when reaching right side (future implementation)

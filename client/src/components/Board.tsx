@@ -101,8 +101,9 @@ const Board = () => {
   };
 
   const cells = [];
-  for (let row = 0; row < 8; row++) {
-    for (let col = 0; col < 8; col++) {
+  const boardSize = checkersBoardState.length; // Get dynamic board size
+  for (let row = 0; row < boardSize; row++) {
+    for (let col = 0; col < boardSize; col++) {
       // Alternate color: true for dark, false for light
       const isDark = (row + col) % 2 === 1;
 
@@ -140,8 +141,13 @@ const Board = () => {
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
-      <div>
-        <div className="grid grid-cols-8 w-fit border-4 border-black ">
+      <div className="flex items-center justify-center h-screen">
+        <div
+          className="grid w-fit "
+          style={{
+            gridTemplateColumns: `repeat(${boardSize}, minmax(0, 1fr))`,
+          }}
+        >
           {cells}
         </div>
       </div>
