@@ -1,10 +1,8 @@
 import type { BoardAction, gameState } from "../types/boardTypes";
-import isValidMove, {
-  hasValidCapture,
-  isPlayersTurn,
-  shouldPromoteToKing,
-  promoteToKing,
-} from "../logic/boardLogic";
+import isValidMove from "../logic/movementValidation";
+import { hasValidCapture } from "../logic/captureLogic";
+import { isPlayersTurn } from "../logic/movementValidation";
+import { shouldPromoteToKing, promoteToKing } from "../logic/pieceUtils";
 
 // Reducer function to handle board actions
 // Accepts current state and an action, returns new state
