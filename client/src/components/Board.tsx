@@ -2,7 +2,6 @@ import { DndContext } from "@dnd-kit/core";
 import useBoard from "../hooks/useBoard";
 import { useDragAndDrop } from "../hooks/useDragAndDrop";
 import { generateBoardCells } from "../utils/boardRenderer";
-import { useSocket } from "../hooks/useSocket";
 import BoardGrid from "./BoardGrid";
 
 const Board = () => {
@@ -19,8 +18,6 @@ const Board = () => {
     handleDragCancel,
   } = useDragAndDrop(checkersBoardState, dispatch);
 
-  const { socket, isConnected } = useSocket();
-
   const cells = generateBoardCells(
     checkersBoardState,
     validMoves,
@@ -36,12 +33,6 @@ const Board = () => {
       onDragCancel={handleDragCancel}
     >
       <BoardGrid cells={cells} boardSize={boardSize} />
-      <p className="text-sm text-gray-600 mt-4">
-        Status:{" "}
-        {isConnected
-          ? "✅ Connected (Socket ID: " + socket?.id + ")"
-          : "❌ Disconnected"}
-      </p>
     </DndContext>
   );
 };
