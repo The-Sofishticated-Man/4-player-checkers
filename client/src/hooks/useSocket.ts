@@ -3,6 +3,7 @@ import { io, Socket } from "socket.io-client";
 
 interface UseSocketReturn {
   socket: Socket | null;
+  roomID: string | null;
   isConnected: boolean;
 }
 
@@ -34,6 +35,7 @@ export const useSocket = (
 
   return {
     socket: socketRef.current,
+    roomID: socketRef.current?.id || null,
     isConnected,
   };
 };
