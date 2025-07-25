@@ -13,6 +13,12 @@ export interface gameState {
 // Type for board actions
 export type BoardAction =
   | {
+      type: "UPDATE_GAME_STATE";
+      payload: {
+        newState: gameState; // New game state after the move
+      };
+    }
+  | {
       type: "MOVE_PIECE";
       payload: {
         fromRow: number;
@@ -32,7 +38,10 @@ export type BoardAction =
         capturedCol: number;
       };
     }
-  | { type: string; payload?: never };
+  | {
+      type: string;
+      payload?: never;
+    };
 
 // Type for the context value: contains board state and dispatch function
 // state: current game state
