@@ -2,7 +2,7 @@ import type {
   checkersBoardState,
   currentPlayerState,
   gameState,
-} from "../types/boardTypes";
+} from "../../../shared/types/boardTypes";
 
 // Initial board setup: 8x8 grid filled with 0s (empty cells)
 const initialBoard: checkersBoardState = [
