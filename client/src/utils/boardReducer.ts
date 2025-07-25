@@ -117,10 +117,12 @@ export const boardReducer = (
       };
     }
     case "UPDATE_GAME_STATE": {
+      console.log("Updating game state");
       if (!payload) return state;
       const {
         newState: { checkersBoardState, currentPlayer },
       } = payload;
+      console.log("newState: ", { checkersBoardState, currentPlayer });
 
       return {
         ...state,
