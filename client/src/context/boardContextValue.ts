@@ -1,5 +1,5 @@
 import { createContext } from "react";
-import type { boardContextType } from "../types/boardTypes";
+import type { boardContextType } from "../../../shared/types/boardTypes";
 import initialState from "../utils/initialState";
 
 // Create the board context with default values
