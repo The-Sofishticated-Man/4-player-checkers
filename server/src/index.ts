@@ -1,6 +1,9 @@
 import express from "express";
 import cors from "cors";
 import { Server } from "socket.io";
+import { type gameState } from "../../shared/types/gameTypes.ts";
+import { setupRoomHandlers } from "./handlers/roomHandlers.ts";
+import { setupMoveHandlers } from "./handlers/moveHandlers.ts";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
