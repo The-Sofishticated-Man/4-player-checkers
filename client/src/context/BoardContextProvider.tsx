@@ -2,7 +2,7 @@
 import { useReducer } from "react";
 import { boardContext } from "./boardContextValue";
 import { boardReducer } from "../utils/boardReducer";
-import type { gameState } from "../types/boardTypes";
+import type { gameState } from "../../../shared/types/boardTypes";
 import initialState from "../utils/initialState";
 
 // Context provider component for the board
