@@ -1,4 +1,4 @@
-import type { checkersBoardState } from "../types/boardTypes";
+import type { checkersBoardState } from "../../../shared/types/boardTypes";
 import Cell from "../components/Cell";
 import Piece from "../components/Piece";
 
