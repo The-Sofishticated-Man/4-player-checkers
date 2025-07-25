@@ -16,6 +16,11 @@ export function useJoinGame(roomId: string) {
   const [isConnecting, setIsConnecting] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Debug logging for useBoard hook
+  console.log("🔍 useBoard dispatch:", dispatch);
+  console.log("🔍 useBoard dispatch type:", typeof dispatch);
+  console.log("🔍 useBoard dispatch is undefined?", dispatch === undefined);
+
   useEffect(() => {
     if (!socket) {
       console.log("Waiting for socket connection...");
@@ -81,17 +86,35 @@ export function useJoinGame(roomId: string) {
       newBoardState: checkersBoardState;
       nextPlayer: currentPlayerState;
     }) => {
-      console.log("Move made received:");
-      // Update the entire game state
-      dispatch({
-        type: "UPDATE_GAME_STATE",
-        payload: {
-          newState: {
-            checkersBoardState: newBoardState,
-            currentPlayer: nextPlayer,
+      console.log("🚀 Move made received!");
+      console.log("📊 Data received:", { newBoardState, nextPlayer });
+      console.log("🔧 Dispatch function:", dispatch);
+      console.log("🔧 Dispatch type:", typeof dispatch);
+      console.log("🔧 Dispatch is function?", typeof dispatch === "function");
+
+      if (!dispatch) {
+        console.error("❌ Dispatch is undefined/null!");
+        return;
+      }
+
+      console.log("📤 About to dispatch UPDATE_GAME_STATE...");
+
+      try {
+        const result = dispatch({
+          type: "UPDATE_GAME_STATE",
+          payload: {
+            newState: {
+              checkersBoardState: newBoardState,
+              currentPlayer: nextPlayer,
+            },
           },
-        },
-      });
+        });
+
+        console.log("✅ Dispatch result:", result);
+        console.log("✅ Dispatch completed successfully");
+      } catch (error) {
+        console.error("❌ Dispatch failed with error:", error);
+      }
     };
 
     socket.on("room-joined", handleRoomJoined);
