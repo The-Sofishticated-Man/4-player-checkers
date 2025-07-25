@@ -8,7 +8,7 @@ import {
   isCapture,
   getCapturedPosition,
   getValidMoves,
-} from "../../../shared/logic/boardLogic";
+} from "../../../shared/logic/boardLogic.ts";
 import { useSocket } from "./useSocket";
 
 export const useDragAndDrop = (
