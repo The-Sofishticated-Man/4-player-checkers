@@ -1,11 +1,15 @@
 import { useState } from "react";
 import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
-import type { BoardAction, checkersBoardState } from "../types/boardTypes";
+import type {
+  BoardAction,
+  checkersBoardState,
+} from "../../../shared/types/boardTypes";
 import {
   isCapture,
   getCapturedPosition,
   getValidMoves,
-} from "../logic/boardLogic";
+} from "../../../shared/logic/boardLogic";
+import { useSocket } from "./useSocket";
 
 export const useDragAndDrop = (
   checkersBoardState: checkersBoardState,
@@ -17,6 +21,7 @@ export const useDragAndDrop = (
   const [draggedPieceOwner, setDraggedPieceOwner] = useState<number | null>(
     null
   );
+  const { socket } = useSocket();
 
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
