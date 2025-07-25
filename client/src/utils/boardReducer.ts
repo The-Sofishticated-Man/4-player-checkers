@@ -1,44 +1,56 @@
-import type { BoardAction, gameState } from "../types/boardTypes";
-import isValidMove from "../logic/movementValidation";
-import { hasValidCapture } from "../logic/captureLogic";
-import { isPlayersTurn } from "../logic/movementValidation";
-import { shouldPromoteToKing, promoteToKing } from "../logic/pieceUtils";
+import type { BoardAction, gameState } from "../../../shared/types/boardTypes";
+import isValidMoveWithCaptures from "../../../shared/logic/boardLogic";
+import { hasValidCapture, isCapture } from "../../../shared/logic/captureLogic";
+import { isPlayersTurn } from "../../../shared/logic/movementValidation";
+import {
+  shouldPromoteToKing,
+  promoteToKing,
+} from "../../../shared/logic/pieceUtils";
 
-// Reducer function to handle board actions
-// Accepts current state and an action, returns new state
+// Reducer function to handle board
+// Accepts current state and an  returns new state
 export const boardReducer = (
   state: gameState,
-  action: BoardAction
+  { type, payload }: BoardAction
 ): gameState => {
   const { checkersBoardState, currentPlayer } = state;
 
-  switch (action.type) {
+  switch (type) {
     case "MOVE_PIECE": {
-      if (!action.payload) return state;
-      const { fromRow, fromCol, toRow, toCol } = action.payload;
-      // if it's not the player's turn, return current state
-      if (!isPlayersTurn(checkersBoardState, fromRow, fromCol, currentPlayer)) {
-        return state;
+      if (!payload) return state;
+      const { fromRow, fromCol, toRow, toCol } = payload;
+
+      // Validate the move before executing
+      if (
+        !isValidMoveWithCaptures(
+          checkersBoardState,
+          fromRow,
+          fromCol,
+          toRow,
+          toCol
+        )
+      ) {
+        return state; // Invalid move, return current state
       }
 
-      // Validate the move using game logic (should only be regular moves, not captures)
-      if (!isValidMove(checkersBoardState, fromRow, fromCol, toRow, toCol)) {
-        return state; // Invalid move, don't change state
+      // Check if it's the correct player's turn
+      if (!isPlayersTurn(checkersBoardState, fromRow, fromCol, currentPlayer)) {
+        return state; // Not this player's piece
       }
 
       // Create a new board state (immutable update)
       const newBoard = checkersBoardState.map((row) => [...row]);
 
       // Move the piece from source to destination
-      let piece = newBoard[fromRow][fromCol];
+      let movedPiece = newBoard[fromRow][fromCol];
       newBoard[fromRow][fromCol] = 0; // Clear the source cell
 
       // Check for king promotion
-      if (shouldPromoteToKing(piece, toRow, toCol, newBoard.length)) {
-        piece = promoteToKing(piece);
+      if (shouldPromoteToKing(movedPiece, toRow, toCol, newBoard.length)) {
+        movedPiece = promoteToKing(movedPiece);
       }
 
-      newBoard[toRow][toCol] = piece;
+      newBoard[toRow][toCol] = movedPiece;
 
       return {
         ...state,
@@ -48,34 +60,49 @@ export const boardReducer = (
     }
 
     case "CAPTURE_PIECE": {
-      if (!action.payload) return state;
+      if (!payload) return state;
       const { fromRow, fromCol, toRow, toCol, capturedRow, capturedCol } =
-        action.payload;
+        payload;
 
-      if (!isPlayersTurn(checkersBoardState, fromRow, fromCol, currentPlayer)) {
-        return state;
+      // Validate this is actually a capture move
+      if (!isCapture(fromRow, fromCol, toRow, toCol)) {
+        return state; // Not a valid capture move
       }
-      // Validate the capture move using game logic
-      if (!isValidMove(checkersBoardState, fromRow, fromCol, toRow, toCol)) {
-        return state; // Invalid capture, don't change state
+
+      // Validate the capture is legal
+      if (
+        !isValidMoveWithCaptures(
+          checkersBoardState,
+          fromRow,
+          fromCol,
+          toRow,
+          toCol
+        )
+      ) {
+        return state; // Invalid capture
+      }
+
+      // Check if it's the correct player's turn
+      if (!isPlayersTurn(checkersBoardState, fromRow, fromCol, currentPlayer)) {
+        return state; // Not this player's piece
       }
 
       // Create a new board state (immutable update)
       const newBoard = checkersBoardState.map((row) => [...row]);
 
       // Move the piece from source to destination
-      let piece = newBoard[fromRow][fromCol];
+      let movedPiece = newBoard[fromRow][fromCol];
       newBoard[fromRow][fromCol] = 0; // Clear the source cell
 
       // Remove the captured piece
       newBoard[capturedRow][capturedCol] = 0;
 
       // Check for king promotion
-      if (shouldPromoteToKing(piece, toRow, toCol, newBoard.length)) {
-        piece = promoteToKing(piece);
+      if (shouldPromoteToKing(movedPiece, toRow, toCol, newBoard.length)) {
+        movedPiece = promoteToKing(movedPiece);
       }
 
-      newBoard[toRow][toCol] = piece;
+      newBoard[toRow][toCol] = movedPiece;
 
       // Check if the same piece has another valid capture available
       const hasMoreCaptures = hasValidCapture(newBoard, toRow, toCol);
@@ -89,7 +116,18 @@ export const boardReducer = (
           : (((currentPlayer % 4) + 1) as 1 | 2 | 3 | 4),
       };
     }
+    case "UPDATE_GAME_STATE": {
+      if (!payload) return state;
+      const {
+        newState: { checkersBoardState, currentPlayer },
+      } = payload;
 
+      return {
+        ...state,
+        checkersBoardState,
+        currentPlayer,
+      };
+    }
     default:
       return state; // Return current state by default
   }
