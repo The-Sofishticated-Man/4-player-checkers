@@ -55,6 +55,9 @@ export const setupMoveHandlers = (
     const isCapture =
       Math.abs(fromRow - toRow) === 2 && Math.abs(fromCol - toCol) === 2;
 
+    let newBoard: number[][];
+    let shouldChangePlayer = true;
+
     if (isCapture) {
       // Validate capture move
       if (
@@ -75,7 +78,7 @@ export const setupMoveHandlers = (
       const capturedCol = (fromCol + toCol) / 2;
 
       // Execute the capture
-      const newBoard = game.boardState.map((row) => [...row]);
+      newBoard = game.boardState.map((row) => [...row]);
       let piece = newBoard[fromRow][fromCol];
 
       // Move piece
@@ -89,28 +92,11 @@ export const setupMoveHandlers = (
 
       newBoard[toRow][toCol] = piece;
 
-      // Update game state
-      game.boardState = newBoard;
-
       // Check if the same piece has another valid capture
       const hasMoreCaptures = hasValidCapture(newBoard, toRow, toCol);
 
       // Only change player if no more captures available
-      if (!hasMoreCaptures) {
-        game.currentPlayer = ((game.currentPlayer % 4) + 1) as 1 | 2 | 3 | 4;
-      }
-
-      // Emit new game state to all players in the room
-      socket.to(roomID).emit("move-made", {
-        boardState: newBoard,
-        currentPlayer: game.currentPlayer,
-      });
-
-      // Also emit to the player who made the move
-      socket.emit("move-made", {
-        boardState: newBoard,
-        currentPlayer: game.currentPlayer,
-      });
+      shouldChangePlayer = !hasMoreCaptures;
     } else {
       // Validate regular move
       if (!isValidMove(game.boardState, fromRow, fromCol, toRow, toCol)) {
@@ -119,7 +105,7 @@ export const setupMoveHandlers = (
       }
 
       // Execute the regular move
-      const newBoard = game.boardState.map((row) => [...row]);
+      newBoard = game.boardState.map((row) => [...row]);
       let piece = newBoard[fromRow][fromCol];
 
       // Move piece
@@ -131,23 +117,25 @@ export const setupMoveHandlers = (
       }
 
       newBoard[toRow][toCol] = piece;
-
-      // Update game state
-      game.boardState = newBoard;
-      game.currentPlayer = ((game.currentPlayer % 4) + 1) as 1 | 2 | 3 | 4;
-
-      // Emit new game state to all players in the room
-      socket.to(roomID).emit("move-made", {
-        boardState: newBoard,
-        currentPlayer: game.currentPlayer,
-      });
-
-      // Also emit to the player who made the move
-      socket.emit("move-made", {
-        newBoardState: newBoard,
-        nextPlayer: game.currentPlayer,
-      });
     }
+
+    // Update game state
+    game.boardState = newBoard;
+    if (shouldChangePlayer) {
+      game.currentPlayer = ((game.currentPlayer % 4) + 1) as 1 | 2 | 3 | 4;
+    }
+
+    // Emit new game state to all players in the room (exactly once)
+    socket.to(roomID).emit("move-made", {
+      newBoardState: newBoard,
+      nextPlayer: game.currentPlayer,
+    });
+
+    // Also emit to the player who made the move (exactly once)
+    socket.emit("move-made", {
+      newBoardState: newBoard,
+      nextPlayer: game.currentPlayer,
+    });
     console.log(
       `✅ Move completed - Room: ${roomID}, Player: ${currentPlayerId}, New turn: Player ${game.currentPlayer}`
     );
