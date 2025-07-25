@@ -86,6 +86,8 @@ export const useDragAndDrop = (
             payload: { fromRow, fromCol, toRow, toCol },
           });
         }
+        const roomID = sessionStorage.getItem("currentRoomId");
+        socket!.emit("make-move", { roomID, fromRow, fromCol, toRow, toCol });
       }
     }
   };
