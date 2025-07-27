@@ -6,8 +6,9 @@ import BoardGrid from "./BoardGrid";
 
 const Board = () => {
   const {
-    state: { checkersBoardState },
+    state: { checkersBoardState, currentPlayer },
     dispatch,
+    playerIndex,
   } = useBoard();
 
   const {
@@ -16,7 +17,7 @@ const Board = () => {
     handleDragStart,
     handleDragEnd,
     handleDragCancel,
-  } = useDragAndDrop(checkersBoardState, dispatch);
+  } = useDragAndDrop(checkersBoardState, currentPlayer, playerIndex, dispatch);
 
   const cells = generateBoardCells(
     checkersBoardState,
