@@ -1,26 +1,31 @@
 // Import React functions for context and reducer
-import { useReducer } from "react";
+import { useReducer, useState } from "react";
 import { boardContext } from "./boardContextValue";
 import { boardReducer } from "../utils/boardReducer";
-import type { gameState } from "../../../shared/types/boardTypes";
 import initialState from "../utils/initialState";
+import { printBoard } from "../utils/debugUtils";
 
 // Context provider component for the board
 // Wraps children with board context
-const BoardContextProvider = ({
-  children,
-  initialStateFromServer,
-}: {
-  children: React.ReactNode;
-  initialStateFromServer: gameState;
-}) => {
-  // useReducer hook to manage board state
-  const [state, dispatch] = useReducer(
-    boardReducer,
-    initialStateFromServer || initialState // Use initialStateFromServer if provided, otherwise use default initialState
-  );
+const BoardContextProvider = ({ children }: { children: React.ReactNode }) => {
+  // Initialize with default state first
+  const [state, dispatch] = useReducer(boardReducer, initialState);
+  const [playerIndex, setPlayerIndex] = useState(0);
+
+  console.log(`🔍 Current state in provider:`);
+  printBoard(state.checkersBoardState);
+  console.log(`Current player: ${state.currentPlayer}`);
+  console.log(`Player index: ${playerIndex}`);
+
   return (
-    <boardContext.Provider value={{ state, dispatch }}>
+    <boardContext.Provider
+      value={{
+        state,
+        dispatch,
+        playerIndex,
+        setPlayerIndex,
+      }}
+    >
       {children}
     </boardContext.Provider>
   );
