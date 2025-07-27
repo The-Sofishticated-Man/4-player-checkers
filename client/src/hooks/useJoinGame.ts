@@ -54,13 +54,35 @@ export function useJoinGame(roomId: string) {
       boardState: checkersBoardState;
       currentPlayer: currentPlayerState;
       playerId: string;
+      playerIndex: number;
     }) => {
       console.log(`Joined room: ${data.roomID}`);
       sessionStorage.setItem("currentRoomId", data.roomID);
+      playerIndex.current = data.playerIndex; // Store player index
+      console.log("Player index:", playerIndex.current);
+
+      // Update the player index in the context
+      setPlayerIndex(data.playerIndex);
+
       initialStateFromServerRef.current = {
         checkersBoardState: data.boardState,
         currentPlayer: data.currentPlayer,
       };
+
+      // Dispatch the initial state to the context
+      if (dispatch) {
+        console.log("📤 Dispatching initial game state from room-joined...");
+        dispatch({
+          type: "UPDATE_GAME_STATE",
+          payload: {
+            newState: {
+              checkersBoardState: data.boardState,
+              currentPlayer: data.currentPlayer,
+            },
+          },
+        });
+      }
+
       setIsConnecting(false);
       setError(null);
     };
@@ -82,14 +104,15 @@ export function useJoinGame(roomId: string) {
       setIsConnecting(false);
     };
     const handleMoveMade = ({
-      newBoardState,
-      nextPlayer,
+      boardState,
+      currentPlayer,
     }: {
-      newBoardState: checkersBoardState;
-      nextPlayer: currentPlayerState;
+      boardState: checkersBoardState;
+      currentPlayer: currentPlayerState;
     }) => {
       console.log("🚀 Move made received!");
-      console.log("📊 Data received:", { newBoardState, nextPlayer });
+      console.log("📊 Data received:", { boardState, currentPlayer });
+      printBoard(boardState);
       console.log("🔧 Dispatch function:", dispatch);
       console.log("🔧 Dispatch type:", typeof dispatch);
       console.log("🔧 Dispatch is function?", typeof dispatch === "function");
@@ -106,8 +129,8 @@ export function useJoinGame(roomId: string) {
           type: "UPDATE_GAME_STATE",
           payload: {
             newState: {
-              checkersBoardState: newBoardState,
-              currentPlayer: nextPlayer,
+              checkersBoardState: boardState,
+              currentPlayer: currentPlayer,
             },
           },
         });
@@ -131,11 +154,11 @@ export function useJoinGame(roomId: string) {
       socket.off("room-not-found", handleRoomNotFound);
       socket.off("move-made", handleMoveMade);
     };
-  }, [socket, roomId, navigate, dispatch]);
+  }, [socket, roomId, navigate, dispatch, setPlayerIndex]);
 
   return {
     initialStateFromServer: initialStateFromServerRef.current,
-
+    playerIndex: playerIndex.current,
     isConnecting,
     error,
   };
