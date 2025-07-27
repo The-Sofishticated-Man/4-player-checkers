@@ -14,6 +14,8 @@ import { useSocket } from "./useSocket";
 
 export const useDragAndDrop = (
   checkersBoardState: checkersBoardState,
+  currentPlayer: currentPlayerState,
+  playerIndex: number,
   dispatch: React.Dispatch<BoardAction> | undefined
 ) => {
   const [validMoves, setValidMoves] = useState<

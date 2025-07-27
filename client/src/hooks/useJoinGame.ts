@@ -7,12 +7,14 @@ import type {
 } from "../../../shared/types/boardTypes";
 import { useNavigate } from "react-router";
 import useBoard from "./useBoard";
+import { printBoard } from "../utils/debugUtils";
 
 export function useJoinGame(roomId: string) {
   const { socket } = useSocket();
   const navigate = useNavigate();
   const initialStateFromServerRef = useRef<gameState | null>(null);
-  const { dispatch } = useBoard();
+  const playerIndex = useRef<number>(0);
+  const { dispatch, setPlayerIndex } = useBoard();
   const [isConnecting, setIsConnecting] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
