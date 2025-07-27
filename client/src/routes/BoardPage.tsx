@@ -2,22 +2,30 @@ import { useParams } from "react-router";
 import Board from "../components/Board";
 import BoardContextProvider from "../context/BoardContextProvider";
 import { useJoinGame } from "../hooks/useJoinGame";
-import initialState from "../utils/initialState";
+import { printBoard } from "../utils/debugUtils";
 
-function BoardPageContent() {
-  const { roomId } = useParams();
-  useJoinGame(roomId!); // This will handle socket events and dispatch updates
+// Inner component that uses the joined game data and has access to context
+function BoardPageInner({ roomId }: { roomId: string }) {
+  const { initialStateFromServer, playerIndex } = useJoinGame(roomId); // Now this has access to the context
+
+  console.log("BoardPage loaded with roomId:", roomId);
+  if (initialStateFromServer?.checkersBoardState) {
+    printBoard(initialStateFromServer.checkersBoardState);
+    console.log("Current player: " + initialStateFromServer.currentPlayer);
+    console.log(`Player index:`, playerIndex);
+  } else {
+    console.log("No initial board state received from server.");
+  }
 
   return <Board />;
 }
 
 function BoardPage() {
   const { roomId } = useParams();
-  console.log("BoardPage loaded with roomId:", roomId);
 
   return (
-    <BoardContextProvider initialStateFromServer={initialState}>
-      <BoardPageContent />
+    <BoardContextProvider>
+      <BoardPageInner roomId={roomId!} />
     </BoardContextProvider>
   );
 }
