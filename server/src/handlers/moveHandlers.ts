@@ -127,14 +127,14 @@ export const setupMoveHandlers = (
 
     // Emit new game state to all players in the room (exactly once)
     socket.to(roomID).emit("move-made", {
-      newBoardState: newBoard,
-      nextPlayer: game.currentPlayer,
+      boardState: newBoard,
+      currentPlayer: game.currentPlayer,
     });
 
     // Also emit to the player who made the move (exactly once)
     socket.emit("move-made", {
-      newBoardState: newBoard,
-      nextPlayer: game.currentPlayer,
+      boardState: newBoard,
+      currentPlayer: game.currentPlayer,
     });
     console.log(
       `✅ Move completed - Room: ${roomID}, Player: ${currentPlayerId}, New turn: Player ${game.currentPlayer}`
