@@ -31,6 +31,8 @@ export const setupRoomHandlers = (
         game.socketToPlayer.set(socket.id, playerId);
         socket.join(roomID);
         const playerIndex = game.players.indexOf(playerId) + 1; // 1-based index
+
+        // Emit to the reconnecting player
         socket.emit("room-joined", {
           roomID,
           boardState: game.boardState,
@@ -38,6 +40,16 @@ export const setupRoomHandlers = (
           playerId,
           playerIndex,
         });
+
+        // Broadcast to all other players that someone reconnected
+        socket.to(roomID).emit("player-reconnected", {
+          roomID,
+          boardState: game.boardState,
+          currentPlayer: game.currentPlayer,
+          playerId,
+          playerIndex,
+        });
+
         console.log(`Player ${playerId} reconnected to room: ${roomID}`);
         return;
       }
@@ -53,6 +65,8 @@ export const setupRoomHandlers = (
       game.socketToPlayer.set(socket.id, playerId);
       socket.join(roomID);
       const playerIndex = game.players.indexOf(playerId) + 1; // 1-based index
+
+      // Emit to the joining player
       socket.emit("room-joined", {
         roomID,
         boardState: game.boardState,
@@ -60,6 +74,16 @@ export const setupRoomHandlers = (
         playerId,
         playerIndex,
       });
+
+      // Broadcast to all other players in the room that someone joined
+      socket.to(roomID).emit("player-joined", {
+        roomID,
+        boardState: game.boardState,
+        currentPlayer: game.currentPlayer,
+        playerId,
+        playerIndex,
+      });
+
       console.log(
         `User ${socket.id} added to room: ${roomID}. Players: ${game.players.length}/4`
       );
