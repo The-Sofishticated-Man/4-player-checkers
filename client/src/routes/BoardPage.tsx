@@ -3,6 +3,7 @@ import Board from "../components/Board";
 import BoardContextProvider from "../context/BoardContextProvider";
 import { useJoinGame } from "../hooks/useJoinGame";
 import { printBoard } from "../utils/debugUtils";
+import PlayerBoard from "../components/PlayerBoard";
 
 // Inner component that uses the joined game data and has access to context
 function BoardPageInner({ roomId }: { roomId: string }) {
@@ -25,6 +26,7 @@ function BoardPage() {
 
   return (
     <BoardContextProvider>
+      <PlayerBoard/>
       <BoardPageInner roomId={roomId!} />
     </BoardContextProvider>
   );
