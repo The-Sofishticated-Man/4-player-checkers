@@ -3,7 +3,6 @@ import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
 import type {
   BoardAction,
   checkersBoardState,
-  currentPlayerState,
 } from "../../../shared/types/boardTypes";
 import {
   isCapture,
@@ -14,8 +13,6 @@ import { useSocket } from "./useSocket";
 
 export const useDragAndDrop = (
   checkersBoardState: checkersBoardState,
-  currentPlayer: currentPlayerState,
-  playerIndex: number,
   dispatch: React.Dispatch<BoardAction> | undefined
 ) => {
   const [validMoves, setValidMoves] = useState<
@@ -37,22 +34,6 @@ export const useDragAndDrop = (
     const draggedPiece = checkersBoardState[fromRow][fromCol];
     const owner =
       draggedPiece >= 10 ? Math.floor(draggedPiece / 10) : draggedPiece;
-
-    // Check if it's this player's turn
-    if (currentPlayer !== playerIndex) {
-      console.log(
-        `❌ Not your turn! Current turn: Player ${currentPlayer}, You are: Player ${playerIndex}`
-      );
-      return;
-    }
-
-    // Check if the piece belongs to this player
-    if (owner !== playerIndex) {
-      console.log(
-        `❌ You can only move your own pieces! Piece belongs to Player ${owner}, You are Player ${playerIndex}`
-      );
-      return;
-    }
 
     setDraggedPieceOwner(owner);
 
@@ -77,25 +58,6 @@ export const useDragAndDrop = (
     // Extract position from cell ID (format: "cell-row-col")
     const cellId = over.id as string;
     const [, toRow, toCol] = cellId.split("-").map(Number);
-
-    // Double-check that it's still this player's turn and they own the piece
-    const draggedPiece = checkersBoardState[fromRow][fromCol];
-    const owner =
-      draggedPiece >= 10 ? Math.floor(draggedPiece / 10) : draggedPiece;
-
-    if (currentPlayer !== playerIndex) {
-      console.log(
-        `❌ Move blocked: Not your turn! Current turn: Player ${currentPlayer}, You are: Player ${playerIndex}`
-      );
-      return;
-    }
-
-    if (owner !== playerIndex) {
-      console.log(
-        `❌ Move blocked: You can only move your own pieces! Piece belongs to Player ${owner}, You are Player ${playerIndex}`
-      );
-      return;
-    }
 
     // Only move if the position actually changed
     if (fromRow !== toRow || fromCol !== toCol) {

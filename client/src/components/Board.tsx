@@ -17,12 +17,14 @@ const Board = () => {
     handleDragStart,
     handleDragEnd,
     handleDragCancel,
-  } = useDragAndDrop(checkersBoardState, currentPlayer, playerIndex, dispatch);
+  } = useDragAndDrop(checkersBoardState, dispatch);
 
   const cells = generateBoardCells(
     checkersBoardState,
     validMoves,
-    draggedPieceOwner
+    draggedPieceOwner,
+    currentPlayer,
+    playerIndex
   );
 
   const boardSize = checkersBoardState.length;

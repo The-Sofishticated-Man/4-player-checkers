@@ -5,7 +5,9 @@ import Piece from "../components/Piece";
 export const generateBoardCells = (
   checkersBoardState: checkersBoardState,
   validMoves: { row: number; col: number; isCapture: boolean }[],
-  draggedPieceOwner: number | null
+  draggedPieceOwner: number | null,
+  currentPlayer: number,
+  playerIndex: number
 ) => {
   const cells = [];
   const boardSize = checkersBoardState.length;
@@ -36,6 +38,13 @@ export const generateBoardCells = (
             <Piece
               pieceID={`piece-${row}-${col}`}
               player={checkersBoardState[row][col]}
+              disabled={
+                currentPlayer !== playerIndex || // Not player's turn
+                (checkersBoardState[row][col] >= 10
+                  ? Math.floor(checkersBoardState[row][col] / 10) !==
+                    playerIndex // King doesn't belong to player
+                  : checkersBoardState[row][col] !== playerIndex) // Regular piece doesn't belong to player
+              }
             />
           )}
         </Cell>

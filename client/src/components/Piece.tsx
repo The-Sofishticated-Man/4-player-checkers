@@ -1,9 +1,18 @@
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 
-const Piece = ({ pieceID, player }: { pieceID: string; player: number }) => {
+const Piece = ({
+  pieceID,
+  player,
+  disabled = false,
+}: {
+  pieceID: string;
+  player: number;
+  disabled?: boolean;
+}) => {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: pieceID,
+    disabled,
   });
 
   const style = {
@@ -32,14 +41,15 @@ const Piece = ({ pieceID, player }: { pieceID: string; player: number }) => {
 
   const playerColor = getPlayerColor(playerNumber);
   const borderStyle = isKing ? "border-4 border-yellow-400" : "";
+  const cursorStyle = !disabled && "cursor-pointer" ; 
 
   return (
     <div
       ref={setNodeRef}
       style={style}
       {...attributes}
-      {...listeners}
-      className={`${playerColor} ${borderStyle} w-10 h-10 rounded-full mx-auto my-auto aspect-square cursor-pointer flex items-center justify-center`}
+      {...(disabled ? {} : listeners)}
+      className={`${playerColor} ${borderStyle} ${cursorStyle}  w-10 h-10 rounded-full mx-auto my-auto aspect-square flex items-center justify-center`}
     >
       {isKing && <span className="text-yellow-400 font-bold text-xs">♔</span>}
     </div>
