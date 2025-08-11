@@ -9,6 +9,7 @@ export type currentPlayerState = 1 | 2 | 3 | 4; // Represents the current player
 export interface gameState {
   checkersBoardState: checkersBoardState; // 2D array representing the board
   currentPlayer: currentPlayerState; // Current player (1 or 2)
+  gameStarted?: boolean; // Whether the game has started (all 4 players joined)
 }
 // Type for board actions
 export type BoardAction =
@@ -42,4 +43,3 @@ export type BoardAction =
       type: string;
       payload?: never;
     };
-
