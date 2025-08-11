@@ -3,8 +3,10 @@ import useBoard from "../hooks/useBoard";
 import { useSocket } from "../hooks/useSocket";
 
 interface GameInfo {
-  players: string[];
+  players: string[]; // All players who joined the game (permanent)
+  connectedPlayers: string[]; // Currently connected players
   playerId: string;
+  gameStarted: boolean;
 }
 
 function PlayerBoard() {
@@ -21,34 +23,6 @@ function PlayerBoard() {
   useEffect(() => {
     if (!socket || !roomId) return;
 
-    // Request current game state to get player list
-    socket.emit("get-game-state", roomId);
-
-    // Listen for game state response
-    const handleGameState = (data: {
-      boardState: number[][];
-      currentPlayer: number;
-      players: string[];
-      playerId: string;
-    }) => {
-      setGameInfo({
-        players: data.players,
-        playerId: data.playerId,
-      });
-    };
-
-    // Listen for player disconnection
-    const handlePlayerDisconnected = ({ playerId }: { playerId: string }) => {
-      console.log(`Player disconnected: ${playerId}`);
-      setGameInfo((prevInfo) => {
-        if (!prevInfo) return null;
-        return {
-          ...prevInfo,
-          players: prevInfo.players.filter((id) => id !== playerId),
-        };
-      });
-    };
-
     // Listen for new player joins (when player-joined is broadcast to others)
     const handlePlayerJoined = (data: {
       roomID: string;
@@ -56,10 +30,51 @@ function PlayerBoard() {
       currentPlayer: number;
       playerId: string;
       playerIndex: number;
+      gameStarted: boolean;
+      players: string[];
+      connectedPlayers: string[];
     }) => {
       console.log(`New player joined: ${data.playerId}`);
-      // Request updated game state to get the full player list
-      socket.emit("get-game-state", roomId);
+      setGameInfo({
+        players: data.players,
+        connectedPlayers: data.connectedPlayers,
+        playerId: data.playerId,
+        gameStarted: data.gameStarted,
+      });
+    };
+
+    // Listen for game state response
+    const handleGameState = (data: {
+      players: string[];
+      connectedPlayers: string[];
+      playerId: string;
+      gameStarted: boolean;
+      currentPlayer: number;
+      roomID: string;
+    }) => {
+      setGameInfo({
+        players: data.players,
+        connectedPlayers: data.connectedPlayers,
+        playerId: data.playerId,
+        gameStarted: data.gameStarted,
+      });
+    };
+
+    // Listen for player disconnection
+    const handlePlayerDisconnected = (data: {
+      playerId: string;
+      players: string[];
+      connectedPlayers: string[];
+    }) => {
+      console.log(`Player disconnected: ${data.playerId}`);
+      setGameInfo((prevInfo) => {
+        if (!prevInfo) return null;
+        return {
+          ...prevInfo,
+          players: data.players,
+          connectedPlayers: data.connectedPlayers,
+        };
+      });
     };
 
     // Listen for player reconnections
@@ -69,22 +84,49 @@ function PlayerBoard() {
       currentPlayer: number;
       playerId: string;
       playerIndex: number;
+      gameStarted: boolean;
+      players: string[];
+      connectedPlayers: string[];
     }) => {
       console.log(`Player reconnected: ${data.playerId}`);
-      // Request updated game state to get the full player list
-      socket.emit("get-game-state", roomId);
+      setGameInfo({
+        players: data.players,
+        connectedPlayers: data.connectedPlayers,
+        playerId: data.playerId,
+        gameStarted: data.gameStarted,
+      });
     };
 
-    socket.on("game-state", handleGameState);
+    // Listen for game start event
+    const handleGameStarted = (data: {
+      roomID: string;
+      playerIndex: number;
+    }) => {
+      console.log(`🎮 Game started in room: ${data.roomID}!`);
+      setGameInfo((prevInfo) => {
+        if (!prevInfo) return null;
+        return {
+          ...prevInfo,
+          gameStarted: true,
+        };
+      });
+    };
+
     socket.on("player-disconnected", handlePlayerDisconnected);
     socket.on("player-joined", handlePlayerJoined);
     socket.on("player-reconnected", handlePlayerReconnected);
+    socket.on("game-started", handleGameStarted);
+    socket.on("game-state", handleGameState);
+
+    // Request current game state when component mounts
+    socket.emit("get-game-state", roomId);
 
     return () => {
-      socket.off("game-state", handleGameState);
       socket.off("player-disconnected", handlePlayerDisconnected);
       socket.off("player-joined", handlePlayerJoined);
       socket.off("player-reconnected", handlePlayerReconnected);
+      socket.off("game-started", handleGameStarted);
+      socket.off("game-state", handleGameState);
     };
   }, [socket, roomId]);
 
@@ -134,7 +176,9 @@ function PlayerBoard() {
     const playerColor = getPlayerColor(slotNumber);
     const isCurrentTurn = currentPlayer === slotNumber;
     const isYou = playerIndex === slotNumber;
-    const hasPlayer = gameInfo && gameInfo.players[slotNumber - 1];
+    const playerId = gameInfo && gameInfo.players[slotNumber - 1];
+    const isConnected =
+      playerId && gameInfo?.connectedPlayers.includes(playerId);
 
     return (
       <div
@@ -146,8 +190,10 @@ function PlayerBoard() {
               ? `bg-gradient-to-r from-${playerColor.bg.split("-")[1]}-50 to-${
                   playerColor.bg.split("-")[1]
                 }-100 border-2 ${playerColor.border} shadow-lg`
-              : hasPlayer
-              ? "bg-gradient-to-r from-gray-50 to-gray-100 border-2 border-gray-200"
+              : playerId
+              ? isConnected
+                ? "bg-gradient-to-r from-gray-50 to-gray-100 border-2 border-gray-200"
+                : "bg-gradient-to-r from-yellow-50 to-yellow-100 border-2 border-yellow-300"
               : "bg-gradient-to-r from-gray-100 to-gray-200 border-2 border-dashed border-gray-300"
           }
           ${isCurrentTurn ? "scale-105" : ""}

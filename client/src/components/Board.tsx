@@ -6,7 +6,7 @@ import BoardGrid from "./BoardGrid";
 
 const Board = () => {
   const {
-    state: { checkersBoardState, currentPlayer },
+    state: { checkersBoardState, currentPlayer, gameStarted },
     dispatch,
     playerIndex,
   } = useBoard();
@@ -24,7 +24,8 @@ const Board = () => {
     validMoves,
     draggedPieceOwner,
     currentPlayer,
-    playerIndex
+    playerIndex,
+    gameStarted || false
   );
 
   const boardSize = checkersBoardState.length;
