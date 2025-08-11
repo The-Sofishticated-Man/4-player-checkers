@@ -319,9 +319,18 @@ function PlayerBoard() {
               </span>
             </div>
 
+            {gameInfo && gameInfo.players.length > 0 && (
+              <div>
+                <span className="text-gray-600">Connected:</span>
+                <span className="font-semibold ml-1 text-green-600">
+                  {gameInfo.connectedPlayers.length}/{gameInfo.players.length}
+                </span>
+              </div>
+            )}
+
             {playerIndex > 0 && (
               <div>
-                <span className="text-gray-600">You:</span>
+                <span className="text-gray-600">You: {playerIndex}</span>
                 <span
                   className={`font-semibold ml-1 ${
                     getPlayerColor(playerIndex).text
@@ -334,7 +343,7 @@ function PlayerBoard() {
           </div>
 
           <div className="flex items-center space-x-2">
-            <span className="text-gray-600 text-sm">Turn:</span>
+            <span className="text-gray-600 text-sm">Turn:{currentPlayer}</span>
             <div
               className={`flex items-center space-x-1 px-2 py-1 rounded-full ${
                 getPlayerColor(currentPlayer).bg
@@ -357,13 +366,42 @@ function PlayerBoard() {
         </div>
 
         {/* Your turn indicator */}
-        {currentPlayer === playerIndex && playerIndex > 0 && (
-          <div className="mt-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white text-sm font-semibold text-center py-2 px-4 rounded-xl shadow-lg animate-pulse">
+        {currentPlayer === playerIndex &&
+          playerIndex > 0 &&
+          gameInfo?.gameStarted && (
+            <div className="mt-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white text-sm font-semibold text-center py-2 px-4 rounded-xl shadow-lg animate-pulse">
+              <span className="inline-flex items-center">
+                🎯 <span className="ml-1">YOUR TURN!</span>
+              </span>
+            </div>
+          )}
+
+        {/* Game status indicator */}
+        {!gameInfo?.gameStarted && (
+          <div className="mt-3 bg-gradient-to-r from-orange-500 to-red-500 text-white text-sm font-semibold text-center py-2 px-4 rounded-xl shadow-lg">
             <span className="inline-flex items-center">
-              🎯 <span className="ml-1">YOUR TURN!</span>
+              ⏳{" "}
+              <span className="ml-1">
+                WAITING FOR PLAYERS ({gameInfo?.players.length || 0}/4)
+              </span>
             </span>
           </div>
         )}
+
+        {gameInfo?.gameStarted &&
+          !(currentPlayer === playerIndex && playerIndex > 0) && (
+            <div className="mt-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-sm font-semibold text-center py-2 px-4 rounded-xl shadow-lg">
+              <span className="inline-flex items-center">
+                🎮 <span className="ml-1">GAME IN PROGRESS</span>
+                {gameInfo.connectedPlayers.length < gameInfo.players.length && (
+                  <span className="ml-2 text-xs bg-yellow-500 px-2 py-1 rounded">
+                    {gameInfo.players.length - gameInfo.connectedPlayers.length}{" "}
+                    DISCONNECTED
+                  </span>
+                )}
+              </span>
+            </div>
+          )}
       </div>
     </div>
   );

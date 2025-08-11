@@ -120,14 +120,19 @@ export const boardReducer = (
       console.log("Updating game state");
       if (!payload) return state;
       const {
-        newState: { checkersBoardState, currentPlayer },
+        newState: { checkersBoardState, currentPlayer, gameStarted },
       } = payload;
-      console.log("newState: ", { checkersBoardState, currentPlayer });
+      console.log("newState: ", {
+        checkersBoardState,
+        currentPlayer,
+        gameStarted,
+      });
 
       return {
         ...state,
         checkersBoardState,
         currentPlayer,
+        gameStarted,
       };
     }
     default:
