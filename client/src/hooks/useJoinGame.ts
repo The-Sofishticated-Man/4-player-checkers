@@ -67,6 +67,7 @@ export function useJoinGame(roomId: string) {
       initialStateFromServerRef.current = {
         checkersBoardState: data.boardState,
         currentPlayer: data.currentPlayer,
+        gameStarted: false, // Game starts as not started when joining
       };
 
       // Dispatch the initial state to the context
@@ -78,6 +79,7 @@ export function useJoinGame(roomId: string) {
             newState: {
               checkersBoardState: data.boardState,
               currentPlayer: data.currentPlayer,
+              gameStarted: false, // Game starts as not started when joining
             },
           },
         });
@@ -106,12 +108,18 @@ export function useJoinGame(roomId: string) {
     const handleMoveMade = ({
       boardState,
       currentPlayer,
+      gameStarted,
     }: {
       boardState: checkersBoardState;
       currentPlayer: currentPlayerState;
+      gameStarted?: boolean;
     }) => {
       console.log("🚀 Move made received!");
-      console.log("📊 Data received:", { boardState, currentPlayer });
+      console.log("📊 Data received:", {
+        boardState,
+        currentPlayer,
+        gameStarted,
+      });
       printBoard(boardState);
       console.log("🔧 Dispatch function:", dispatch);
       console.log("🔧 Dispatch type:", typeof dispatch);
@@ -131,6 +139,7 @@ export function useJoinGame(roomId: string) {
             newState: {
               checkersBoardState: boardState,
               currentPlayer: currentPlayer,
+              gameStarted: gameStarted,
             },
           },
         });
@@ -142,10 +151,27 @@ export function useJoinGame(roomId: string) {
       }
     };
 
+    // Listen for game started event
+    const handleGameStarted = () => {
+      console.log("🎮 Game started! All 4 players are connected.");
+      if (dispatch) {
+        dispatch({
+          type: "UPDATE_GAME_STATE",
+          payload: {
+            newState: {
+              ...initialStateFromServerRef.current!,
+              gameStarted: true,
+            },
+          },
+        });
+      }
+    };
+
     socket.on("room-joined", handleRoomJoined);
     socket.on("room-full", handleRoomFull);
     socket.on("room-not-found", handleRoomNotFound);
     socket.on("move-made", handleMoveMade);
+    socket.on("game-started", handleGameStarted);
 
     // Cleanup listeners on unmount
     return () => {
@@ -153,6 +179,7 @@ export function useJoinGame(roomId: string) {
       socket.off("room-full", handleRoomFull);
       socket.off("room-not-found", handleRoomNotFound);
       socket.off("move-made", handleMoveMade);
+      socket.off("game-started", handleGameStarted);
     };
   }, [socket, roomId, navigate, dispatch, setPlayerIndex]);
 
