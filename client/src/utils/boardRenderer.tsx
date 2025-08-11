@@ -7,7 +7,8 @@ export const generateBoardCells = (
   validMoves: { row: number; col: number; isCapture: boolean }[],
   draggedPieceOwner: number | null,
   currentPlayer: number,
-  playerIndex: number
+  playerIndex: number,
+  gameStarted: boolean = false
 ) => {
   const cells = [];
   const boardSize = checkersBoardState.length;
@@ -39,6 +40,7 @@ export const generateBoardCells = (
               pieceID={`piece-${row}-${col}`}
               player={checkersBoardState[row][col]}
               disabled={
+                !gameStarted || // Game hasn't started yet
                 currentPlayer !== playerIndex || // Not player's turn
                 (checkersBoardState[row][col] >= 10
                   ? Math.floor(checkersBoardState[row][col] / 10) !==
