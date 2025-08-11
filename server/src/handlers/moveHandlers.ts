@@ -24,7 +24,7 @@ export const setupMoveHandlers = (
       return;
     }
 
-    const currentPlayerId = game.socketToPlayer.get(socket.id);
+    const currentPlayerId = game.connectedPlayers.get(socket.id);
     if (!currentPlayerId) {
       console.error(`Socket ID ${socket.id} not found in game state`);
       socket.emit("move-error", "Player not found");
@@ -38,6 +38,16 @@ export const setupMoveHandlers = (
     for (const row of game.boardState) {
       console.log(row.join(" "));
     }
+
+    // Check if the game has started
+    if (!game.gameStarted) {
+      socket.emit(
+        "move-error",
+        "Game hasn't started yet - waiting for all 4 players to join"
+      );
+      return;
+    }
+
     // Check if it's the current player's turn
     const playerIndex = game.players.indexOf(currentPlayerId) + 1;
     if (game.currentPlayer !== playerIndex) {
@@ -143,27 +153,5 @@ export const setupMoveHandlers = (
     for (const row of game.boardState) {
       console.log(row.join(" "));
     }
-  });
-
-  // Handle request for current game state
-  socket.on("get-game-state", (roomID) => {
-    const game = games.get(roomID);
-    if (!game) {
-      socket.emit("game-state-error", "Game not found");
-      return;
-    }
-
-    const currentPlayerId = game.socketToPlayer.get(socket.id);
-    if (!currentPlayerId) {
-      socket.emit("game-state-error", "Player not found");
-      return;
-    }
-
-    socket.emit("game-state", {
-      boardState: game.boardState,
-      currentPlayer: game.currentPlayer,
-      players: game.players,
-      playerId: currentPlayerId,
-    });
   });
 };

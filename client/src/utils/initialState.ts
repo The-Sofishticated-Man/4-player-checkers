@@ -27,6 +27,7 @@ const initialPlayer: currentPlayerState = 1; // Red starts first
 const initialState: gameState = {
   checkersBoardState: initialBoard,
   currentPlayer: initialPlayer,
+  gameStarted: false, // Game starts as not started
 };
 
 export default initialState;

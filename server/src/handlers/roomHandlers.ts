@@ -7,17 +7,33 @@ export const setupRoomHandlers = (
   games: Map<string, gameState>
 ) => {
   // Handle room creation
-  socket.on("create-room", (initialBoard, playerId) => {
+  socket.on("create-room", (initialBoard) => {
     const roomID = generateRoomId(); // Generate unique room ID
     games.set(roomID, {
       players: [],
       boardState: initialBoard,
       currentPlayer: 1, // Red starts first
-      socketToPlayer: new Map([]),
+      connectedPlayers: new Map([]),
+      gameStarted: false, // Game hasn't started yet
     });
     socket.join(roomID);
     socket.emit("room-created", { roomID });
     console.log(`Room created: ${roomID}`);
+  });
+
+  // Handle getting current game state
+  socket.on("get-game-state", (roomID) => {
+    const game = games.get(roomID);
+    if (game) {
+      const connectedPlayerIds = Array.from(game.connectedPlayers.values());
+      socket.emit("game-state", {
+        players: game.players,
+        connectedPlayers: connectedPlayerIds,
+        gameStarted: game.gameStarted,
+        currentPlayer: game.currentPlayer,
+        roomID,
+      });
+    }
   });
 
   socket.on("join-room", (roomID, playerId) => {
@@ -28,7 +44,8 @@ export const setupRoomHandlers = (
     if (game) {
       // Check if player is already in the game (reconnecting)
       if (game.players.includes(playerId)) {
-        game.socketToPlayer.set(socket.id, playerId);
+        // Handle player reconnection by adding their socket
+        game.connectedPlayers.set(socket.id, playerId);
         socket.join(roomID);
         const playerIndex = game.players.indexOf(playerId) + 1; // 1-based index
 
@@ -39,6 +56,9 @@ export const setupRoomHandlers = (
           currentPlayer: game.currentPlayer,
           playerId,
           playerIndex,
+          gameStarted: game.gameStarted,
+          players: game.players,
+          connectedPlayers: Array.from(game.connectedPlayers.values()),
         });
 
         // Broadcast to all other players that someone reconnected
@@ -48,6 +68,9 @@ export const setupRoomHandlers = (
           currentPlayer: game.currentPlayer,
           playerId,
           playerIndex,
+          gameStarted: game.gameStarted,
+          players: game.players,
+          connectedPlayers: Array.from(game.connectedPlayers.values()),
         });
 
         console.log(`Player ${playerId} reconnected to room: ${roomID}`);
@@ -62,9 +85,18 @@ export const setupRoomHandlers = (
       }
 
       game.players.push(playerId);
-      game.socketToPlayer.set(socket.id, playerId);
+      game.connectedPlayers.set(socket.id, playerId);
       socket.join(roomID);
       const playerIndex = game.players.indexOf(playerId) + 1; // 1-based index
+
+      // Check if game should start (4 players joined)
+      const shouldStartGame = !game.gameStarted && game.players.length === 4;
+      if (shouldStartGame) {
+        game.gameStarted = true;
+        console.log(
+          `🎮 Game started in room: ${roomID} - All 4 players connected!`
+        );
+      }
 
       // Emit to the joining player
       socket.emit("room-joined", {
@@ -73,6 +105,9 @@ export const setupRoomHandlers = (
         currentPlayer: game.currentPlayer,
         playerId,
         playerIndex,
+        gameStarted: game.gameStarted,
+        players: game.players,
+        connectedPlayers: Array.from(game.connectedPlayers.values()),
       });
 
       // Broadcast to all other players in the room that someone joined
@@ -82,10 +117,29 @@ export const setupRoomHandlers = (
         currentPlayer: game.currentPlayer,
         playerId,
         playerIndex,
+        gameStarted: game.gameStarted,
+        players: game.players,
+        connectedPlayers: Array.from(game.connectedPlayers.values()),
       });
 
+      // If game just started, broadcast game-started event to all players
+      if (shouldStartGame) {
+        socket.to(roomID).emit("game-started", {
+          roomID,
+          boardState: game.boardState,
+          currentPlayer: game.currentPlayer,
+        });
+        socket.emit("game-started", {
+          roomID,
+          boardState: game.boardState,
+          currentPlayer: game.currentPlayer,
+        });
+      }
+
       console.log(
-        `User ${socket.id} added to room: ${roomID}. Players: ${game.players.length}/4`
+        `User ${socket.id} added to room: ${roomID}. Players: ${
+          game.players.length
+        }/4${shouldStartGame ? " - GAME STARTED!" : ""}`
       );
     } else {
       console.log(`Room not found: ${roomID}`);
@@ -98,7 +152,7 @@ export const setupRoomHandlers = (
       console.log(`👥 Players: [${game.players.join(", ")}]`);
       console.log(`🎯 Current Player: ${game.currentPlayer}`);
       console.log(`🔌 Socket to Player mapping:`);
-      console.table(Object.fromEntries(game.socketToPlayer));
+      console.table(Object.fromEntries(game.connectedPlayers));
       console.log(`📊 Player positions:`);
       game.players.forEach((playerId, index) => {
         const isCurrentTurn = game.currentPlayer === index + 1;
@@ -114,14 +168,19 @@ export const setupRoomHandlers = (
   // Handle player disconnection
   socket.on("disconnect", () => {
     console.log(`Player disconnected: ${socket.id}`);
-    // Note: We don't remove the player from the game, just their socket mapping
-    // This allows them to reconnect with the same playerId
+    // Remove the socket mapping but keep the player in the game
     for (const [roomID, game] of games) {
-      if (game.socketToPlayer.has(socket.id)) {
-        const playerId = game.socketToPlayer.get(socket.id);
-        game.socketToPlayer.delete(socket.id);
+      if (game.connectedPlayers.has(socket.id)) {
+        const playerId = game.connectedPlayers.get(socket.id);
+        game.connectedPlayers.delete(socket.id);
         console.log(`Player ${playerId} disconnected from room ${roomID}`);
-        socket.to(roomID).emit("player-disconnected", { playerId });
+
+        // Broadcast updated connection state to all remaining players
+        socket.to(roomID).emit("player-disconnected", {
+          playerId,
+          players: game.players,
+          connectedPlayers: Array.from(game.connectedPlayers.values()),
+        });
         break;
       }
     }
