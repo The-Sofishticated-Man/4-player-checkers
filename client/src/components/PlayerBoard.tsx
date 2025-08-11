@@ -215,7 +215,13 @@ function PlayerBoard() {
               w-10 h-10 rounded-full flex items-center justify-center border-2 shadow-md
               ${playerColor.bg} ${playerColor.border}
               ${isCurrentTurn ? "animate-pulse shadow-lg" : ""}
-              ${!hasPlayer ? "opacity-50 grayscale" : ""}
+              ${
+                !playerId
+                  ? "opacity-50 grayscale"
+                  : !isConnected
+                  ? "opacity-75"
+                  : ""
+              }
             `}
           >
             <span className="text-white font-bold text-sm">{slotNumber}</span>
@@ -224,7 +230,7 @@ function PlayerBoard() {
           <div className="flex flex-col">
             <div
               className={`font-semibold text-sm ${
-                hasPlayer ? playerColor.text : "text-gray-500"
+                playerId ? playerColor.text : "text-gray-500"
               }`}
             >
               {playerColor.name}
@@ -232,13 +238,24 @@ function PlayerBoard() {
             <div className="flex items-center space-x-2">
               <div
                 className={`text-xs ${
-                  hasPlayer ? "text-gray-600" : "text-gray-500"
+                  playerId
+                    ? isConnected
+                      ? "text-green-600"
+                      : "text-yellow-600"
+                    : "text-gray-500"
                 }`}
               >
-                {hasPlayer ? "Online" : "Waiting..."}
+                {playerId
+                  ? isConnected
+                    ? "Online"
+                    : "Disconnected"
+                  : "Waiting..."}
               </div>
-              {hasPlayer && (
+              {playerId && isConnected && (
                 <div className="w-2 h-2 bg-green-400 rounded-full animate-ping"></div>
+              )}
+              {playerId && !isConnected && (
+                <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
               )}
             </div>
           </div>
@@ -252,13 +269,13 @@ function PlayerBoard() {
             </div>
           )}
 
-          {isCurrentTurn && hasPlayer && (
+          {isCurrentTurn && playerId && isConnected && (
             <div className="px-2 py-1 bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xs font-bold rounded-full animate-bounce shadow-sm">
               TURN
             </div>
           )}
 
-          {!hasPlayer && (
+          {!playerId && (
             <div className="w-6 h-6 border-2 border-dashed border-gray-400 rounded-full flex items-center justify-center">
               <div className="w-1 h-1 bg-gray-400 rounded-full animate-pulse"></div>
             </div>
