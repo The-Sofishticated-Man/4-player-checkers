@@ -1,188 +1,118 @@
 import { Socket } from "socket.io";
-import { type gameState } from "../../../shared/types/gameTypes.ts";
-import { generateRoomId } from "../utils/gameUtils.ts";
+import { Game } from "../models/Game";
+import { generateRoomId } from "../utils/gameUtils";
+import { BoardState } from "../../../shared/types/gameTypes";
 
-export const setupRoomHandlers = (
-  socket: Socket,
-  games: Map<string, gameState>
-) => {
-  // Handle room creation
-  socket.on("create-room", (initialBoard) => {
-    const roomID = generateRoomId(); // Generate unique room ID
-    games.set(roomID, {
-      players: [],
-      boardState: initialBoard,
-      currentPlayer: 1, // Red starts first
-      connectedPlayers: new Map([]),
-      gameStarted: false, // Game hasn't started yet
-    });
-    socket.join(roomID);
-    socket.emit("room-created", { roomID });
-    console.log(`Room created: ${roomID}`);
-  });
+export class RoomHandlers {
+  constructor(private socket: Socket, private games: Map<string, Game>) {}
 
-  // Handle getting current game state
-  socket.on("get-game-state", (roomID) => {
-    const game = games.get(roomID);
-    if (game) {
-      const connectedPlayerIds = Array.from(game.connectedPlayers.values());
-      socket.emit("game-state", {
-        players: game.players,
-        connectedPlayers: connectedPlayerIds,
-        gameStarted: game.gameStarted,
-        currentPlayer: game.currentPlayer,
-        roomID,
-      });
-    }
-  });
+  handleRoomCreation = (initialBoard: BoardState) => {
+    const gameId = generateRoomId();
+    this.games.set(gameId, new Game(gameId, initialBoard, this.socket));
+  };
 
-  socket.on("join-room", (roomID, playerId) => {
+  handleRoomJoin = (roomID: string, playerId: string) => {
     console.log(
-      `User ${socket.id} (${playerId}) trying to join room: ${roomID}`
+      `User ${this.socket.id} (${playerId}) trying to join room: ${roomID}`
     );
-    const game = games.get(roomID);
-    if (game) {
-      // Check if player is already in the game (reconnecting)
-      if (game.players.includes(playerId)) {
-        // Handle player reconnection by adding their socket
-        game.connectedPlayers.set(socket.id, playerId);
-        socket.join(roomID);
-        const playerIndex = game.players.indexOf(playerId) + 1; // 1-based index
 
-        // Emit to the reconnecting player
-        socket.emit("room-joined", {
-          roomID,
-          boardState: game.boardState,
-          currentPlayer: game.currentPlayer,
-          playerId,
-          playerIndex,
-          gameStarted: game.gameStarted,
-          players: game.players,
-          connectedPlayers: Array.from(game.connectedPlayers.values()),
-        });
-
-        // Broadcast to all other players that someone reconnected
-        socket.to(roomID).emit("player-reconnected", {
-          roomID,
-          boardState: game.boardState,
-          currentPlayer: game.currentPlayer,
-          playerId,
-          playerIndex,
-          gameStarted: game.gameStarted,
-          players: game.players,
-          connectedPlayers: Array.from(game.connectedPlayers.values()),
-        });
-
-        console.log(`Player ${playerId} reconnected to room: ${roomID}`);
-        return;
-      }
-
-      // New player joining
-      if (game.players.length >= 4) {
-        console.log(`Room ${roomID} is full (4 players max)`);
-        socket.emit("room-full", roomID);
-        return;
-      }
-
-      game.players.push(playerId);
-      game.connectedPlayers.set(socket.id, playerId);
-      socket.join(roomID);
-      const playerIndex = game.players.indexOf(playerId) + 1; // 1-based index
-
-      // Check if game should start (4 players joined)
-      const shouldStartGame = !game.gameStarted && game.players.length === 4;
-      if (shouldStartGame) {
-        game.gameStarted = true;
-        console.log(
-          `🎮 Game started in room: ${roomID} - All 4 players connected!`
-        );
-      }
-
-      // Emit to the joining player
-      socket.emit("room-joined", {
-        roomID,
-        boardState: game.boardState,
-        currentPlayer: game.currentPlayer,
-        playerId,
-        playerIndex,
-        gameStarted: game.gameStarted,
-        players: game.players,
-        connectedPlayers: Array.from(game.connectedPlayers.values()),
-      });
-
-      // Broadcast to all other players in the room that someone joined
-      socket.to(roomID).emit("player-joined", {
-        roomID,
-        boardState: game.boardState,
-        currentPlayer: game.currentPlayer,
-        playerId,
-        playerIndex,
-        gameStarted: game.gameStarted,
-        players: game.players,
-        connectedPlayers: Array.from(game.connectedPlayers.values()),
-      });
-
-      // If game just started, broadcast game-started event to all players
-      if (shouldStartGame) {
-        socket.to(roomID).emit("game-started", {
-          roomID,
-          boardState: game.boardState,
-          currentPlayer: game.currentPlayer,
-        });
-        socket.emit("game-started", {
-          roomID,
-          boardState: game.boardState,
-          currentPlayer: game.currentPlayer,
-        });
-      }
-
-      console.log(
-        `User ${socket.id} added to room: ${roomID}. Players: ${
-          game.players.length
-        }/4${shouldStartGame ? " - GAME STARTED!" : ""}`
-      );
-    } else {
-      console.log(`Room not found: ${roomID}`);
-      socket.emit("room-not-found", roomID);
+    const game = this.games.get(roomID);
+    if (!game) {
+      this.socket.emit("room-not-found", roomID);
+      return;
     }
+
+    // Check if player is already in the game (reconnecting)
+    if (game.hasPlayer(playerId)) {
+      game.reconnectPlayer(playerId, this.socket);
+      const playerIndex = game.getPlayerIndexFromId(playerId);
+      const gameState = game.getGameStateInfo();
+
+      // Emit to the reconnecting player
+      this.socket.emit("room-joined", {
+        ...gameState,
+        playerId,
+        playerIndex,
+      });
+
+      // Broadcast to all other players that someone reconnected
+      this.socket.to(roomID).emit("player-reconnected", {
+        ...gameState,
+        playerId,
+        playerIndex,
+      });
+
+      return;
+    }
+
+    // Check if room is full before adding new player
+    if (game.isFull()) {
+      this.socket.emit("room-full");
+      return;
+    }
+
+    // New player joining
+    game.addPlayer(playerId, this.socket.id);
+    this.socket.join(roomID);
+
+    const playerIndex = game.getPlayerIndexFromId(playerId);
+    const gameState = game.getGameStateInfo();
+
+    // Emit to the joining player
+    this.socket.emit("room-joined", {
+      ...gameState,
+      playerId,
+      playerIndex,
+    });
+
+    // Broadcast to all other players in the room that someone joined
+    this.socket.to(roomID).emit("player-joined", {
+      ...gameState,
+      playerId,
+      playerIndex,
+    });
+
+    // Check if game just started
+    const shouldStartGame = game.shouldStartGame();
+
+    // If game just started, broadcast game-started event to all players
+    if (shouldStartGame) {
+      const startGameData = {
+        roomID: game.gameId,
+        boardState: game.boardState,
+        currentPlayer: game.currentPlayer,
+      };
+
+      this.socket.to(roomID).emit("game-started", startGameData);
+      this.socket.emit("game-started", startGameData);
+    }
+
+    console.log(
+      `User ${this.socket.id} added to room: ${roomID}. Players: ${
+        game.players.size
+      }/4${shouldStartGame ? " - GAME STARTED!" : ""}`
+    );
 
     // Debug: Visualize game state after join
-    if (game) {
-      console.log(`\n🎮 GAME STATE - Room: ${roomID}`);
-      console.log(`👥 Players: [${game.players.join(", ")}]`);
-      console.log(`🎯 Current Player: ${game.currentPlayer}`);
-      console.log(`🔌 Socket to Player mapping:`);
-      console.table(Object.fromEntries(game.connectedPlayers));
-      console.log(`📊 Player positions:`);
-      game.players.forEach((playerId, index) => {
-        const isCurrentTurn = game.currentPlayer === index + 1;
-        console.log(
-          `   Player ${index + 1}: ${playerId} ${
-            isCurrentTurn ? "🔥 (CURRENT TURN)" : ""
-          }`
-        );
-      });
-    }
-  });
+    game.logGameState();
+  };
 
-  // Handle player disconnection
-  socket.on("disconnect", () => {
-    console.log(`Player disconnected: ${socket.id}`);
-    // Remove the socket mapping but keep the player in the game
-    for (const [roomID, game] of games) {
-      if (game.connectedPlayers.has(socket.id)) {
-        const playerId = game.connectedPlayers.get(socket.id);
-        game.connectedPlayers.delete(socket.id);
-        console.log(`Player ${playerId} disconnected from room ${roomID}`);
+  handlePlayerDisconnect = () => {
+    console.log(`Player disconnected: ${this.socket.id}`);
 
-        // Broadcast updated connection state to all remaining players
-        socket.to(roomID).emit("player-disconnected", {
-          playerId,
-          players: game.players,
-          connectedPlayers: Array.from(game.connectedPlayers.values()),
-        });
+    for (const [roomID, game] of this.games) {
+      if (game.hasSocket(this.socket.id)) {
+        const playerId = game.disconnectPlayer(this.socket.id);
+
+        if (playerId) {
+          this.socket.to(roomID).emit("player-disconnected", {
+            playerId,
+            players: game.players,
+            connectedPlayers: game.getConnectedPlayerIds(),
+          });
+        }
         break;
       }
     }
-  });
-};
+  };
+}
