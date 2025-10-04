@@ -138,6 +138,13 @@ export class Game {
   }
 
   /**
+   * Gets the player ID associated with a socket ID
+   */
+  getPlayerFromSocket(socketId: string): PlayerId | undefined {
+    return this.socketToPlayer.get(socketId);
+  }
+
+  /**
    * Debug method to log current game state
    */
   logGameState(): void {
