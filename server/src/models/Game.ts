@@ -10,11 +10,11 @@ import {
 export class Game {
   gameId: string;
   players: playerMap = new Map([]);
-  playerCount: number = 0;
-  boardState: BoardState;
-  currentPlayer: CurrentPlayer = 1;
-  socketToPlayer: SocketIdToPlayerIdMap = new Map([]);
-  gameStarted: boolean = false;
+  public playerCount: number = 0;
+  public boardState: BoardState;
+  public currentPlayer: CurrentPlayer = 1;
+  private socketToPlayer: SocketIdToPlayerIdMap = new Map([]);
+  public gameStarted: boolean = false;
   private creatorSocket: Socket;
 
   constructor(gameId: string, initialBoard: BoardState, socket: Socket) {
