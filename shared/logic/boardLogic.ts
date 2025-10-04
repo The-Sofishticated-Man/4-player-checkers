@@ -39,3 +39,10 @@ export {
   promoteToKing,
 } from "./pieceUtils";
 export { getValidMoves } from "./gameUtils";
+export {
+  executeCaptureMove,
+  executeRegularMove,
+  isCaptureMove,
+  getNextPlayer,
+  type MoveExecutionResult,
+} from "./boardExecution";
