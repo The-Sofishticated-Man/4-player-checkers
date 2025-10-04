@@ -89,7 +89,7 @@ export class RoomHandlers {
 
     console.log(
       `User ${this.socket.id} added to room: ${roomID}. Players: ${
-        game.players.size
+        game.playerCount
       }/4${shouldStartGame ? " - GAME STARTED!" : ""}`
     );
 
