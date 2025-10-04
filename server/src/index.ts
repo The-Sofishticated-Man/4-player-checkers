@@ -1,8 +1,8 @@
 import express from "express";
 import cors from "cors";
 import { Server } from "socket.io";
-import { type gameState } from "../../shared/types/gameTypes.ts";
-import { setupRoomHandlers } from "./handlers/roomHandlers.ts";
+import { Game } from "./models/Game.ts";
+import { setupRoomHandlers } from "./utils/setupRoomHandlers.ts";
 import { setupMoveHandlers } from "./handlers/moveHandlers.ts";
 
 const app = express();
@@ -31,7 +31,7 @@ const io = new Server(expressServer, {
   },
 });
 
-const games = new Map<string, gameState>();
+const games = new Map<string, Game>();
 
 io.on("connection", (socket) => {
   console.log(`User connected: ${socket.id}`);
