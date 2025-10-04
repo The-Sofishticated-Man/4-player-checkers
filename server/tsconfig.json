@@ -4,7 +4,7 @@
     "module": "ESNext",
     "allowImportingTsExtensions": true,
     "noEmit": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "allowJs": true,
