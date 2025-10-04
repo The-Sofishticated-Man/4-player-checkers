@@ -1,6 +1,6 @@
 import { Socket } from "socket.io";
 import { Game } from "../models/Game.ts";
-import { RoomHandlers } from "../handlers/roomHandlers.ts";
+import { RoomHandlers } from "../handlers/RoomHandlers.ts";
 
 export const setupRoomHandlers = (socket: Socket, games: Map<string, Game>) => {
   // Handle room creation
