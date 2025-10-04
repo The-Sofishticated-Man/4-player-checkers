@@ -3,7 +3,7 @@ import cors from "cors";
 import { Server } from "socket.io";
 import { Game } from "./models/Game.ts";
 import { setupRoomHandlers } from "./utils/setupRoomHandlers.ts";
-import { setupMoveHandlers } from "./handlers/moveHandlers.ts";
+import { setupMoveHandlers } from "./utils/setupMoveHandlers.ts";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
