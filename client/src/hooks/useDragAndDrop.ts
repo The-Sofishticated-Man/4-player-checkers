@@ -1,25 +1,23 @@
 import { useState } from "react";
 import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
-import type {
-  BoardAction,
-  checkersBoardState,
-} from "../../../shared/types/boardTypes";
+import type { BoardState } from "../../../shared/types/gameTypes";
+import type { BoardAction } from "../utils/boardActions";
 import {
   isCapture,
   getCapturedPosition,
   getValidMoves,
-} from "../../../shared/logic/boardLogic.ts";
+} from "../../../shared/logic/boardLogic";
 import { useSocket } from "./useSocket";
 
 export const useDragAndDrop = (
-  checkersBoardState: checkersBoardState,
-  dispatch: React.Dispatch<BoardAction> | undefined
+  boardState: BoardState,
+  dispatch: React.Dispatch<BoardAction> | undefined,
 ) => {
   const [validMoves, setValidMoves] = useState<
     { row: number; col: number; isCapture: boolean }[]
   >([]);
   const [draggedPieceOwner, setDraggedPieceOwner] = useState<number | null>(
-    null
+    null,
   );
   const { socket } = useSocket();
 
@@ -31,14 +29,14 @@ export const useDragAndDrop = (
     const [, fromRow, fromCol] = pieceId.split("-").map(Number);
 
     // Get the piece being dragged and determine its owner
-    const draggedPiece = checkersBoardState[fromRow][fromCol];
+    const draggedPiece = boardState[fromRow][fromCol];
     const owner =
       draggedPiece >= 10 ? Math.floor(draggedPiece / 10) : draggedPiece;
 
     setDraggedPieceOwner(owner);
 
     // Calculate and set valid moves for highlighting
-    const moves = getValidMoves(checkersBoardState, fromRow, fromCol);
+    const moves = getValidMoves(boardState, fromRow, fromCol);
     setValidMoves(moves);
   };
 
@@ -68,7 +66,7 @@ export const useDragAndDrop = (
             fromRow,
             fromCol,
             toRow,
-            toCol
+            toCol,
           );
           dispatch({
             type: "CAPTURE_PIECE",

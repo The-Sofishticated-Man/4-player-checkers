@@ -23,5 +23,9 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src", "../shared/types/boardTypes.ts"]
+  "include": [
+    "src",
+    "../shared/types/boardTypes.ts",
+    "../server/src/utils/initialGameState.ts"
+  ]
 }

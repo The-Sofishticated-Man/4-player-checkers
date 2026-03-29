@@ -1,17 +1,17 @@
-import type { checkersBoardState } from "../../../shared/types/boardTypes";
+import type { BoardState } from "../../../shared/types/gameTypes";
 import Cell from "../components/Cell";
 import Piece from "../components/Piece";
 
 export const generateBoardCells = (
-  checkersBoardState: checkersBoardState,
+  boardState: BoardState,
   validMoves: { row: number; col: number; isCapture: boolean }[],
   draggedPieceOwner: number | null,
   currentPlayer: number,
   playerIndex: number,
-  gameStarted: boolean = false
+  gameStarted: boolean = false,
 ) => {
   const cells = [];
-  const boardSize = checkersBoardState.length;
+  const boardSize = boardState.length;
 
   for (let row = 0; row < boardSize; row++) {
     for (let col = 0; col < boardSize; col++) {
@@ -20,7 +20,7 @@ export const generateBoardCells = (
 
       // Check if this cell is a valid move
       const validMove = validMoves.find(
-        (move) => move.row === row && move.col === col
+        (move) => move.row === row && move.col === col,
       );
       const isValidMove = !!validMove && !validMove.isCapture;
       const isValidCapture = !!validMove && validMove.isCapture;
@@ -35,21 +35,20 @@ export const generateBoardCells = (
           isValidCapture={isValidCapture}
           draggedPieceOwner={draggedPieceOwner}
         >
-          {checkersBoardState[row][col] !== 0 && (
+          {boardState[row][col] !== 0 && (
             <Piece
               pieceID={`piece-${row}-${col}`}
-              player={checkersBoardState[row][col]}
+              player={boardState[row][col]}
               disabled={
                 !gameStarted || // Game hasn't started yet
                 currentPlayer !== playerIndex || // Not player's turn
-                (checkersBoardState[row][col] >= 10
-                  ? Math.floor(checkersBoardState[row][col] / 10) !==
-                    playerIndex // King doesn't belong to player
-                  : checkersBoardState[row][col] !== playerIndex) // Regular piece doesn't belong to player
+                (boardState[row][col] >= 10
+                  ? Math.floor(boardState[row][col] / 10) !== playerIndex // King doesn't belong to player
+                  : boardState[row][col] !== playerIndex) // Regular piece doesn't belong to player
               }
             />
           )}
-        </Cell>
+        </Cell>,
       );
     }
   }

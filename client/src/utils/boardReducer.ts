@@ -1,4 +1,6 @@
-import type { BoardAction, gameState } from "../../../shared/types/boardTypes";
+import type { BoardAction } from "./boardActions";
+import type { GameState } from "../../../shared/types/gameTypes";
+
 import isValidMoveWithCaptures from "../../../shared/logic/boardLogic";
 import { hasValidCapture, isCapture } from "../../../shared/logic/captureLogic";
 import { isPlayersTurn } from "../../../shared/logic/movementValidation";
@@ -10,36 +12,36 @@ import {
 // Reducer function to handle board
 // Accepts current state and an  returns new state
 export const boardReducer = (
-  state: gameState,
-  { type, payload }: BoardAction
-): gameState => {
-  const { checkersBoardState, currentPlayer } = state;
+  gameState: GameState,
+  { type, payload }: BoardAction,
+): GameState => {
+  const { boardState, currentPlayer } = gameState;
 
   switch (type) {
     case "MOVE_PIECE": {
-      if (!payload) return state;
+      if (!payload) return gameState;
       const { fromRow, fromCol, toRow, toCol } = payload;
 
       // Validate the move before executing
       if (
         !isValidMoveWithCaptures(
-          checkersBoardState,
+          boardState,
           fromRow,
           fromCol,
           toRow,
-          toCol
+          toCol,
         )
       ) {
-        return state; // Invalid move, return current state
+        return gameState; // Invalid move, return current state
       }
 
       // Check if it's the correct player's turn
-      if (!isPlayersTurn(checkersBoardState, fromRow, fromCol, currentPlayer)) {
-        return state; // Not this player's piece
+      if (!isPlayersTurn(boardState, fromRow, fromCol, currentPlayer)) {
+        return gameState; // Not this player's piece
       }
 
       // Create a new board state (immutable update)
-      const newBoard = checkersBoardState.map((row) => [...row]);
+      const newBoard = boardState.map((row) => [...row]);
 
       // Move the piece from source to destination
       let movedPiece = newBoard[fromRow][fromCol];
@@ -53,42 +55,42 @@ export const boardReducer = (
       newBoard[toRow][toCol] = movedPiece;
 
       return {
-        ...state,
-        checkersBoardState: newBoard,
+        ...gameState,
+        boardState: newBoard,
         currentPlayer: ((currentPlayer % 4) + 1) as 1 | 2 | 3 | 4, // Cycle through players 1->2->3->4->1
       };
     }
 
     case "CAPTURE_PIECE": {
-      if (!payload) return state;
+      if (!payload) return gameState;
       const { fromRow, fromCol, toRow, toCol, capturedRow, capturedCol } =
         payload;
 
       // Validate this is actually a capture move
       if (!isCapture(fromRow, fromCol, toRow, toCol)) {
-        return state; // Not a valid capture move
+        return gameState; // Not a valid capture move
       }
 
       // Validate the capture is legal
       if (
         !isValidMoveWithCaptures(
-          checkersBoardState,
+          boardState,
           fromRow,
           fromCol,
           toRow,
-          toCol
+          toCol,
         )
       ) {
-        return state; // Invalid capture
+        return gameState; // Invalid capture
       }
 
       // Check if it's the correct player's turn
-      if (!isPlayersTurn(checkersBoardState, fromRow, fromCol, currentPlayer)) {
-        return state; // Not this player's piece
+      if (!isPlayersTurn(boardState, fromRow, fromCol, currentPlayer)) {
+        return gameState; // Not this player's piece
       }
 
       // Create a new board state (immutable update)
-      const newBoard = checkersBoardState.map((row) => [...row]);
+      const newBoard = boardState.map((row) => [...row]);
 
       // Move the piece from source to destination
       let movedPiece = newBoard[fromRow][fromCol];
@@ -108,8 +110,8 @@ export const boardReducer = (
       const hasMoreCaptures = hasValidCapture(newBoard, toRow, toCol);
 
       return {
-        ...state,
-        checkersBoardState: newBoard,
+        ...gameState,
+        boardState: newBoard,
         // Only switch players if no more captures are available
         currentPlayer: hasMoreCaptures
           ? currentPlayer
@@ -118,24 +120,13 @@ export const boardReducer = (
     }
     case "UPDATE_GAME_STATE": {
       console.log("Updating game state");
-      if (!payload) return state;
-      const {
-        newState: { checkersBoardState, currentPlayer, gameStarted },
-      } = payload;
-      console.log("newState: ", {
-        checkersBoardState,
-        currentPlayer,
-        gameStarted,
-      });
+      if (!payload) return gameState;
+      const { newGameState } = payload;
+      console.log("new game state: ", newGameState);
 
-      return {
-        ...state,
-        checkersBoardState,
-        currentPlayer,
-        gameStarted,
-      };
+      return newGameState;
     }
     default:
-      return state; // Return current state by default
+      return gameState; // Return current state by default
   }
 };

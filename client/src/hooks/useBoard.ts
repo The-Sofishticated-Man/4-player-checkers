@@ -1,9 +1,9 @@
+import type { GameContextType } from "./../types/contextTypes";
 import { useContext } from "react";
-import type { boardContextType } from "../types/boardTypes";
-import { boardContext } from "../context/boardContextValue";
+import { gameContext } from "../context/boardContextValue";
 
-function useBoard(): boardContextType {
-  return useContext(boardContext);
+function useGameState(): GameContextType {
+  return useContext(gameContext);
 }
 
-export default useBoard;
+export default useGameState;

@@ -1,134 +1,18 @@
-import { useEffect, useState } from "react";
-import useBoard from "../hooks/useBoard";
-import { useSocket } from "../hooks/useSocket";
-
-interface GameInfo {
-  players: string[]; // All players who joined the game (permanent)
-  connectedPlayers: string[]; // Currently connected players
-  playerId: string;
-  gameStarted: boolean;
-}
+import useGameState from "../hooks/useBoard";
 
 function PlayerBoard() {
   const {
-    state: { currentPlayer },
+    gameState: { currentPlayer, players, gameStarted },
     playerIndex,
-  } = useBoard();
-  const { socket } = useSocket();
-  const [gameInfo, setGameInfo] = useState<GameInfo | null>(null);
+  } = useGameState();
+  const playerEntries = Array.from(players.entries());
+  const connectedPlayers = playerEntries.filter(
+    ([, player]) => player.isConnected,
+  );
+  const connectedPlayerIds = connectedPlayers.map(([playerId]) => playerId);
 
   // Get the current room ID from session storage
   const roomId = sessionStorage.getItem("currentRoomId");
-
-  useEffect(() => {
-    if (!socket || !roomId) return;
-
-    // Listen for new player joins (when player-joined is broadcast to others)
-    const handlePlayerJoined = (data: {
-      roomID: string;
-      boardState: number[][];
-      currentPlayer: number;
-      playerId: string;
-      playerIndex: number;
-      gameStarted: boolean;
-      players: string[];
-      connectedPlayers: string[];
-    }) => {
-      console.log(`New player joined: ${data.playerId}`);
-      setGameInfo({
-        players: data.players,
-        connectedPlayers: data.connectedPlayers,
-        playerId: data.playerId,
-        gameStarted: data.gameStarted,
-      });
-    };
-
-    // Listen for game state response
-    const handleGameState = (data: {
-      players: string[];
-      connectedPlayers: string[];
-      playerId: string;
-      gameStarted: boolean;
-      currentPlayer: number;
-      roomID: string;
-    }) => {
-      setGameInfo({
-        players: data.players,
-        connectedPlayers: data.connectedPlayers,
-        playerId: data.playerId,
-        gameStarted: data.gameStarted,
-      });
-    };
-
-    // Listen for player disconnection
-    const handlePlayerDisconnected = (data: {
-      playerId: string;
-      players: string[];
-      connectedPlayers: string[];
-    }) => {
-      console.log(`Player disconnected: ${data.playerId}`);
-      setGameInfo((prevInfo) => {
-        if (!prevInfo) return null;
-        return {
-          ...prevInfo,
-          players: data.players,
-          connectedPlayers: data.connectedPlayers,
-        };
-      });
-    };
-
-    // Listen for player reconnections
-    const handlePlayerReconnected = (data: {
-      roomID: string;
-      boardState: number[][];
-      currentPlayer: number;
-      playerId: string;
-      playerIndex: number;
-      gameStarted: boolean;
-      players: string[];
-      connectedPlayers: string[];
-    }) => {
-      console.log(`Player reconnected: ${data.playerId}`);
-      setGameInfo({
-        players: data.players,
-        connectedPlayers: data.connectedPlayers,
-        playerId: data.playerId,
-        gameStarted: data.gameStarted,
-      });
-    };
-
-    // Listen for game start event
-    const handleGameStarted = (data: {
-      roomID: string;
-      playerIndex: number;
-    }) => {
-      console.log(`🎮 Game started in room: ${data.roomID}!`);
-      setGameInfo((prevInfo) => {
-        if (!prevInfo) return null;
-        return {
-          ...prevInfo,
-          gameStarted: true,
-        };
-      });
-    };
-
-    socket.on("player-disconnected", handlePlayerDisconnected);
-    socket.on("player-joined", handlePlayerJoined);
-    socket.on("player-reconnected", handlePlayerReconnected);
-    socket.on("game-started", handleGameStarted);
-    socket.on("game-state", handleGameState);
-
-    // Request current game state when component mounts
-    socket.emit("get-game-state", roomId);
-
-    return () => {
-      socket.off("player-disconnected", handlePlayerDisconnected);
-      socket.off("player-joined", handlePlayerJoined);
-      socket.off("player-reconnected", handlePlayerReconnected);
-      socket.off("game-started", handleGameStarted);
-      socket.off("game-state", handleGameState);
-    };
-  }, [socket, roomId]);
 
   // Player colors for display
   const getPlayerColor = (playerNum: number) => {
@@ -176,9 +60,9 @@ function PlayerBoard() {
     const playerColor = getPlayerColor(slotNumber);
     const isCurrentTurn = currentPlayer === slotNumber;
     const isYou = playerIndex === slotNumber;
-    const playerId = gameInfo && gameInfo.players[slotNumber - 1];
-    const isConnected =
-      playerId && gameInfo?.connectedPlayers.includes(playerId);
+    const playerEntry = playerEntries[slotNumber - 1];
+    const playerId = playerEntry?.[0];
+    const isConnected = Boolean(playerEntry?.[1].isConnected);
 
     return (
       <div
@@ -191,10 +75,10 @@ function PlayerBoard() {
                   playerColor.bg.split("-")[1]
                 }-100 border-2 ${playerColor.border} shadow-lg`
               : playerId
-              ? isConnected
-                ? "bg-gradient-to-r from-gray-50 to-gray-100 border-2 border-gray-200"
-                : "bg-gradient-to-r from-yellow-50 to-yellow-100 border-2 border-yellow-300"
-              : "bg-gradient-to-r from-gray-100 to-gray-200 border-2 border-dashed border-gray-300"
+                ? isConnected
+                  ? "bg-gradient-to-r from-gray-50 to-gray-100 border-2 border-gray-200"
+                  : "bg-gradient-to-r from-yellow-50 to-yellow-100 border-2 border-yellow-300"
+                : "bg-gradient-to-r from-gray-100 to-gray-200 border-2 border-dashed border-gray-300"
           }
           ${isCurrentTurn ? "scale-105" : ""}
         `}
@@ -219,8 +103,8 @@ function PlayerBoard() {
                 !playerId
                   ? "opacity-50 grayscale"
                   : !isConnected
-                  ? "opacity-75"
-                  : ""
+                    ? "opacity-75"
+                    : ""
               }
             `}
           >
@@ -315,15 +199,15 @@ function PlayerBoard() {
             <div>
               <span className="text-gray-600">Players:</span>
               <span className="font-semibold ml-1 text-gray-800">
-                {gameInfo ? gameInfo.players.length : 0}/4
+                {playerEntries.length}/4
               </span>
             </div>
 
-            {gameInfo && gameInfo.players.length > 0 && (
+            {playerEntries.length > 0 && (
               <div>
                 <span className="text-gray-600">Connected:</span>
                 <span className="font-semibold ml-1 text-green-600">
-                  {gameInfo.connectedPlayers.length}/{gameInfo.players.length}
+                  {connectedPlayers.length}/{playerEntries.length}
                 </span>
               </div>
             )}
@@ -366,42 +250,39 @@ function PlayerBoard() {
         </div>
 
         {/* Your turn indicator */}
-        {currentPlayer === playerIndex &&
-          playerIndex > 0 &&
-          gameInfo?.gameStarted && (
-            <div className="mt-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white text-sm font-semibold text-center py-2 px-4 rounded-xl shadow-lg animate-pulse">
-              <span className="inline-flex items-center">
-                🎯 <span className="ml-1">YOUR TURN!</span>
-              </span>
-            </div>
-          )}
+        {currentPlayer === playerIndex && playerIndex > 0 && gameStarted && (
+          <div className="mt-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white text-sm font-semibold text-center py-2 px-4 rounded-xl shadow-lg animate-pulse">
+            <span className="inline-flex items-center">
+              🎯 <span className="ml-1">YOUR TURN!</span>
+            </span>
+          </div>
+        )}
 
         {/* Game status indicator */}
-        {!gameInfo?.gameStarted && (
+        {!gameStarted && (
           <div className="mt-3 bg-gradient-to-r from-orange-500 to-red-500 text-white text-sm font-semibold text-center py-2 px-4 rounded-xl shadow-lg">
             <span className="inline-flex items-center">
               ⏳{" "}
               <span className="ml-1">
-                WAITING FOR PLAYERS ({gameInfo?.players.length || 0}/4)
+                WAITING FOR PLAYERS ({playerEntries.length}/4)
               </span>
             </span>
           </div>
         )}
 
-        {gameInfo?.gameStarted &&
-          !(currentPlayer === playerIndex && playerIndex > 0) && (
-            <div className="mt-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-sm font-semibold text-center py-2 px-4 rounded-xl shadow-lg">
-              <span className="inline-flex items-center">
-                🎮 <span className="ml-1">GAME IN PROGRESS</span>
-                {gameInfo.connectedPlayers.length < gameInfo.players.length && (
-                  <span className="ml-2 text-xs bg-yellow-500 px-2 py-1 rounded">
-                    {gameInfo.players.length - gameInfo.connectedPlayers.length}{" "}
-                    DISCONNECTED
-                  </span>
-                )}
-              </span>
-            </div>
-          )}
+        {gameStarted && !(currentPlayer === playerIndex && playerIndex > 0) && (
+          <div className="mt-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-sm font-semibold text-center py-2 px-4 rounded-xl shadow-lg">
+            <span className="inline-flex items-center">
+              🎮 <span className="ml-1">GAME IN PROGRESS</span>
+              {connectedPlayerIds.length < playerEntries.length && (
+                <span className="ml-2 text-xs bg-yellow-500 px-2 py-1 rounded">
+                  {playerEntries.length - connectedPlayerIds.length}{" "}
+                  DISCONNECTED
+                </span>
+              )}
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );

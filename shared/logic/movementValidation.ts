@@ -1,4 +1,4 @@
-import type { checkersBoardState } from "../types/boardTypes";
+import type { BoardState } from "../types/gameTypes";
 
 // Import piece utilities - these functions will be defined in pieceUtils.ts
 function isKing(piece: number): boolean {
@@ -22,7 +22,7 @@ function PositionChanged(
 }
 
 function isOccupied(
-  board: checkersBoardState,
+  board: BoardState,
   row: number,
   col: number
 ): boolean {
@@ -31,7 +31,7 @@ function isOccupied(
 }
 
 function isValidDiagonalMoveForPlayer(
-  board: checkersBoardState,
+  board: BoardState,
   fromRow: number,
   fromCol: number,
   toRow: number,
@@ -61,7 +61,7 @@ function isValidDiagonalMoveForPlayer(
 }
 
 function moveIsOutOfBounds(
-  board: checkersBoardState,
+  board: BoardState,
   toRow: number,
   toCol: number
 ) {
@@ -76,7 +76,7 @@ function moveIsOutOfBounds(
 }
 
 export function isPlayersTurn(
-  board: checkersBoardState,
+  board: BoardState,
   fromRow: number,
   fromCol: number,
   currentPlayer: number
@@ -88,7 +88,7 @@ export function isPlayersTurn(
 }
 
 export default function isValidMove(
-  board: checkersBoardState,
+  board: BoardState,
   fromRow: number,
   fromCol: number,
   toRow: number,

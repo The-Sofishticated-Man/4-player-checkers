@@ -1,28 +1,19 @@
-import { Socket } from "socket.io";
 import {
-  BoardState,
-  CurrentPlayer,
   PlayerId,
-  playerMap,
-  SocketIdToPlayerIdMap,
-} from "../../../shared/types/gameTypes";
+  PlayerMap,
+  GameState,
+} from "../../../shared/types/gameTypes.ts";
+import initialGameState from "../utils/initialGameState.ts";
 
 export class Game {
   gameId: string;
-  players: playerMap = new Map([]);
+  players: PlayerMap = new Map([]);
   public playerCount: number = 0;
-  public boardState: BoardState;
-  public currentPlayer: CurrentPlayer = 1;
-  private socketToPlayer: SocketIdToPlayerIdMap = new Map([]);
+  public gameState: GameState = initialGameState;
   public gameStarted: boolean = false;
-  private creatorSocket: Socket;
 
-  constructor(gameId: string, initialBoard: BoardState, socket: Socket) {
+  constructor(gameId: string) {
     this.gameId = gameId;
-    this.boardState = initialBoard;
-    this.creatorSocket = socket;
-    this.creatorSocket.join(gameId);
-    this.creatorSocket.emit("game-created", { gameId: gameId });
     console.log(`Room created: ${gameId}`);
   }
 
@@ -30,9 +21,8 @@ export class Game {
     return this.players.has(playerId);
   }
 
-  addPlayer(playerId: PlayerId, socketId: string): void {
+  addNewPlayer(playerId: PlayerId): void {
     this.players.set(playerId, { isConnected: true, leftGame: false });
-    this.socketToPlayer.set(socketId, playerId);
     this.playerCount++;
 
     // Start game when 4 players have joined
@@ -48,17 +38,14 @@ export class Game {
   startGame() {
     this.gameStarted = true;
     console.log(
-      `🎮 Game started in room: ${this.gameId} - All 4 players connected!`
+      `🎮 Game started in room: ${this.gameId} - All 4 players connected!`,
     );
   }
 
   /**
    * Handles player reconnection by updating socket mapping
    */
-  reconnectPlayer(playerId: PlayerId, socket: Socket): void {
-    this.socketToPlayer.set(socket.id, playerId);
-    socket.join(this.gameId);
-
+  reconnectPlayer(playerId: PlayerId): void {
     // Update player connection status
     const playerData = this.players.get(playerId);
     if (playerData) {
@@ -71,21 +58,15 @@ export class Game {
   /**
    * Handles player disconnection by removing socket mapping
    */
-  disconnectPlayer(socketId: string): PlayerId | null {
-    const playerId = this.socketToPlayer.get(socketId);
-    if (playerId) {
-      this.socketToPlayer.delete(socketId);
-
-      // Update player connection status
-      const playerData = this.players.get(playerId);
-      if (playerData) {
-        playerData.isConnected = false;
-      }
-
-      console.log(`Player ${playerId} disconnected from room ${this.gameId}`);
-      return playerId;
+  disconnectPlayer(playerId: PlayerId): PlayerId | null {
+    const playerData = this.players.get(playerId);
+    if (!playerData) {
+      return null;
     }
-    return null;
+
+    playerData.isConnected = false;
+    console.log(`Player ${playerId} disconnected from room ${this.gameId}`);
+    return playerId;
   }
 
   /**
@@ -93,12 +74,8 @@ export class Game {
    */
   getGameStateInfo() {
     return {
-      roomID: this.gameId,
-      boardState: this.boardState,
-      currentPlayer: this.currentPlayer,
-      gameStarted: this.gameStarted,
-      players: this.players,
-      connectedPlayers: Array.from(this.socketToPlayer.values()),
+      gameID: this.gameId,
+      gameState: this.gameState,
     };
   }
 
@@ -106,7 +83,9 @@ export class Game {
    * Gets connected player IDs
    */
   getConnectedPlayerIds(): PlayerId[] {
-    return Array.from(this.socketToPlayer.values());
+    return Array.from(this.players.entries())
+      .filter(([, player]) => player.isConnected)
+      .map(([playerId]) => playerId);
   }
 
   /**
@@ -127,21 +106,13 @@ export class Game {
    * Gets the number of connected players
    */
   getConnectedPlayerCount(): number {
-    return this.socketToPlayer.size;
-  }
-
-  /**
-   * Checks if a socket ID is associated with a player in this game
-   */
-  hasSocket(socketId: string): boolean {
-    return this.socketToPlayer.has(socketId);
-  }
-
-  /**
-   * Gets the player ID associated with a socket ID
-   */
-  getPlayerFromSocket(socketId: string): PlayerId | undefined {
-    return this.socketToPlayer.get(socketId);
+    let count = 0;
+    for (const player of this.players.values()) {
+      if (player.isConnected) {
+        count++;
+      }
+    }
+    return count;
   }
 
   /**
@@ -150,16 +121,17 @@ export class Game {
   logGameState(): void {
     console.log(`\n🎮 GAME STATE - Room: ${this.gameId}`);
     console.log(`👥 Players: [${Array.from(this.players.keys()).join(", ")}]`);
-    console.log(`🎯 Current Player: ${this.currentPlayer}`);
-    console.log(`🔌 Socket to Player mapping:`);
-    console.table(Object.fromEntries(this.socketToPlayer));
+    console.log(`🎯 Current Player: ${this.gameState.currentPlayer}`);
+    console.log(
+      `🔌 Connected players: [${this.getConnectedPlayerIds().join(", ")}]`,
+    );
     console.log(`📊 Player positions:`);
     Array.from(this.players.keys()).forEach((playerId, index) => {
-      const isCurrentTurn = this.currentPlayer === index + 1;
+      const isCurrentTurn = this.gameState.currentPlayer === index + 1;
       console.log(
         `   Player ${index + 1}: ${playerId} ${
           isCurrentTurn ? "🔥 (CURRENT TURN)" : ""
-        }`
+        }`,
       );
     });
   }

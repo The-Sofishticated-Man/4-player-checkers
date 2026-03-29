@@ -1,4 +1,4 @@
-import type { checkersBoardState } from "../types/boardTypes";
+import type { BoardState } from "../types/gameTypes";
 
 // Import piece utilities - avoiding circular dependencies
 function isKing(piece: number): boolean {
@@ -11,21 +11,17 @@ function getPlayerFromPiece(piece: number): number {
   return piece; // Regular pieces: 1, 2, 3, 4
 }
 
-function isOccupied(
-  board: checkersBoardState,
-  row: number,
-  col: number
-): boolean {
+function isOccupied(board: BoardState, row: number, col: number): boolean {
   // Check if the specified position is occupied
   return board[row][col] !== 0;
 }
 
 export function isValidCaptureForPlayer(
-  board: checkersBoardState,
+  board: BoardState,
   fromRow: number,
   fromCol: number,
   toRow: number,
-  toCol: number
+  toCol: number,
 ) {
   const piece = board[fromRow][fromCol];
   const player = getPlayerFromPiece(piece);
@@ -90,7 +86,7 @@ export function isCapture(
   fromRow: number,
   fromCol: number,
   toRow: number,
-  toCol: number
+  toCol: number,
 ): boolean {
   // A capture is a 2-square diagonal move
   return Math.abs(fromRow - toRow) === 2 && Math.abs(fromCol - toCol) === 2;
@@ -100,7 +96,7 @@ export function getCapturedPosition(
   fromRow: number,
   fromCol: number,
   toRow: number,
-  toCol: number
+  toCol: number,
 ): { capturedRow: number; capturedCol: number } {
   return {
     capturedRow: (fromRow + toRow) / 2,
@@ -109,9 +105,9 @@ export function getCapturedPosition(
 }
 
 export function hasValidCapture(
-  board: checkersBoardState,
+  board: BoardState,
   fromRow: number,
-  fromCol: number
+  fromCol: number,
 ): boolean {
   // Check all four diagonal directions for potential captures
   const directions = [

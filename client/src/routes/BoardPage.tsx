@@ -1,6 +1,6 @@
 import { useParams } from "react-router";
 import Board from "../components/Board";
-import BoardContextProvider from "../context/BoardContextProvider";
+import GameContextProvider from "../context/BoardContextProvider";
 import { useJoinGame } from "../hooks/useJoinGame";
 import { printBoard } from "../utils/debugUtils";
 import PlayerBoard from "../components/PlayerBoard";
@@ -10,8 +10,8 @@ function BoardPageInner({ roomId }: { roomId: string }) {
   const { initialStateFromServer, playerIndex } = useJoinGame(roomId); // Now this has access to the context
 
   console.log("BoardPage loaded with roomId:", roomId);
-  if (initialStateFromServer?.checkersBoardState) {
-    printBoard(initialStateFromServer.checkersBoardState);
+  if (initialStateFromServer?.boardState) {
+    printBoard(initialStateFromServer.boardState);
     console.log("Current player: " + initialStateFromServer.currentPlayer);
     console.log(`Player index:`, playerIndex);
   } else {
@@ -25,10 +25,10 @@ function BoardPage() {
   const { roomId } = useParams();
 
   return (
-    <BoardContextProvider>
-      <PlayerBoard/>
+    <GameContextProvider>
+      <PlayerBoard />
       <BoardPageInner roomId={roomId!} />
-    </BoardContextProvider>
+    </GameContextProvider>
   );
 }
 

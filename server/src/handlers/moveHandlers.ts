@@ -1,26 +1,26 @@
 import { Socket } from "socket.io";
-import { Game } from "../models/Game";
+import { Game } from "../models/Game.ts";
 
 import isValidMove, {
   isPlayersTurn,
-} from "../../../shared/logic/movementValidation";
+} from "../../../shared/logic/movementValidation.ts";
 
 import {
   isValidCaptureForPlayer,
   hasValidCapture,
-} from "../../../shared/logic/captureLogic";
+} from "../../../shared/logic/captureLogic.ts";
 
 import {
   shouldPromoteToKing,
   promoteToKing,
-} from "../../../shared/logic/pieceUtils";
+} from "../../../shared/logic/pieceUtils.ts";
 
 import {
   executeCaptureMove,
   executeRegularMove,
   isCaptureMove,
   getNextPlayer,
-} from "../../../shared/logic/boardExecution";
+} from "../../../shared/logic/boardExecution.ts";
 
 interface MoveParams {
   roomID: string;
@@ -31,7 +31,10 @@ interface MoveParams {
 }
 
 export class MoveHandlers {
-  constructor(private socket: Socket, private games: Map<string, Game>) {}
+  constructor(
+    private socket: Socket,
+    private games: Map<string, Game>,
+  ) {}
 
   handleMakeMove = ({ roomID, fromRow, toRow, fromCol, toCol }: MoveParams) => {
     // grab game
@@ -43,7 +46,7 @@ export class MoveHandlers {
       return;
     }
 
-    const currentPlayerId = game.getPlayerFromSocket(this.socket.id);
+    const currentPlayerId = this.socket.data.playerId as string | undefined;
     if (!currentPlayerId) {
       console.error(`Socket ID ${this.socket.id} not found in game state`);
       this.socket.emit("move-error", "Player not found");
@@ -51,10 +54,10 @@ export class MoveHandlers {
     }
 
     console.log(
-      `🚀 Move attempt - Room: ${roomID}, Player: ${currentPlayerId}, Move: (${fromRow},${fromCol}) → (${toRow},${toCol})`
+      `🚀 Move attempt - Room: ${roomID}, Player: ${currentPlayerId}, Move: (${fromRow},${fromCol}) → (${toRow},${toCol})`,
     );
     console.log("current board state:");
-    for (const row of game.boardState) {
+    for (const row of game.gameState.boardState) {
       console.log(row.join(" "));
     }
 
@@ -62,20 +65,27 @@ export class MoveHandlers {
     if (!game.gameStarted) {
       this.socket.emit(
         "move-error",
-        "Game hasn't started yet - waiting for all 4 players to join"
+        "Game hasn't started yet - waiting for all 4 players to join",
       );
       return;
     }
 
     // Check if it's the current player's turn
     const playerIndex = game.getPlayerIndexFromId(currentPlayerId);
-    if (game.currentPlayer !== playerIndex) {
+    if (game.gameState.currentPlayer !== playerIndex) {
       this.socket.emit("move-error", "It's not your turn");
       return;
     }
 
     // Validate that the piece belongs to the current player
-    if (!isPlayersTurn(game.boardState, fromRow, fromCol, game.currentPlayer)) {
+    if (
+      !isPlayersTurn(
+        game.gameState.boardState,
+        fromRow,
+        fromCol,
+        game.gameState.currentPlayer,
+      )
+    ) {
       this.socket.emit("move-error", "You can only move your own pieces");
       return;
     }
@@ -89,11 +99,11 @@ export class MoveHandlers {
       // Validate capture move
       if (
         !isValidCaptureForPlayer(
-          game.boardState,
+          game.gameState.boardState,
           fromRow,
           fromCol,
           toRow,
-          toCol
+          toCol,
         )
       ) {
         this.socket.emit("move-error", "Invalid capture move");
@@ -102,51 +112,68 @@ export class MoveHandlers {
 
       // Execute the capture using shared logic
       moveResult = executeCaptureMove(
-        game.boardState,
+        game.gameState.boardState,
         fromRow,
         fromCol,
         toRow,
-        toCol
+        toCol,
       );
     } else {
       // Validate regular move
-      if (!isValidMove(game.boardState, fromRow, fromCol, toRow, toCol)) {
+      if (
+        !isValidMove(game.gameState.boardState, fromRow, fromCol, toRow, toCol)
+      ) {
         this.socket.emit("move-error", "Invalid move");
         return;
       }
 
       // Execute the regular move using shared logic
       moveResult = executeRegularMove(
-        game.boardState,
+        game.gameState.boardState,
         fromRow,
         fromCol,
         toRow,
-        toCol
+        toCol,
       );
     }
 
     // Update game state
-    game.boardState = moveResult.newBoard;
+    game.gameState.boardState = moveResult.newBoard;
+
+    // Check for king promotion after the move
+    const pieceAtDestination = game.gameState.boardState[toRow][toCol];
+    const boardSize = game.gameState.boardState.length;
+
+    if (shouldPromoteToKing(pieceAtDestination, toRow, toCol, boardSize)) {
+      console.log(
+        `👑 Promoting piece at (${toRow},${toCol}) to king for player ${game.gameState.currentPlayer}`,
+      );
+      const promotedPiece = promoteToKing(pieceAtDestination);
+      game.gameState.boardState[toRow][toCol] = promotedPiece;
+    }
+
     if (moveResult.shouldChangePlayer) {
-      game.currentPlayer = getNextPlayer(game.currentPlayer);
+      game.gameState.currentPlayer = getNextPlayer(
+        game.gameState.currentPlayer,
+      );
     }
 
     // Emit new game state to all players in the room (exactly once)
     this.socket.to(roomID).emit("move-made", {
       boardState: moveResult.newBoard,
-      currentPlayer: game.currentPlayer,
+      currentPlayer: game.gameState.currentPlayer,
     });
 
     // Also emit to the player who made the move (exactly once)
     this.socket.emit("move-made", {
       boardState: moveResult.newBoard,
-      currentPlayer: game.currentPlayer,
+      currentPlayer: game.gameState.currentPlayer,
     });
     console.log(
-      `✅ Move completed - Room: ${roomID}, Player: ${currentPlayerId}, New turn: Player ${game.currentPlayer}`
+      `✅ Move completed - Room: ${roomID}, Player: ${currentPlayerId}, New turn: Player ${game.gameState.currentPlayer}`,
     );
     console.log("new board state:");
-    for (const row of game.boardState) {
+    for (const row of game.gameState.boardState) {
       console.log(row.join(" "));
     }
   };

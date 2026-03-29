@@ -1,5 +1,5 @@
 import { useDroppable } from "@dnd-kit/core";
-import useBoard from "../hooks/useBoard";
+import useGameState from "../hooks/useBoard";
 
 const Cell = ({
   isDark,
@@ -19,11 +19,11 @@ const Cell = ({
   draggedPieceOwner?: number | null;
 }) => {
   const {
-    state: { currentPlayer, checkersBoardState },
-  } = useBoard();
+    gameState: { currentPlayer, boardState },
+  } = useGameState();
 
   // Check if this cell is inaccessible (-1)
-  const cellValue = checkersBoardState[row][column];
+  const cellValue = boardState[row][column];
   const isInaccessible = cellValue === -1;
 
   // Don't render droppable functionality for inaccessible cells

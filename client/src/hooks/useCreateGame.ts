@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router";
 import { useSocket } from "./useSocket";
-import initialState from "../utils/initialState";
+import initialState from "../../../server/src/utils/initialGameState";
 
 export function useCreateGame() {
   const navigate = useNavigate();
@@ -8,7 +8,7 @@ export function useCreateGame() {
 
   const createGame = (afterCreate?: () => void) => {
     // Get or create persistent player ID
-    socket?.emit("create-room", initialState.checkersBoardState);
+    socket?.emit("create-room", initialState.boardState);
 
     socket?.on("room-created", ({ roomID }: { roomID: string }) => {
       // todo: implement some way of letting player join multiple games

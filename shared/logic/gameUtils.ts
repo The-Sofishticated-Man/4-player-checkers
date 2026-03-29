@@ -1,10 +1,10 @@
-import type { checkersBoardState } from "../types/boardTypes";
-import isValidMove from "./movementValidation";
+import type { BoardState } from "../types/gameTypes";
+import isValidMove from "./movementValidation.ts";
 
 export function getValidMoves(
-  board: checkersBoardState,
+  board: BoardState,
   fromRow: number,
-  fromCol: number
+  fromCol: number,
 ): { row: number; col: number; isCapture: boolean }[] {
   const validMoves: { row: number; col: number; isCapture: boolean }[] = [];
 

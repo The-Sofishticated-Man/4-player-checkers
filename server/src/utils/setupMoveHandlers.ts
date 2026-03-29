@@ -1,6 +1,6 @@
 import { Socket } from "socket.io";
 import { Game } from "../models/Game.ts";
-import { MoveHandlers } from "../handlers/MoveHandlers.ts";
+import { MoveHandlers } from "../handlers/moveHandlers.ts";
 
 export const setupMoveHandlers = (socket: Socket, games: Map<string, Game>) => {
   const handlers = new MoveHandlers(socket, games);

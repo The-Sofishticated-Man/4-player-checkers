@@ -1,11 +1,11 @@
 import { createContext } from "react";
-import { type boardContextType } from "../types/boardTypes";
-import initialState from "../utils/initialState";
+import type { GameContextType } from "../types/contextTypes";
+import initialGameState from "../../../server/src/utils/initialGameState";
 
 // Create the board context with default values
-export const boardContext = createContext<boardContextType>({
-  state: initialState,
-  dispatch: () => {}, // Default dispatch (no-op)
-  playerIndex: 0, // Default player index (can be updated later in context provider)
-  setPlayerIndex: () => {}, // Default setter (no-op)
+export const gameContext = createContext<GameContextType>({
+  gameState: initialGameState,
+  dispatchGameState: () => {}, // Default dispatch (no-op)
+  playerIndex: 1,
+  setPlayerIndex: () => {},
 });

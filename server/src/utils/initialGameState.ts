@@ -1,11 +1,11 @@
 import type {
-  checkersBoardState,
-  currentPlayerState,
-  gameState,
-} from "../../../shared/types/boardTypes";
+  BoardState,
+  PlayerIndex,
+  GameState,
+} from "../../../shared/types/gameTypes.ts";
 
 // Initial board setup: 8x8 grid filled with 0s (empty cells)
-const initialBoard: checkersBoardState = [
+const initialBoard: BoardState = [
   [-1, -1, -1, 0, 3, 0, 3, 0, 3, 0, 3, -1, -1, -1],
   [-1, -1, -1, 3, 0, 3, 0, 3, 0, 3, 0, -1, -1, -1],
   [-1, -1, -1, 0, 3, 0, 3, 0, 3, 0, 3, -1, -1, -1],
@@ -22,12 +22,13 @@ const initialBoard: checkersBoardState = [
   [-1, -1, -1, 1, 0, 1, 0, 1, 0, 1, 0, -1, -1, -1],
 ];
 
-const initialPlayer: currentPlayerState = 1; // Red starts first
+const initialPlayer: PlayerIndex = 1; // Red starts first
 
-const initialState: gameState = {
-  checkersBoardState: initialBoard,
+const initialGameState: GameState = {
+  boardState: initialBoard,
+  players: new Map(), // Start with an empty player map
   currentPlayer: initialPlayer,
   gameStarted: false, // Game starts as not started
 };
 
-export default initialState;
+export default initialGameState;

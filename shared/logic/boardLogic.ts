@@ -1,15 +1,15 @@
 // Main board logic file - combines all game logic modules
-import type { checkersBoardState } from "../types/boardTypes";
-import isValidMove from "./movementValidation";
-import { isValidCaptureForPlayer } from "./captureLogic";
+import type { BoardState } from "../types/gameTypes";
+import isValidMove from "./movementValidation.ts";
+import { isValidCaptureForPlayer } from "./captureLogic.ts";
 
 // Enhanced isValidMove that includes capture validation
 export default function isValidMoveWithCaptures(
-  board: checkersBoardState,
+  board: BoardState,
   fromRow: number,
   fromCol: number,
   toRow: number,
-  toCol: number
+  toCol: number,
 ): boolean {
   // Check basic movement validation first
   if (isValidMove(board, fromRow, fromCol, toRow, toCol)) {
@@ -25,24 +25,24 @@ export default function isValidMoveWithCaptures(
 }
 
 // Re-export all functions for backward compatibility
-export { isPlayersTurn } from "./movementValidation";
+export { isPlayersTurn } from "./movementValidation.ts";
 export {
   isValidCaptureForPlayer,
   isCapture,
   getCapturedPosition,
   hasValidCapture,
-} from "./captureLogic";
+} from "./captureLogic.ts";
 export {
   isKing,
   getPlayerFromPiece,
   shouldPromoteToKing,
   promoteToKing,
-} from "./pieceUtils";
-export { getValidMoves } from "./gameUtils";
+} from "./pieceUtils.ts";
+export { getValidMoves } from "./gameUtils.ts";
 export {
   executeCaptureMove,
   executeRegularMove,
   isCaptureMove,
   getNextPlayer,
   type MoveExecutionResult,
-} from "./boardExecution";
+} from "./boardExecution.ts";
