@@ -227,7 +227,9 @@ function DevSandboxPanel({
         ))}
       </div>
 
-      <div className={`mt-2 rounded border px-2 py-1 text-xs ${statusClassName}`}>
+      <div
+        className={`mt-2 rounded border px-2 py-1 text-xs ${statusClassName}`}
+      >
         {status.message}
       </div>
     </div>
