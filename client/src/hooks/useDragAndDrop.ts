@@ -12,6 +12,7 @@ import { useSocket } from "./useSocket";
 export const useDragAndDrop = (
   boardState: BoardState,
   dispatch: React.Dispatch<BoardAction> | undefined,
+  allowMoveAnyPiece: boolean = false,
 ) => {
   const [validMoves, setValidMoves] = useState<
     { row: number; col: number; isCapture: boolean }[]
@@ -60,31 +61,34 @@ export const useDragAndDrop = (
     // Only move if the position actually changed
     if (fromRow !== toRow || fromCol !== toCol) {
       if (dispatch) {
-        // Check if this is a capture move
-        if (isCapture(fromRow, fromCol, toRow, toCol)) {
-          const { capturedRow, capturedCol } = getCapturedPosition(
-            fromRow,
-            fromCol,
-            toRow,
-            toCol,
-          );
-          dispatch({
-            type: "CAPTURE_PIECE",
-            payload: {
+        if (!allowMoveAnyPiece) {
+          // Check if this is a capture move
+          if (isCapture(fromRow, fromCol, toRow, toCol)) {
+            const { capturedRow, capturedCol } = getCapturedPosition(
               fromRow,
               fromCol,
               toRow,
               toCol,
-              capturedRow,
-              capturedCol,
-            },
-          });
-        } else {
-          dispatch({
-            type: "MOVE_PIECE",
-            payload: { fromRow, fromCol, toRow, toCol },
-          });
+            );
+            dispatch({
+              type: "CAPTURE_PIECE",
+              payload: {
+                fromRow,
+                fromCol,
+                toRow,
+                toCol,
+                capturedRow,
+                capturedCol,
+              },
+            });
+          } else {
+            dispatch({
+              type: "MOVE_PIECE",
+              payload: { fromRow, fromCol, toRow, toCol },
+            });
+          }
         }
+
         const roomID = sessionStorage.getItem("currentRoomId");
         socket!.emit("make-move", { roomID, fromRow, fromCol, toRow, toCol });
       }

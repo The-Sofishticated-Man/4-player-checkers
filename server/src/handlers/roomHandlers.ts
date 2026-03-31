@@ -70,6 +70,7 @@ export class RoomHandlers {
     }
 
     // New player joining
+    const wasStartedBeforeJoin = game.gameStarted;
     game.addNewPlayer(playerId);
     this.socket.join(roomID);
     this.socket.data.playerId = playerId;
@@ -102,8 +103,8 @@ export class RoomHandlers {
       gameStarted: game.gameStarted,
     });
 
-    // Check if game just started
-    const shouldStartGame = game.shouldStartGame();
+    // Check if game transitioned to started state during this join.
+    const shouldStartGame = !wasStartedBeforeJoin && game.shouldStartGame();
 
     // If game just started, broadcast game-started event to all players
     if (shouldStartGame) {

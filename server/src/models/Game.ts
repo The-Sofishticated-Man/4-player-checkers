@@ -4,6 +4,7 @@ import {
   GameState,
 } from "../../../shared/types/gameTypes.ts";
 import initialGameState from "../utils/initialGameState.ts";
+import { MIN_PLAYERS_TO_START, SANDBOX_MODE } from "../utils/devSandbox.ts";
 
 export class Game {
   gameId: string;
@@ -25,8 +26,8 @@ export class Game {
     this.players.set(playerId, { isConnected: true, leftGame: false });
     this.playerCount++;
 
-    // Start game when 4 players have joined
-    if (this.playerCount === 4) {
+    // In sandbox mode, allow instant start with fewer players.
+    if (!this.gameStarted && this.playerCount >= MIN_PLAYERS_TO_START) {
       this.startGame();
     }
   }
@@ -38,7 +39,9 @@ export class Game {
   startGame() {
     this.gameStarted = true;
     console.log(
-      `🎮 Game started in room: ${this.gameId} - All 4 players connected!`,
+      SANDBOX_MODE
+        ? `🎮 Sandbox game started in room: ${this.gameId} (${this.playerCount} player connected)`
+        : `🎮 Game started in room: ${this.gameId} - All 4 players connected!`,
     );
   }
 
@@ -92,7 +95,7 @@ export class Game {
    * Checks if the game should start (4 players joined)
    */
   shouldStartGame(): boolean {
-    return this.gameStarted && this.playerCount === 4;
+    return this.gameStarted && this.playerCount >= MIN_PLAYERS_TO_START;
   }
 
   /**

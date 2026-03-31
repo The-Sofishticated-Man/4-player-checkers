@@ -21,6 +21,11 @@ import {
   isCaptureMove,
   getNextPlayer,
 } from "../../../shared/logic/boardExecution.ts";
+import type {
+  BoardState,
+  PlayerIndex,
+} from "../../../shared/types/gameTypes.ts";
+import { SANDBOX_MODE } from "../utils/devSandbox.ts";
 
 interface MoveParams {
   roomID: string;
@@ -30,11 +35,29 @@ interface MoveParams {
   toCol: number;
 }
 
+interface DebugSetStateParams {
+  roomID: string;
+  boardState?: BoardState;
+  currentPlayer?: PlayerIndex;
+  gameStarted?: boolean;
+}
+
 export class MoveHandlers {
   constructor(
     private socket: Socket,
     private games: Map<string, Game>,
   ) {}
+
+  private emitGameStateUpdate(roomID: string, game: Game): void {
+    const payload = {
+      boardState: game.gameState.boardState,
+      currentPlayer: game.gameState.currentPlayer,
+      gameStarted: game.gameStarted,
+    };
+
+    this.socket.to(roomID).emit("move-made", payload);
+    this.socket.emit("move-made", payload);
+  }
 
   handleMakeMove = ({ roomID, fromRow, toRow, fromCol, toCol }: MoveParams) => {
     // grab game
@@ -62,7 +85,7 @@ export class MoveHandlers {
     }
 
     // Check if the game has started
-    if (!game.gameStarted) {
+    if (!SANDBOX_MODE && !game.gameStarted) {
       this.socket.emit(
         "move-error",
         "Game hasn't started yet - waiting for all 4 players to join",
@@ -72,13 +95,14 @@ export class MoveHandlers {
 
     // Check if it's the current player's turn
     const playerIndex = game.getPlayerIndexFromId(currentPlayerId);
-    if (game.gameState.currentPlayer !== playerIndex) {
+    if (!SANDBOX_MODE && game.gameState.currentPlayer !== playerIndex) {
       this.socket.emit("move-error", "It's not your turn");
       return;
     }
 
     // Validate that the piece belongs to the current player
     if (
+      !SANDBOX_MODE &&
       !isPlayersTurn(
         game.gameState.boardState,
         fromRow,
@@ -98,6 +122,7 @@ export class MoveHandlers {
     if (isCapture) {
       // Validate capture move
       if (
+        !SANDBOX_MODE &&
         !isValidCaptureForPlayer(
           game.gameState.boardState,
           fromRow,
@@ -121,6 +146,7 @@ export class MoveHandlers {
     } else {
       // Validate regular move
       if (
+        !SANDBOX_MODE &&
         !isValidMove(game.gameState.boardState, fromRow, fromCol, toRow, toCol)
       ) {
         this.socket.emit("move-error", "Invalid move");
@@ -159,16 +185,7 @@ export class MoveHandlers {
     }
 
     // Emit new game state to all players in the room (exactly once)
-    this.socket.to(roomID).emit("move-made", {
-      boardState: moveResult.newBoard,
-      currentPlayer: game.gameState.currentPlayer,
-    });
-
-    // Also emit to the player who made the move (exactly once)
-    this.socket.emit("move-made", {
-      boardState: moveResult.newBoard,
-      currentPlayer: game.gameState.currentPlayer,
-    });
+    this.emitGameStateUpdate(roomID, game);
     console.log(
       `✅ Move completed - Room: ${roomID}, Player: ${currentPlayerId}, New turn: Player ${game.gameState.currentPlayer}`,
     );
@@ -176,5 +193,38 @@ export class MoveHandlers {
     for (const row of game.gameState.boardState) {
       console.log(row.join(" "));
     }
+  };
+
+  handleDebugSetState = ({
+    roomID,
+    boardState,
+    currentPlayer,
+    gameStarted,
+  }: DebugSetStateParams) => {
+    if (!SANDBOX_MODE) {
+      this.socket.emit("move-error", "Sandbox mode is disabled on the server");
+      return;
+    }
+
+    const game = this.games.get(roomID);
+    if (!game) {
+      this.socket.emit("move-error", "Game not found");
+      return;
+    }
+
+    if (boardState) {
+      game.gameState.boardState = boardState.map((row) => [...row]);
+    }
+
+    if (currentPlayer) {
+      game.gameState.currentPlayer = currentPlayer;
+    }
+
+    if (typeof gameStarted === "boolean") {
+      game.gameStarted = gameStarted;
+      game.gameState.gameStarted = gameStarted;
+    }
+
+    this.emitGameStateUpdate(roomID, game);
   };
 }

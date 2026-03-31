@@ -4,6 +4,7 @@ import { Server } from "socket.io";
 import { Game } from "./models/Game.ts";
 import { setupRoomHandlers } from "./utils/setupRoomHandlers.ts";
 import { setupMoveHandlers } from "./utils/setupMoveHandlers.ts";
+import { MIN_PLAYERS_TO_START, SANDBOX_MODE } from "./utils/devSandbox.ts";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -16,11 +17,14 @@ app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
 app.use(
   cors({
     origin: "*", // Allow all origins for simplicity, adjust as needed
-  })
+  }),
 );
 
 const expressServer = app.listen(PORT, () => {
   console.log(`${new Date()} || server running at port: ${PORT}`);
+  console.log(
+    `sandbox mode: ${SANDBOX_MODE ? "ON" : "OFF"} (min players to start: ${MIN_PLAYERS_TO_START})`,
+  );
 });
 
 const io = new Server(expressServer, {

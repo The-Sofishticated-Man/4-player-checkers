@@ -4,7 +4,11 @@ import { useDragAndDrop } from "../hooks/useDragAndDrop";
 import { generateBoardCells } from "../utils/boardRenderer";
 import BoardGrid from "./BoardGrid";
 
-const Board = () => {
+interface BoardProps {
+  allowMoveAnyPiece?: boolean;
+}
+
+const Board = ({ allowMoveAnyPiece = false }: BoardProps) => {
   const {
     gameState: { boardState, currentPlayer, gameStarted },
     dispatchGameState: dispatch,
@@ -17,7 +21,7 @@ const Board = () => {
     handleDragStart,
     handleDragEnd,
     handleDragCancel,
-  } = useDragAndDrop(boardState, dispatch);
+  } = useDragAndDrop(boardState, dispatch, allowMoveAnyPiece);
 
   const cells = generateBoardCells(
     boardState,
@@ -26,6 +30,7 @@ const Board = () => {
     currentPlayer,
     playerIndex,
     gameStarted || false,
+    allowMoveAnyPiece,
   );
 
   const boardSize = boardState.length;

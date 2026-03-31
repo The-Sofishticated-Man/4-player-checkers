@@ -9,6 +9,7 @@ export const generateBoardCells = (
   currentPlayer: number,
   playerIndex: number,
   gameStarted: boolean = false,
+  allowMoveAnyPiece: boolean = false,
 ) => {
   const cells = [];
   const boardSize = boardState.length;
@@ -41,10 +42,11 @@ export const generateBoardCells = (
               player={boardState[row][col]}
               disabled={
                 !gameStarted || // Game hasn't started yet
-                currentPlayer !== playerIndex || // Not player's turn
-                (boardState[row][col] >= 10
-                  ? Math.floor(boardState[row][col] / 10) !== playerIndex // King doesn't belong to player
-                  : boardState[row][col] !== playerIndex) // Regular piece doesn't belong to player
+                (!allowMoveAnyPiece &&
+                  (currentPlayer !== playerIndex || // Not player's turn
+                    (boardState[row][col] >= 10
+                      ? Math.floor(boardState[row][col] / 10) !== playerIndex // King doesn't belong to player
+                      : boardState[row][col] !== playerIndex))) // Regular piece doesn't belong to player
               }
             />
           )}
