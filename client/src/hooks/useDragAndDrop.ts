@@ -2,11 +2,7 @@ import { useState } from "react";
 import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
 import type { BoardState } from "../../../shared/types/gameTypes";
 import type { BoardAction } from "../utils/boardActions";
-import {
-  isCapture,
-  getCapturedPosition,
-  getValidMoves,
-} from "../../../shared/logic/boardLogic";
+import { Board } from "../../../shared/logic/boardModel";
 import { useSocket } from "./useSocket";
 
 export const useDragAndDrop = (
@@ -37,7 +33,8 @@ export const useDragAndDrop = (
     setDraggedPieceOwner(owner);
 
     // Calculate and set valid moves for highlighting
-    const moves = getValidMoves(boardState, fromRow, fromCol);
+    const board = new Board(boardState);
+    const moves = board.getValidMoves(fromRow, fromCol);
     setValidMoves(moves);
   };
 
@@ -62,9 +59,11 @@ export const useDragAndDrop = (
     if (fromRow !== toRow || fromCol !== toCol) {
       if (dispatch) {
         if (!allowMoveAnyPiece) {
+          const board = new Board(boardState);
+
           // Check if this is a capture move
-          if (isCapture(fromRow, fromCol, toRow, toCol)) {
-            const { capturedRow, capturedCol } = getCapturedPosition(
+          if (board.isCapture(fromRow, fromCol, toRow, toCol)) {
+            const { capturedRow, capturedCol } = board.getCapturedPosition(
               fromRow,
               fromCol,
               toRow,

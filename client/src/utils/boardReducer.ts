@@ -1,9 +1,7 @@
 import type { BoardAction } from "./boardActions";
 import type { GameState } from "../../../shared/types/gameTypes";
 
-import isValidMoveWithCaptures from "../../../shared/logic/boardLogic";
-import { hasValidCapture, isCapture } from "../../../shared/logic/captureLogic";
-import { isPlayersTurn } from "../../../shared/logic/movementValidation";
+import { Board } from "../../../shared/logic/boardModel";
 import {
   shouldPromoteToKing,
   promoteToKing,
@@ -16,6 +14,7 @@ export const boardReducer = (
   { type, payload }: BoardAction,
 ): GameState => {
   const { boardState, currentPlayer } = gameState;
+  const board = new Board(boardState);
 
   switch (type) {
     case "MOVE_PIECE": {
@@ -23,20 +22,12 @@ export const boardReducer = (
       const { fromRow, fromCol, toRow, toCol } = payload;
 
       // Validate the move before executing
-      if (
-        !isValidMoveWithCaptures(
-          boardState,
-          fromRow,
-          fromCol,
-          toRow,
-          toCol,
-        )
-      ) {
+      if (!board.isValidMoveWithCaptures(fromRow, fromCol, toRow, toCol)) {
         return gameState; // Invalid move, return current state
       }
 
       // Check if it's the correct player's turn
-      if (!isPlayersTurn(boardState, fromRow, fromCol, currentPlayer)) {
+      if (!board.isPlayersTurn(fromRow, fromCol, currentPlayer)) {
         return gameState; // Not this player's piece
       }
 
@@ -67,25 +58,17 @@ export const boardReducer = (
         payload;
 
       // Validate this is actually a capture move
-      if (!isCapture(fromRow, fromCol, toRow, toCol)) {
+      if (!board.isCapture(fromRow, fromCol, toRow, toCol)) {
         return gameState; // Not a valid capture move
       }
 
       // Validate the capture is legal
-      if (
-        !isValidMoveWithCaptures(
-          boardState,
-          fromRow,
-          fromCol,
-          toRow,
-          toCol,
-        )
-      ) {
+      if (!board.isValidMoveWithCaptures(fromRow, fromCol, toRow, toCol)) {
         return gameState; // Invalid capture
       }
 
       // Check if it's the correct player's turn
-      if (!isPlayersTurn(boardState, fromRow, fromCol, currentPlayer)) {
+      if (!board.isPlayersTurn(fromRow, fromCol, currentPlayer)) {
         return gameState; // Not this player's piece
       }
 
@@ -107,7 +90,7 @@ export const boardReducer = (
       newBoard[toRow][toCol] = movedPiece;
 
       // Check if the same piece has another valid capture available
-      const hasMoreCaptures = hasValidCapture(newBoard, toRow, toCol);
+      const hasMoreCaptures = new Board(newBoard).hasValidCapture(toRow, toCol);
 
       return {
         ...gameState,

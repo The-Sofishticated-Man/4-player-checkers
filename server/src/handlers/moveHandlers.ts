@@ -1,26 +1,6 @@
 import { Socket } from "socket.io";
 import { Game } from "../models/Game.ts";
-
-import isValidMove, {
-  isPlayersTurn,
-} from "../../../shared/logic/movementValidation.ts";
-
-import {
-  isValidCaptureForPlayer,
-  hasValidCapture,
-} from "../../../shared/logic/captureLogic.ts";
-
-import {
-  shouldPromoteToKing,
-  promoteToKing,
-} from "../../../shared/logic/pieceUtils.ts";
-
-import {
-  executeCaptureMove,
-  executeRegularMove,
-  isCaptureMove,
-  getNextPlayer,
-} from "../../../shared/logic/boardExecution.ts";
+import { Board } from "../../../shared/logic/boardModel.ts";
 import type {
   BoardState,
   MoveCoordinates,
@@ -105,73 +85,48 @@ export class MoveHandlers {
     }
 
     // Validate that the piece belongs to the current player
+    const board = new Board(game.gameState.boardState);
+
     if (
       !SANDBOX_MODE &&
-      !isPlayersTurn(
-        game.gameState.boardState,
-        fromRow,
-        fromCol,
-        game.gameState.currentPlayer,
-      )
+      !board.isPlayersTurn(fromRow, fromCol, game.gameState.currentPlayer)
     ) {
       this.socket.emit("move-error", "You can only move your own pieces");
       return;
     }
 
     // Check if this is a capture move (2 squares diagonally)
-    const isCapture = isCaptureMove(move);
-
-    let moveResult;
+    const isCapture = Board.isCapture(
+      move.fromRow,
+      move.fromCol,
+      move.toRow,
+      move.toCol,
+    );
 
     if (isCapture) {
       // Validate capture move
       if (
         !SANDBOX_MODE &&
-        !isValidCaptureForPlayer(
-          game.gameState.boardState,
-          fromRow,
-          fromCol,
-          toRow,
-          toCol,
-        )
+        !board.isValidCaptureForPlayer(fromRow, fromCol, toRow, toCol)
       ) {
         this.socket.emit("move-error", "Invalid capture move");
         return;
       }
-
-      // Execute the capture using shared logic
-      moveResult = executeCaptureMove(game.gameState.boardState, move);
     } else {
       // Validate regular move
-      if (
-        !SANDBOX_MODE &&
-        !isValidMove(game.gameState.boardState, fromRow, fromCol, toRow, toCol)
-      ) {
+      if (!SANDBOX_MODE && !board.isValidMove(fromRow, fromCol, toRow, toCol)) {
         this.socket.emit("move-error", "Invalid move");
         return;
       }
-
-      // Execute the regular move using shared logic
-      moveResult = executeRegularMove(game.gameState.boardState, move);
     }
+
+    const moveResult = board.applyMove(move);
 
     // Update game state
     game.gameState.boardState = moveResult.newBoard;
 
-    // Check for king promotion after the move
-    const pieceAtDestination = game.gameState.boardState[toRow][toCol];
-    const boardSize = game.gameState.boardState.length;
-
-    if (shouldPromoteToKing(pieceAtDestination, toRow, toCol, boardSize)) {
-      console.log(
-        `👑 Promoting piece at (${toRow},${toCol}) to king for player ${game.gameState.currentPlayer}`,
-      );
-      const promotedPiece = promoteToKing(pieceAtDestination);
-      game.gameState.boardState[toRow][toCol] = promotedPiece;
-    }
-
     if (moveResult.shouldChangePlayer) {
-      game.gameState.currentPlayer = getNextPlayer(
+      game.gameState.currentPlayer = Board.getNextPlayer(
         game.gameState.currentPlayer,
       );
     }
