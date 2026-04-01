@@ -1,5 +1,7 @@
 import type { BoardState } from "../types/gameTypes";
 import isValidMove from "./movementValidation.ts";
+import { isOccupied } from "./movementValidation.ts";
+import { isValidCaptureForPlayer } from "./captureLogic.ts";
 
 export function getValidMoves(
   board: BoardState,
@@ -11,10 +13,13 @@ export function getValidMoves(
   // Check all possible moves in a reasonable range
   for (let toRow = 0; toRow < board.length; toRow++) {
     for (let toCol = 0; toCol < board[0].length; toCol++) {
-      if (isValidMove(board, fromRow, fromCol, toRow, toCol)) {
-        const isCapture =
-          Math.abs(fromRow - toRow) === 2 && Math.abs(fromCol - toCol) === 2;
-        validMoves.push({ row: toRow, col: toCol, isCapture });
+      const isRegularMove = isValidMove(board, fromRow, fromCol, toRow, toCol);
+      const isCaptureMove =
+        isValidCaptureForPlayer(board, fromRow, fromCol, toRow, toCol) &&
+        !isOccupied(board, toRow, toCol);
+
+      if (isRegularMove || isCaptureMove) {
+        validMoves.push({ row: toRow, col: toCol, isCapture: isCaptureMove });
       }
     }
   }
