@@ -1,4 +1,4 @@
-import type { BoardState } from "../types/gameTypes";
+import type { BoardState, MoveCoordinates } from "../types/gameTypes";
 import { shouldPromoteToKing, promoteToKing } from "./pieceUtils.ts";
 import { hasValidCapture } from "./captureLogic.ts";
 
@@ -12,10 +12,7 @@ export interface MoveExecutionResult {
  */
 export function executeCaptureMove(
   board: BoardState,
-  fromRow: number,
-  fromCol: number,
-  toRow: number,
-  toCol: number,
+  { fromRow, fromCol, toRow, toCol }: MoveCoordinates,
 ): MoveExecutionResult {
   // Calculate captured piece position
   const capturedRow = (fromRow + toRow) / 2;
@@ -53,10 +50,7 @@ export function executeCaptureMove(
  */
 export function executeRegularMove(
   board: BoardState,
-  fromRow: number,
-  fromCol: number,
-  toRow: number,
-  toCol: number,
+  { fromRow, fromCol, toRow, toCol }: MoveCoordinates,
 ): MoveExecutionResult {
   // Create a copy of the board
   const newBoard = board.map((row) => [...row]);
@@ -81,12 +75,12 @@ export function executeRegularMove(
 /**
  * Determines if a move is a capture move (2 squares diagonally)
  */
-export function isCaptureMove(
-  fromRow: number,
-  fromCol: number,
-  toRow: number,
-  toCol: number,
-): boolean {
+export function isCaptureMove({
+  fromRow,
+  fromCol,
+  toRow,
+  toCol,
+}: MoveCoordinates): boolean {
   return Math.abs(fromRow - toRow) === 2 && Math.abs(fromCol - toCol) === 2;
 }
 

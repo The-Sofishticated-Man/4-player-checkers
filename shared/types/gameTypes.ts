@@ -4,6 +4,13 @@ export type PlayerIndex = 1 | 2 | 3 | 4; // Only 4 possible players
 export type PlayerId = string;
 export type GameId = string;
 
+export interface MoveCoordinates {
+  fromRow: number;
+  fromCol: number;
+  toRow: number;
+  toCol: number;
+}
+
 export type PlayerMap = Map<PlayerId, PlayerState>;
 export interface PlayerState {
   isConnected: boolean;

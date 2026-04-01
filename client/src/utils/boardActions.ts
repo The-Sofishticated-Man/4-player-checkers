@@ -1,4 +1,7 @@
-import type { GameState } from "../../../shared/types/gameTypes";
+import type {
+  GameState,
+  MoveCoordinates,
+} from "../../../shared/types/gameTypes";
 
 // Type for board actions
 export type BoardAction =
@@ -10,20 +13,11 @@ export type BoardAction =
     }
   | {
       type: "MOVE_PIECE";
-      payload: {
-        fromRow: number;
-        fromCol: number;
-        toRow: number;
-        toCol: number;
-      };
+      payload: MoveCoordinates;
     }
   | {
       type: "CAPTURE_PIECE";
-      payload: {
-        fromRow: number;
-        fromCol: number;
-        toRow: number;
-        toCol: number;
+      payload: MoveCoordinates & {
         capturedRow: number;
         capturedCol: number;
       };

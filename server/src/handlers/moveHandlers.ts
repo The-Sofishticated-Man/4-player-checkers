@@ -23,16 +23,13 @@ import {
 } from "../../../shared/logic/boardExecution.ts";
 import type {
   BoardState,
+  MoveCoordinates,
   PlayerIndex,
 } from "../../../shared/types/gameTypes.ts";
 import { SANDBOX_MODE } from "../utils/devSandbox.ts";
 
-interface MoveParams {
+interface MoveParams extends MoveCoordinates {
   roomID: string;
-  fromRow: number;
-  toRow: number;
-  fromCol: number;
-  toCol: number;
 }
 
 interface DebugSetStateParams {
@@ -60,6 +57,13 @@ export class MoveHandlers {
   }
 
   handleMakeMove = ({ roomID, fromRow, toRow, fromCol, toCol }: MoveParams) => {
+    const move: MoveCoordinates = {
+      fromRow,
+      fromCol,
+      toRow,
+      toCol,
+    };
+
     // grab game
     const game = this.games.get(roomID);
 
@@ -115,7 +119,7 @@ export class MoveHandlers {
     }
 
     // Check if this is a capture move (2 squares diagonally)
-    const isCapture = isCaptureMove(fromRow, fromCol, toRow, toCol);
+    const isCapture = isCaptureMove(move);
 
     let moveResult;
 
@@ -136,13 +140,7 @@ export class MoveHandlers {
       }
 
       // Execute the capture using shared logic
-      moveResult = executeCaptureMove(
-        game.gameState.boardState,
-        fromRow,
-        fromCol,
-        toRow,
-        toCol,
-      );
+      moveResult = executeCaptureMove(game.gameState.boardState, move);
     } else {
       // Validate regular move
       if (
@@ -154,13 +152,7 @@ export class MoveHandlers {
       }
 
       // Execute the regular move using shared logic
-      moveResult = executeRegularMove(
-        game.gameState.boardState,
-        fromRow,
-        fromCol,
-        toRow,
-        toCol,
-      );
+      moveResult = executeRegularMove(game.gameState.boardState, move);
     }
 
     // Update game state
