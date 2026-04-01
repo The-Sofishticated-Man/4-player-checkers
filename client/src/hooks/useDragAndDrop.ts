@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
+import { flushSync } from "react-dom";
 import type { BoardState } from "../../../shared/types/gameTypes";
 import type { BoardAction } from "../utils/boardActions";
 import { Board } from "../../../shared/logic/boardModel";
@@ -16,7 +17,14 @@ export const useDragAndDrop = (
   const [draggedPieceOwner, setDraggedPieceOwner] = useState<number | null>(
     null,
   );
+  const [activePiece, setActivePiece] = useState<number | null>(null);
   const { socket } = useSocket();
+
+  const clearDragState = () => {
+    setValidMoves([]);
+    setDraggedPieceOwner(null);
+    setActivePiece(null);
+  };
 
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
@@ -31,6 +39,7 @@ export const useDragAndDrop = (
       draggedPiece >= 10 ? Math.floor(draggedPiece / 10) : draggedPiece;
 
     setDraggedPieceOwner(owner);
+    setActivePiece(draggedPiece);
 
     // Calculate and set valid moves for highlighting
     const board = new Board(boardState);
@@ -39,13 +48,12 @@ export const useDragAndDrop = (
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
-    // Clear valid moves highlighting and dragged piece owner
-    setValidMoves([]);
-    setDraggedPieceOwner(null);
-
     const { active, over } = event;
 
-    if (!over) return; // No valid drop target
+    if (!over) {
+      clearDragState();
+      return; // No valid drop target
+    }
 
     // Extract position from piece ID (format: "piece-row-col")
     const pieceId = active.id as string;
@@ -57,52 +65,76 @@ export const useDragAndDrop = (
 
     // Only move if the position actually changed
     if (fromRow !== toRow || fromCol !== toCol) {
-      if (dispatch) {
-        if (!allowMoveAnyPiece) {
-          const board = new Board(boardState);
+      const board = new Board(boardState);
+      const isCaptureMove = board.isCapture(fromRow, fromCol, toRow, toCol);
+      const isDestinationOccupied = board.isOccupied(toRow, toCol);
 
-          // Check if this is a capture move
-          if (board.isCapture(fromRow, fromCol, toRow, toCol)) {
-            const { capturedRow, capturedCol } = board.getCapturedPosition(
-              fromRow,
-              fromCol,
-              toRow,
-              toCol,
-            );
-            dispatch({
-              type: "CAPTURE_PIECE",
-              payload: {
-                fromRow,
-                fromCol,
-                toRow,
-                toCol,
-                capturedRow,
-                capturedCol,
-              },
-            });
-          } else {
-            dispatch({
-              type: "MOVE_PIECE",
-              payload: { fromRow, fromCol, toRow, toCol },
-            });
-          }
-        }
+      const isLocallyValidMove = allowMoveAnyPiece
+        ? true
+        : isCaptureMove
+          ? board.isValidCaptureForPlayer(fromRow, fromCol, toRow, toCol) &&
+            !isDestinationOccupied
+          : board.isValidMove(fromRow, fromCol, toRow, toCol);
 
-        const roomID = sessionStorage.getItem("currentRoomId");
-        socket!.emit("make-move", { roomID, fromRow, fromCol, toRow, toCol });
+      if (!isLocallyValidMove) {
+        clearDragState();
+        return;
       }
+
+      if (dispatch) {
+        const optimisticAction: BoardAction = allowMoveAnyPiece
+          ? {
+              type: "SANDBOX_APPLY_MOVE",
+              payload: { fromRow, fromCol, toRow, toCol },
+            }
+          : isCaptureMove
+            ? (() => {
+                const { capturedRow, capturedCol } = board.getCapturedPosition(
+                  fromRow,
+                  fromCol,
+                  toRow,
+                  toCol,
+                );
+
+                return {
+                  type: "CAPTURE_PIECE",
+                  payload: {
+                    fromRow,
+                    fromCol,
+                    toRow,
+                    toCol,
+                    capturedRow,
+                    capturedCol,
+                  },
+                };
+              })()
+            : {
+                type: "MOVE_PIECE",
+                payload: { fromRow, fromCol, toRow, toCol },
+              };
+
+        // Commit optimistic state immediately so the piece does not wait on server round-trip.
+        flushSync(() => {
+          dispatch(optimisticAction);
+        });
+      }
+
+      const roomID = sessionStorage.getItem("currentRoomId");
+      socket?.emit("make-move", { roomID, fromRow, fromCol, toRow, toCol });
     }
+
+    clearDragState();
   };
 
   const handleDragCancel = () => {
-    // Clear valid moves highlighting and dragged piece owner when drag is cancelled
-    setValidMoves([]);
-    setDraggedPieceOwner(null);
+    // Clear drag metadata and highlights when drag is cancelled.
+    clearDragState();
   };
 
   return {
     validMoves,
     draggedPieceOwner,
+    activePiece,
     handleDragStart,
     handleDragEnd,
     handleDragCancel,

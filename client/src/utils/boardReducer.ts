@@ -17,6 +17,20 @@ export const boardReducer = (
   const board = new Board(boardState);
 
   switch (type) {
+    case "SANDBOX_APPLY_MOVE": {
+      if (!payload) return gameState;
+
+      const moveResult = board.applyMove(payload);
+
+      return {
+        ...gameState,
+        boardState: moveResult.newBoard,
+        currentPlayer: moveResult.shouldChangePlayer
+          ? (((currentPlayer % 4) + 1) as 1 | 2 | 3 | 4)
+          : currentPlayer,
+      };
+    }
+
     case "MOVE_PIECE": {
       if (!payload) return gameState;
       const { fromRow, fromCol, toRow, toCol } = payload;

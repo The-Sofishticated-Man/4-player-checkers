@@ -10,13 +10,15 @@ const Piece = ({
   player: number;
   disabled?: boolean;
 }) => {
-  const { attributes, listeners, setNodeRef, transform } = useDraggable({
-    id: pieceID,
-    disabled,
-  });
+  const { attributes, listeners, setNodeRef, transform, isDragging } =
+    useDraggable({
+      id: pieceID,
+      disabled,
+    });
 
   const style = {
     transform: CSS.Translate.toString(transform),
+    opacity: isDragging ? 0 : 1,
   };
 
   // Determine piece type and color
@@ -41,7 +43,7 @@ const Piece = ({
 
   const playerColor = getPlayerColor(playerNumber);
   const borderStyle = isKing ? "border-4 border-yellow-400" : "";
-  const cursorStyle = !disabled && "cursor-pointer" ; 
+  const cursorStyle = !disabled && "cursor-pointer";
 
   return (
     <div

@@ -16,6 +16,10 @@ export type BoardAction =
       payload: MoveCoordinates;
     }
   | {
+      type: "SANDBOX_APPLY_MOVE";
+      payload: MoveCoordinates;
+    }
+  | {
       type: "CAPTURE_PIECE";
       payload: MoveCoordinates & {
         capturedRow: number;
