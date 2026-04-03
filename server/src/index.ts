@@ -4,6 +4,7 @@ import { Server } from "socket.io";
 import { Game } from "./models/Game.ts";
 import { setupRoomHandlers } from "./utils/setupRoomHandlers.ts";
 import { setupMoveHandlers } from "./utils/setupMoveHandlers.ts";
+import { setupSandboxHandlers } from "./utils/setupSandboxHandlers.ts";
 import { MIN_PLAYERS_TO_START, SANDBOX_MODE } from "./utils/devSandbox.ts";
 
 const app = express();
@@ -45,4 +46,7 @@ io.on("connection", (socket) => {
 
   // Setup move handlers
   setupMoveHandlers(socket, games);
+
+  // Setup sandbox handlers
+  setupSandboxHandlers(socket, games);
 });

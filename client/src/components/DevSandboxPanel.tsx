@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
 import { useSocket } from "../hooks/useSocket";
 import initialState from "../../../server/src/utils/initialGameState";
-import type { BoardState, PlayerIndex } from "../../../shared/types/gameTypes";
+import type {
+  BoardState,
+  PlayerIndex,
+  SerializedGameState,
+} from "../../../shared/types/gameTypes";
 
 interface DevSandboxPanelProps {
   roomId: string;
@@ -21,6 +25,13 @@ type StatusKind = "info" | "success" | "error";
 interface SandboxStatus {
   kind: StatusKind;
   message: string;
+}
+
+interface SandboxRoomSnapshot {
+  roomID: string;
+  playerCount: number;
+  connectedPlayerCount: number;
+  gameState: SerializedGameState;
 }
 
 const cloneBoard = (board: BoardState): BoardState =>
@@ -79,6 +90,7 @@ function DevSandboxPanel({
     kind: "info",
     message: "Ready",
   });
+  const [snapshot, setSnapshot] = useState<SandboxRoomSnapshot | null>(null);
 
   useEffect(() => {
     if (!socket) {
@@ -95,6 +107,36 @@ function DevSandboxPanel({
       setPendingAction(null);
     };
 
+    const handleSandboxError = (message: string) => {
+      setStatus({
+        kind: "error",
+        message: pendingAction
+          ? `${pendingAction} failed: ${message}`
+          : `Sandbox error: ${message}`,
+      });
+      setPendingAction(null);
+    };
+
+    const handleSandboxStateApplied = () => {
+      if (!pendingAction) {
+        return;
+      }
+
+      setStatus({
+        kind: "success",
+        message: `${pendingAction} applied`,
+      });
+      setPendingAction(null);
+    };
+
+    const handleSandboxRoomState = (payload: SandboxRoomSnapshot) => {
+      if (payload.roomID !== roomId) {
+        return;
+      }
+
+      setSnapshot(payload);
+    };
+
     const handleMoveMade = () => {
       if (!pendingAction) {
         return;
@@ -108,13 +150,27 @@ function DevSandboxPanel({
     };
 
     socket.on("move-error", handleMoveError);
+    socket.on("sandbox-error", handleSandboxError);
+    socket.on("sandbox-state-applied", handleSandboxStateApplied);
+    socket.on("sandbox-room-state", handleSandboxRoomState);
     socket.on("move-made", handleMoveMade);
 
     return () => {
       socket.off("move-error", handleMoveError);
+      socket.off("sandbox-error", handleSandboxError);
+      socket.off("sandbox-state-applied", handleSandboxStateApplied);
+      socket.off("sandbox-room-state", handleSandboxRoomState);
       socket.off("move-made", handleMoveMade);
     };
-  }, [socket, pendingAction]);
+  }, [socket, pendingAction, roomId]);
+
+  useEffect(() => {
+    if (!socket || !isConnected) {
+      return;
+    }
+
+    socket.emit("sandbox-get-room-state", { roomID: roomId });
+  }, [socket, isConnected, roomId]);
 
   if (!import.meta.env.DEV) {
     return null;
@@ -135,7 +191,7 @@ function DevSandboxPanel({
     setPendingAction(actionLabel);
     setStatus({ kind: "info", message: `${actionLabel} sent...` });
 
-    socket.emit("debug-set-state", {
+    socket.emit("sandbox-set-state", {
       roomID: roomId,
       ...payload,
     } satisfies DebugSetStatePayload);
@@ -165,6 +221,10 @@ function DevSandboxPanel({
       </p>
       <p className="mb-2 text-xs text-orange-700">
         Socket: {isConnected ? "Connected" : "Disconnected"}
+      </p>
+      <p className="mb-2 text-xs text-orange-700">
+        Players: {snapshot?.connectedPlayerCount ?? 0}/
+        {snapshot?.playerCount ?? 0} connected
       </p>
 
       <div className="mb-2 flex flex-wrap gap-2">

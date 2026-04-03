@@ -24,8 +24,11 @@ const initialBoard: BoardState = [
 
 const initialPlayer: PlayerIndex = 1; // Red starts first
 
-const initialGameState: GameState = {
-  boardState: initialBoard,
+const cloneBoardState = (boardState: BoardState): BoardState =>
+  boardState.map((row) => [...row]);
+
+export const createInitialGameState = (): GameState => ({
+  boardState: cloneBoardState(initialBoard),
   players: new Map(), // Start with an empty player map
   currentPlayer: initialPlayer,
   gameStarted: false, // Game starts as not started
@@ -33,6 +36,8 @@ const initialGameState: GameState = {
   winner: null,
   isDraw: false,
   activePlayers: [1, 2, 3, 4],
-};
+});
+
+const initialGameState: GameState = createInitialGameState();
 
 export default initialGameState;

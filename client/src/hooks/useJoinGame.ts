@@ -5,13 +5,11 @@ import type {
   BoardState,
   PlayerIndex,
   PlayerState,
+  SerializedGameState,
+  SerializedPlayerMap,
 } from "../../../shared/types/gameTypes";
 import { useNavigate } from "react-router";
 import useGameState from "./useBoard";
-
-type SerializedGameState = Omit<GameState, "players"> & {
-  players: [string, PlayerState][];
-};
 
 export function useJoinGame(roomId: string) {
   const { socket } = useSocket();
@@ -65,6 +63,50 @@ export function useJoinGame(roomId: string) {
       players: new Map(serialized.players),
     });
 
+    const isSerializedPlayerMap = (
+      players: unknown,
+    ): players is SerializedPlayerMap => {
+      if (!Array.isArray(players)) {
+        return false;
+      }
+
+      if (players.length === 0) {
+        return true;
+      }
+
+      const first = players[0];
+      return (
+        Array.isArray(first) &&
+        first.length === 2 &&
+        typeof first[0] === "string" &&
+        typeof first[1] === "object" &&
+        first[1] !== null
+      );
+    };
+
+    const hydratePlayersFromEvent = (
+      players: SerializedPlayerMap | string[] | undefined,
+      connectedPlayers: string[] | undefined,
+    ): Map<string, PlayerState> | null => {
+      if (!players) {
+        return null;
+      }
+
+      if (isSerializedPlayerMap(players)) {
+        return new Map(players);
+      }
+
+      return new Map<string, PlayerState>(
+        players.map((nextPlayerId) => [
+          nextPlayerId,
+          {
+            isConnected: (connectedPlayers ?? []).includes(nextPlayerId),
+            leftGame: false,
+          },
+        ]),
+      );
+    };
+
     // Listen for success response
     const handleRoomJoined = (data: {
       roomID: string;
@@ -109,6 +151,8 @@ export function useJoinGame(roomId: string) {
       winner,
       isDraw,
       activePlayers,
+      players,
+      connectedPlayers,
     }: {
       boardState: BoardState;
       currentPlayer: PlayerIndex;
@@ -117,6 +161,8 @@ export function useJoinGame(roomId: string) {
       winner?: PlayerIndex | null;
       isDraw?: boolean;
       activePlayers?: PlayerIndex[];
+      players?: SerializedPlayerMap;
+      connectedPlayers?: string[];
     }) => {
       if (!dispatch) {
         console.error("Dispatch is undefined/null");
@@ -124,10 +170,15 @@ export function useJoinGame(roomId: string) {
       }
 
       try {
+        const nextPlayers =
+          hydratePlayersFromEvent(players, connectedPlayers) ??
+          gameStateRef.current.players;
+
         dispatchNewGameState({
           ...gameStateRef.current,
           boardState,
           currentPlayer,
+          players: nextPlayers,
           gameStarted: gameStarted ?? gameStateRef.current.gameStarted,
           gameOver: gameOver ?? gameStateRef.current.gameOver,
           winner: winner ?? gameStateRef.current.winner,
@@ -147,6 +198,8 @@ export function useJoinGame(roomId: string) {
       winner,
       isDraw,
       activePlayers,
+      players,
+      connectedPlayers,
     }: {
       boardState: BoardState;
       currentPlayer: PlayerIndex;
@@ -155,11 +208,18 @@ export function useJoinGame(roomId: string) {
       winner: PlayerIndex | null;
       isDraw: boolean;
       activePlayers: PlayerIndex[];
+      players?: SerializedPlayerMap;
+      connectedPlayers?: string[];
     }) => {
+      const nextPlayers =
+        hydratePlayersFromEvent(players, connectedPlayers) ??
+        gameStateRef.current.players;
+
       dispatchNewGameState({
         ...gameStateRef.current,
         boardState,
         currentPlayer,
+        players: nextPlayers,
         gameStarted,
         gameOver,
         winner,
@@ -178,24 +238,14 @@ export function useJoinGame(roomId: string) {
         ? hydrateGameState(data.gameState)
         : gameStateRef.current;
 
-      const nextPlayers = data.gameState
-        ? nextBaseState.players
-        : new Map<string, PlayerState>(
-            (data.players ?? []).map((nextPlayerId) => [
-              nextPlayerId,
-              {
-                isConnected: (data.connectedPlayers ?? []).includes(
-                  nextPlayerId,
-                ),
-                leftGame: false,
-              },
-            ]),
-          );
+      const nextPlayers = data.gameState?.players
+        ? hydratePlayersFromEvent(data.gameState.players, data.connectedPlayers)
+        : hydratePlayersFromEvent(data.players, data.connectedPlayers);
 
       dispatchNewGameState({
         ...gameStateRef.current,
         ...nextBaseState,
-        players: nextPlayers,
+        players: nextPlayers ?? gameStateRef.current.players,
         gameStarted:
           data.gameStarted ??
           nextBaseState.gameStarted ??
@@ -243,17 +293,35 @@ export function useJoinGame(roomId: string) {
       roomID: string;
       boardState: BoardState;
       currentPlayer: PlayerIndex;
+      players?: SerializedPlayerMap;
+      connectedPlayers?: string[];
     }) => {
       if (data.roomID !== roomId) {
         return;
       }
 
+      const nextPlayers =
+        hydratePlayersFromEvent(data.players, data.connectedPlayers) ??
+        gameStateRef.current.players;
+
       dispatchNewGameState({
         ...gameStateRef.current,
         boardState: data.boardState,
         currentPlayer: data.currentPlayer,
+        players: nextPlayers,
         gameStarted: true,
       });
+    };
+
+    const handleSandboxRoomState = (data: {
+      roomID: string;
+      gameState: SerializedGameState;
+    }) => {
+      if (data.roomID !== roomId) {
+        return;
+      }
+
+      dispatchNewGameState(hydrateGameState(data.gameState));
     };
 
     socket.on("room-joined", handleRoomJoined);
@@ -265,6 +333,7 @@ export function useJoinGame(roomId: string) {
     socket.on("player-reconnected", handlePlayerReconnected);
     socket.on("game-started", handleGameStarted);
     socket.on("game-over", handleGameOver);
+    socket.on("sandbox-room-state", handleSandboxRoomState);
 
     // Register listeners before emitting join-room so the initial response
     // can't race ahead of subscriptions.
@@ -281,6 +350,7 @@ export function useJoinGame(roomId: string) {
       socket.off("player-reconnected", handlePlayerReconnected);
       socket.off("game-started", handleGameStarted);
       socket.off("game-over", handleGameOver);
+      socket.off("sandbox-room-state", handleSandboxRoomState);
     };
   }, [socket, roomId, navigate, dispatch, setPlayerIndex]);
 

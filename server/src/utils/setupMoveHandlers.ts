@@ -5,5 +5,4 @@ import { MoveHandlers } from "../handlers/moveHandlers.ts";
 export const setupMoveHandlers = (socket: Socket, games: Map<string, Game>) => {
   const handlers = new MoveHandlers(socket, games);
   socket.on("make-move", handlers.handleMakeMove);
-  socket.on("debug-set-state", handlers.handleDebugSetState);
 };

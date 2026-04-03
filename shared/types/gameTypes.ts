@@ -17,6 +17,8 @@ export interface PlayerState {
   leftGame: boolean;
 }
 
+export type SerializedPlayerMap = [PlayerId, PlayerState][];
+
 export interface GameState {
   boardState: BoardState; // 2D array representing the board
   players: PlayerMap;
@@ -27,3 +29,7 @@ export interface GameState {
   isDraw?: boolean;
   activePlayers?: PlayerIndex[];
 }
+
+export type SerializedGameState = Omit<GameState, "players"> & {
+  players: SerializedPlayerMap;
+};

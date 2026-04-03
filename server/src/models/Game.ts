@@ -3,14 +3,14 @@ import {
   PlayerMap,
   GameState,
 } from "../../../shared/types/gameTypes.ts";
-import initialGameState from "../utils/initialGameState.ts";
+import { createInitialGameState } from "../utils/initialGameState.ts";
 import { MIN_PLAYERS_TO_START, SANDBOX_MODE } from "../utils/devSandbox.ts";
 
 export class Game {
   gameId: string;
   players: PlayerMap = new Map([]);
   public playerCount: number = 0;
-  public gameState: GameState = initialGameState;
+  public gameState: GameState = createInitialGameState();
   public gameStarted: boolean = false;
 
   constructor(gameId: string) {

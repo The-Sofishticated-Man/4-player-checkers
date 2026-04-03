@@ -6,31 +6,14 @@ import {
   getNextActivePlayer,
 } from "../../../shared/logic/boardGameState.ts";
 import type {
-  BoardState,
   MoveCoordinates,
   PlayerIndex,
 } from "../../../shared/types/gameTypes.ts";
 import { SANDBOX_MODE } from "../utils/devSandbox.ts";
+import { createGameStateEventPayload } from "../utils/sandboxEvents.ts";
 
 interface MoveParams extends MoveCoordinates {
   roomID: string;
-}
-
-interface DebugSetStateParams {
-  roomID: string;
-  boardState?: BoardState;
-  currentPlayer?: PlayerIndex;
-  gameStarted?: boolean;
-}
-
-interface GameStateEventPayload {
-  boardState: BoardState;
-  currentPlayer: PlayerIndex;
-  gameStarted: boolean;
-  gameOver: boolean;
-  winner: PlayerIndex | null;
-  isDraw: boolean;
-  activePlayers: PlayerIndex[];
 }
 
 export class MoveHandlers {
@@ -38,18 +21,6 @@ export class MoveHandlers {
     private socket: Socket,
     private games: Map<string, Game>,
   ) {}
-
-  private createGameStatePayload(game: Game): GameStateEventPayload {
-    return {
-      boardState: game.gameState.boardState,
-      currentPlayer: game.gameState.currentPlayer,
-      gameStarted: game.gameStarted,
-      gameOver: game.gameState.gameOver ?? false,
-      winner: game.gameState.winner ?? null,
-      isDraw: game.gameState.isDraw ?? false,
-      activePlayers: game.gameState.activePlayers ?? [],
-    };
-  }
 
   private evaluateAndApplyGameStatus(game: Game): PlayerIndex[] {
     const status = evaluateGameStatus(game.gameState.boardState);
@@ -70,7 +41,7 @@ export class MoveHandlers {
     game: Game,
     emitGameOverEvent = false,
   ): void {
-    const payload = this.createGameStatePayload(game);
+    const payload = createGameStateEventPayload(game);
 
     this.socket.to(roomID).emit("move-made", payload);
     this.socket.emit("move-made", payload);
@@ -206,51 +177,5 @@ export class MoveHandlers {
     for (const row of game.gameState.boardState) {
       console.log(row.join(" "));
     }
-  };
-
-  handleDebugSetState = ({
-    roomID,
-    boardState,
-    currentPlayer,
-    gameStarted,
-  }: DebugSetStateParams) => {
-    if (!SANDBOX_MODE) {
-      this.socket.emit("move-error", "Sandbox mode is disabled on the server");
-      return;
-    }
-
-    const game = this.games.get(roomID);
-    if (!game) {
-      this.socket.emit("move-error", "Game not found");
-      return;
-    }
-
-    const wasGameOver = game.gameState.gameOver === true;
-
-    if (boardState) {
-      game.gameState.boardState = boardState.map((row) => [...row]);
-    }
-
-    if (currentPlayer) {
-      game.gameState.currentPlayer = currentPlayer;
-    }
-
-    if (typeof gameStarted === "boolean") {
-      game.gameStarted = gameStarted;
-      game.gameState.gameStarted = gameStarted;
-    }
-
-    const activePlayers = this.evaluateAndApplyGameStatus(game);
-    if (
-      !game.gameState.gameOver &&
-      activePlayers.length > 0 &&
-      !activePlayers.includes(game.gameState.currentPlayer)
-    ) {
-      game.gameState.currentPlayer = activePlayers[0];
-    }
-
-    const shouldEmitGameOver =
-      !wasGameOver && (game.gameState.gameOver ?? false);
-    this.emitGameStateUpdate(roomID, game, shouldEmitGameOver);
   };
 }

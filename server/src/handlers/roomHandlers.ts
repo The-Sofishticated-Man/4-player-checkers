@@ -2,12 +2,28 @@ import { Socket } from "socket.io";
 import { Game } from "../models/Game.ts";
 import { generateID } from "../utils/gameUtils.ts";
 import type { PlayerId } from "../../../shared/types/gameTypes.ts";
+import { SANDBOX_MODE } from "../utils/devSandbox.ts";
+import {
+  createGameStateEventPayload,
+  createSandboxRoomStatePayload,
+  serializeGameState,
+} from "../utils/sandboxEvents.ts";
 
 export class RoomHandlers {
   constructor(
     private socket: Socket,
     private games: Map<string, Game>,
   ) {}
+
+  private emitSandboxRoomState(game: Game): void {
+    if (!SANDBOX_MODE) {
+      return;
+    }
+
+    const payload = createSandboxRoomStatePayload(game);
+    this.socket.to(game.gameId).emit("sandbox-room-state", payload);
+    this.socket.emit("sandbox-room-state", payload);
+  }
 
   handleRoomCreation = () => {
     const roomID = generateID();
@@ -34,11 +50,7 @@ export class RoomHandlers {
       this.socket.data.playerId = playerId;
       this.socket.data.gameId = roomID;
       const playerIndex = game.getPlayerIndexFromId(playerId);
-      const gameState = {
-        ...game.gameState,
-        gameStarted: game.gameStarted,
-        players: Array.from(game.players.entries()),
-      };
+      const gameState = serializeGameState(game);
       const playerIds = Array.from(game.players.keys());
       const connectedPlayers = game.getConnectedPlayerIds();
 
@@ -60,6 +72,8 @@ export class RoomHandlers {
         gameStarted: game.gameStarted,
       });
 
+      this.emitSandboxRoomState(game);
+
       return;
     }
 
@@ -77,11 +91,7 @@ export class RoomHandlers {
     this.socket.data.gameId = roomID;
 
     const playerIndex = game.getPlayerIndexFromId(playerId);
-    const gameState = {
-      ...game.gameState,
-      gameStarted: game.gameStarted,
-      players: Array.from(game.players.entries()),
-    };
+    const gameState = serializeGameState(game);
     const playerIds = Array.from(game.players.keys());
     const connectedPlayers = game.getConnectedPlayerIds();
 
@@ -110,13 +120,14 @@ export class RoomHandlers {
     if (shouldStartGame) {
       const startGameData = {
         roomID: game.gameId,
-        boardState: game.gameState.boardState,
-        currentPlayer: game.gameState.currentPlayer,
+        ...createGameStateEventPayload(game),
       };
 
       this.socket.to(roomID).emit("game-started", startGameData);
       this.socket.emit("game-started", startGameData);
     }
+
+    this.emitSandboxRoomState(game);
 
     console.log(
       `User ${this.socket.id} added to room: ${roomID}. Players: ${
@@ -149,6 +160,8 @@ export class RoomHandlers {
         players: Array.from(game.players.keys()),
         connectedPlayers: game.getConnectedPlayerIds(),
       });
+
+      this.emitSandboxRoomState(game);
     }
   };
 }
