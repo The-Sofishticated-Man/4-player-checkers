@@ -47,6 +47,27 @@ const createKingPromotionBoard = (): BoardState => {
   return board;
 };
 
+const createOneMoveToWinBoard = (): BoardState => {
+  const board = createEmptyPlayableBoard(initialState.boardState);
+
+  // Player 1 can capture player 2 in one move to end the game.
+  board[8][4] = 1;
+  board[7][5] = 2;
+
+  return board;
+};
+
+const createPlayerOneWinsBoard = (): BoardState => {
+  const board = createEmptyPlayableBoard(initialState.boardState);
+
+  board[8][4] = 1;
+
+  return board;
+};
+
+const createForcedDrawBoard = (): BoardState =>
+  createEmptyPlayableBoard(initialState.boardState);
+
 function DevSandboxPanel({
   roomId,
   allowMoveAnyPiece,
@@ -207,6 +228,48 @@ function DevSandboxPanel({
           type="button"
         >
           King Test
+        </button>
+
+        <button
+          className="rounded bg-rose-700 px-2 py-1 text-xs font-semibold text-white"
+          onClick={() =>
+            emitDebugState("One Move To Win", {
+              boardState: createOneMoveToWinBoard(),
+              currentPlayer: 1,
+              gameStarted: true,
+            })
+          }
+          type="button"
+        >
+          One Move To Win
+        </button>
+
+        <button
+          className="rounded bg-red-800 px-2 py-1 text-xs font-semibold text-white"
+          onClick={() =>
+            emitDebugState("Game Over P1", {
+              boardState: createPlayerOneWinsBoard(),
+              currentPlayer: 1,
+              gameStarted: true,
+            })
+          }
+          type="button"
+        >
+          Game Over P1
+        </button>
+
+        <button
+          className="rounded bg-slate-800 px-2 py-1 text-xs font-semibold text-white"
+          onClick={() =>
+            emitDebugState("Force Draw", {
+              boardState: createForcedDrawBoard(),
+              currentPlayer: 1,
+              gameStarted: true,
+            })
+          }
+          type="button"
+        >
+          Force Draw
         </button>
       </div>
 

@@ -29,6 +29,10 @@ const initialGameState: GameState = {
   players: new Map(), // Start with an empty player map
   currentPlayer: initialPlayer,
   gameStarted: false, // Game starts as not started
+  gameOver: false,
+  winner: null,
+  isDraw: false,
+  activePlayers: [1, 2, 3, 4],
 };
 
 export default initialGameState;

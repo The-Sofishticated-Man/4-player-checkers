@@ -105,10 +105,18 @@ export function useJoinGame(roomId: string) {
       boardState,
       currentPlayer,
       gameStarted,
+      gameOver,
+      winner,
+      isDraw,
+      activePlayers,
     }: {
       boardState: BoardState;
       currentPlayer: PlayerIndex;
       gameStarted?: boolean;
+      gameOver?: boolean;
+      winner?: PlayerIndex | null;
+      isDraw?: boolean;
+      activePlayers?: PlayerIndex[];
     }) => {
       if (!dispatch) {
         console.error("Dispatch is undefined/null");
@@ -121,10 +129,43 @@ export function useJoinGame(roomId: string) {
           boardState,
           currentPlayer,
           gameStarted: gameStarted ?? gameStateRef.current.gameStarted,
+          gameOver: gameOver ?? gameStateRef.current.gameOver,
+          winner: winner ?? gameStateRef.current.winner,
+          isDraw: isDraw ?? gameStateRef.current.isDraw,
+          activePlayers: activePlayers ?? gameStateRef.current.activePlayers,
         });
       } catch (error) {
         console.error("Dispatch failed with error:", error);
       }
+    };
+
+    const handleGameOver = ({
+      boardState,
+      currentPlayer,
+      gameStarted,
+      gameOver,
+      winner,
+      isDraw,
+      activePlayers,
+    }: {
+      boardState: BoardState;
+      currentPlayer: PlayerIndex;
+      gameStarted: boolean;
+      gameOver: boolean;
+      winner: PlayerIndex | null;
+      isDraw: boolean;
+      activePlayers: PlayerIndex[];
+    }) => {
+      dispatchNewGameState({
+        ...gameStateRef.current,
+        boardState,
+        currentPlayer,
+        gameStarted,
+        gameOver,
+        winner,
+        isDraw,
+        activePlayers,
+      });
     };
 
     const syncPlayersFromEvent = (data: {
@@ -143,7 +184,9 @@ export function useJoinGame(roomId: string) {
             (data.players ?? []).map((nextPlayerId) => [
               nextPlayerId,
               {
-                isConnected: (data.connectedPlayers ?? []).includes(nextPlayerId),
+                isConnected: (data.connectedPlayers ?? []).includes(
+                  nextPlayerId,
+                ),
                 leftGame: false,
               },
             ]),
@@ -221,6 +264,7 @@ export function useJoinGame(roomId: string) {
     socket.on("player-disconnected", handlePlayerDisconnected);
     socket.on("player-reconnected", handlePlayerReconnected);
     socket.on("game-started", handleGameStarted);
+    socket.on("game-over", handleGameOver);
 
     // Register listeners before emitting join-room so the initial response
     // can't race ahead of subscriptions.
@@ -236,6 +280,7 @@ export function useJoinGame(roomId: string) {
       socket.off("player-disconnected", handlePlayerDisconnected);
       socket.off("player-reconnected", handlePlayerReconnected);
       socket.off("game-started", handleGameStarted);
+      socket.off("game-over", handleGameOver);
     };
   }, [socket, roomId, navigate, dispatch, setPlayerIndex]);
 

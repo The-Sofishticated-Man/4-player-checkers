@@ -22,4 +22,8 @@ export interface GameState {
   players: PlayerMap;
   currentPlayer: PlayerIndex; // Current player (1 or 2)
   gameStarted?: boolean; // Whether the game has started (all 4 players joined)
+  gameOver?: boolean;
+  winner?: PlayerIndex | null;
+  isDraw?: boolean;
+  activePlayers?: PlayerIndex[];
 }

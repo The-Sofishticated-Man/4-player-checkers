@@ -10,7 +10,7 @@ interface BoardProps {
 
 const Board = ({ allowMoveAnyPiece = false }: BoardProps) => {
   const {
-    gameState: { boardState, currentPlayer, gameStarted },
+    gameState: { boardState, currentPlayer, gameStarted, gameOver },
     dispatchGameState: dispatch,
     playerIndex,
   } = useGameState();
@@ -66,7 +66,7 @@ const Board = ({ allowMoveAnyPiece = false }: BoardProps) => {
     draggedPieceOwner,
     currentPlayer,
     playerIndex,
-    gameStarted || false,
+    (gameStarted || false) && !gameOver,
     allowMoveAnyPiece,
   );
 

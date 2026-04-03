@@ -2,7 +2,14 @@ import useGameState from "../hooks/useBoard";
 
 function PlayerBoard() {
   const {
-    gameState: { currentPlayer, players, gameStarted },
+    gameState: {
+      currentPlayer,
+      players,
+      gameStarted,
+      gameOver,
+      winner,
+      isDraw,
+    },
     playerIndex,
   } = useGameState();
   const playerEntries = Array.from(players.entries());
@@ -250,16 +257,19 @@ function PlayerBoard() {
         </div>
 
         {/* Your turn indicator */}
-        {currentPlayer === playerIndex && playerIndex > 0 && gameStarted && (
-          <div className="mt-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white text-sm font-semibold text-center py-2 px-4 rounded-xl shadow-lg animate-pulse">
-            <span className="inline-flex items-center">
-              🎯 <span className="ml-1">YOUR TURN!</span>
-            </span>
-          </div>
-        )}
+        {currentPlayer === playerIndex &&
+          playerIndex > 0 &&
+          gameStarted &&
+          !gameOver && (
+            <div className="mt-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white text-sm font-semibold text-center py-2 px-4 rounded-xl shadow-lg animate-pulse">
+              <span className="inline-flex items-center">
+                🎯 <span className="ml-1">YOUR TURN!</span>
+              </span>
+            </div>
+          )}
 
         {/* Game status indicator */}
-        {!gameStarted && (
+        {!gameStarted && !gameOver && (
           <div className="mt-3 bg-gradient-to-r from-orange-500 to-red-500 text-white text-sm font-semibold text-center py-2 px-4 rounded-xl shadow-lg">
             <span className="inline-flex items-center">
               ⏳{" "}
@@ -270,19 +280,38 @@ function PlayerBoard() {
           </div>
         )}
 
-        {gameStarted && !(currentPlayer === playerIndex && playerIndex > 0) && (
-          <div className="mt-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-sm font-semibold text-center py-2 px-4 rounded-xl shadow-lg">
+        {gameOver && (
+          <div
+            className={`mt-3 text-white text-sm font-semibold text-center py-2 px-4 rounded-xl shadow-lg ${
+              isDraw
+                ? "bg-gradient-to-r from-slate-600 to-slate-800"
+                : "bg-gradient-to-r from-rose-600 to-red-700"
+            }`}
+          >
             <span className="inline-flex items-center">
-              🎮 <span className="ml-1">GAME IN PROGRESS</span>
-              {connectedPlayerIds.length < playerEntries.length && (
-                <span className="ml-2 text-xs bg-yellow-500 px-2 py-1 rounded">
-                  {playerEntries.length - connectedPlayerIds.length}{" "}
-                  DISCONNECTED
-                </span>
-              )}
+              {isDraw ? "🤝" : "🏆"}
+              <span className="ml-1">
+                {isDraw ? "DRAW" : `GAME OVER - PLAYER ${winner} WINS`}
+              </span>
             </span>
           </div>
         )}
+
+        {gameStarted &&
+          !gameOver &&
+          !(currentPlayer === playerIndex && playerIndex > 0) && (
+            <div className="mt-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-sm font-semibold text-center py-2 px-4 rounded-xl shadow-lg">
+              <span className="inline-flex items-center">
+                🎮 <span className="ml-1">GAME IN PROGRESS</span>
+                {connectedPlayerIds.length < playerEntries.length && (
+                  <span className="ml-2 text-xs bg-yellow-500 px-2 py-1 rounded">
+                    {playerEntries.length - connectedPlayerIds.length}{" "}
+                    DISCONNECTED
+                  </span>
+                )}
+              </span>
+            </div>
+          )}
       </div>
     </div>
   );

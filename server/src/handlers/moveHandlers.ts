@@ -1,6 +1,10 @@
 import { Socket } from "socket.io";
 import { Game } from "../models/Game.ts";
 import { Board } from "../../../shared/logic/boardModel.ts";
+import {
+  evaluateGameStatus,
+  getNextActivePlayer,
+} from "../../../shared/logic/boardGameState.ts";
 import type {
   BoardState,
   MoveCoordinates,
@@ -19,21 +23,62 @@ interface DebugSetStateParams {
   gameStarted?: boolean;
 }
 
+interface GameStateEventPayload {
+  boardState: BoardState;
+  currentPlayer: PlayerIndex;
+  gameStarted: boolean;
+  gameOver: boolean;
+  winner: PlayerIndex | null;
+  isDraw: boolean;
+  activePlayers: PlayerIndex[];
+}
+
 export class MoveHandlers {
   constructor(
     private socket: Socket,
     private games: Map<string, Game>,
   ) {}
 
-  private emitGameStateUpdate(roomID: string, game: Game): void {
-    const payload = {
+  private createGameStatePayload(game: Game): GameStateEventPayload {
+    return {
       boardState: game.gameState.boardState,
       currentPlayer: game.gameState.currentPlayer,
       gameStarted: game.gameStarted,
+      gameOver: game.gameState.gameOver ?? false,
+      winner: game.gameState.winner ?? null,
+      isDraw: game.gameState.isDraw ?? false,
+      activePlayers: game.gameState.activePlayers ?? [],
     };
+  }
+
+  private evaluateAndApplyGameStatus(game: Game): PlayerIndex[] {
+    const status = evaluateGameStatus(game.gameState.boardState);
+    game.gameState.activePlayers = status.activePlayers;
+    game.gameState.gameOver = status.gameOver;
+    game.gameState.winner = status.winner;
+    game.gameState.isDraw = status.isDraw;
+
+    if (status.gameOver && status.winner) {
+      game.gameState.currentPlayer = status.winner;
+    }
+
+    return status.activePlayers;
+  }
+
+  private emitGameStateUpdate(
+    roomID: string,
+    game: Game,
+    emitGameOverEvent = false,
+  ): void {
+    const payload = this.createGameStatePayload(game);
 
     this.socket.to(roomID).emit("move-made", payload);
     this.socket.emit("move-made", payload);
+
+    if (emitGameOverEvent && payload.gameOver) {
+      this.socket.to(roomID).emit("game-over", payload);
+      this.socket.emit("game-over", payload);
+    }
   }
 
   handleMakeMove = ({ roomID, fromRow, toRow, fromCol, toCol }: MoveParams) => {
@@ -50,6 +95,11 @@ export class MoveHandlers {
     if (!game) {
       console.error(`Game not found for room: ${roomID}`);
       this.socket.emit("move-error", "Game not found");
+      return;
+    }
+
+    if (game.gameState.gameOver) {
+      this.socket.emit("move-error", "Game is over");
       return;
     }
 
@@ -125,16 +175,32 @@ export class MoveHandlers {
     // Update game state
     game.gameState.boardState = moveResult.newBoard;
 
-    if (moveResult.shouldChangePlayer) {
-      game.gameState.currentPlayer = Board.getNextPlayer(
+    const activePlayers = this.evaluateAndApplyGameStatus(game);
+
+    if (moveResult.shouldChangePlayer && !game.gameState.gameOver) {
+      game.gameState.currentPlayer = getNextActivePlayer(
         game.gameState.currentPlayer,
+        activePlayers,
       );
+    } else if (
+      !game.gameState.gameOver &&
+      activePlayers.length > 0 &&
+      !activePlayers.includes(game.gameState.currentPlayer)
+    ) {
+      game.gameState.currentPlayer = activePlayers[0];
     }
 
     // Emit new game state to all players in the room (exactly once)
-    this.emitGameStateUpdate(roomID, game);
+    const shouldEmitGameOver = game.gameState.gameOver ?? false;
+    this.emitGameStateUpdate(roomID, game, shouldEmitGameOver);
     console.log(
-      `✅ Move completed - Room: ${roomID}, Player: ${currentPlayerId}, New turn: Player ${game.gameState.currentPlayer}`,
+      `✅ Move completed - Room: ${roomID}, Player: ${currentPlayerId}, New turn: Player ${game.gameState.currentPlayer}${
+        game.gameState.gameOver
+          ? game.gameState.isDraw
+            ? " - DRAW"
+            : ` - WINNER: Player ${game.gameState.winner}`
+          : ""
+      }`,
     );
     console.log("new board state:");
     for (const row of game.gameState.boardState) {
@@ -159,6 +225,8 @@ export class MoveHandlers {
       return;
     }
 
+    const wasGameOver = game.gameState.gameOver === true;
+
     if (boardState) {
       game.gameState.boardState = boardState.map((row) => [...row]);
     }
@@ -172,6 +240,17 @@ export class MoveHandlers {
       game.gameState.gameStarted = gameStarted;
     }
 
-    this.emitGameStateUpdate(roomID, game);
+    const activePlayers = this.evaluateAndApplyGameStatus(game);
+    if (
+      !game.gameState.gameOver &&
+      activePlayers.length > 0 &&
+      !activePlayers.includes(game.gameState.currentPlayer)
+    ) {
+      game.gameState.currentPlayer = activePlayers[0];
+    }
+
+    const shouldEmitGameOver =
+      !wasGameOver && (game.gameState.gameOver ?? false);
+    this.emitGameStateUpdate(roomID, game, shouldEmitGameOver);
   };
 }
