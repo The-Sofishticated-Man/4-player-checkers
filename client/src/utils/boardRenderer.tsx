@@ -1,6 +1,10 @@
 import type { BoardState } from "../../../shared/types/gameTypes";
 import Cell from "../components/Cell";
 import Piece from "../components/Piece";
+import {
+  getBoardRotationForPlayer,
+  visualToLogicalPosition,
+} from "./boardOrientation";
 
 export const generateBoardCells = (
   boardState: BoardState,
@@ -16,9 +20,17 @@ export const generateBoardCells = (
 ) => {
   const cells = [];
   const boardSize = boardState.length;
+  const boardRotation = getBoardRotationForPlayer(playerIndex);
 
-  for (let row = 0; row < boardSize; row++) {
-    for (let col = 0; col < boardSize; col++) {
+  for (let visualRow = 0; visualRow < boardSize; visualRow++) {
+    for (let visualCol = 0; visualCol < boardSize; visualCol++) {
+      const { row, col } = visualToLogicalPosition(
+        visualRow,
+        visualCol,
+        boardSize,
+        boardRotation,
+      );
+
       // Alternate color: true for dark, false for light
       const isDark = (row + col) % 2 === 1;
 
@@ -41,7 +53,7 @@ export const generateBoardCells = (
 
       cells.push(
         <Cell
-          key={`${row}-${col}`}
+          key={`${visualRow}-${visualCol}`}
           row={row}
           column={col}
           isDark={isDark}
