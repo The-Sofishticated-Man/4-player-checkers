@@ -6,6 +6,14 @@ import type { BoardAction } from "../utils/boardActions";
 import { Board } from "../../../shared/logic/boardModel";
 import { useSocket } from "./useSocket";
 
+type BoardPosition = { row: number; col: number };
+type MoveResult = {
+  moved: boolean;
+  shouldContinueCapture: boolean;
+  nextPosition?: BoardPosition;
+  resultingBoard?: BoardState;
+};
+
 export const useDragAndDrop = (
   boardState: BoardState,
   dispatch: React.Dispatch<BoardAction> | undefined,
@@ -19,12 +27,117 @@ export const useDragAndDrop = (
     null,
   );
   const [activePiece, setActivePiece] = useState<number | null>(null);
+  const [selectedPiece, setSelectedPiece] = useState<BoardPosition | null>(
+    null,
+  );
   const { socket } = useSocket();
 
   const clearDragState = () => {
     setValidMoves([]);
     setDraggedPieceOwner(null);
     setActivePiece(null);
+    setSelectedPiece(null);
+  };
+
+  const getPieceOwner = (piece: number) =>
+    piece >= 10 ? Math.floor(piece / 10) : piece;
+
+  const selectPiece = (fromRow: number, fromCol: number) => {
+    const selected = boardState[fromRow][fromCol];
+    if (selected <= 0) {
+      clearDragState();
+      return;
+    }
+
+    const owner = getPieceOwner(selected);
+    const board = new Board(boardState);
+    const moves = allowMoveAnyPiece
+      ? board.getValidMoves(fromRow, fromCol)
+      : board.getValidMoves(fromRow, fromCol, currentPlayer);
+
+    setSelectedPiece({ row: fromRow, col: fromCol });
+    setDraggedPieceOwner(owner);
+    setActivePiece(selected);
+    setValidMoves(moves);
+  };
+
+  const executeMove = (
+    fromRow: number,
+    fromCol: number,
+    toRow: number,
+    toCol: number,
+  ): MoveResult => {
+    if (fromRow === toRow && fromCol === toCol) {
+      return { moved: false, shouldContinueCapture: false };
+    }
+
+    const board = new Board(boardState);
+    const isCaptureMove = board.isCapture(fromRow, fromCol, toRow, toCol);
+
+    const isLocallyValidMove = allowMoveAnyPiece
+      ? true
+      : board.isValidMoveWithCaptures(
+          fromRow,
+          fromCol,
+          toRow,
+          toCol,
+          currentPlayer,
+        );
+
+    if (!isLocallyValidMove) {
+      return { moved: false, shouldContinueCapture: false };
+    }
+
+    const moveResult = board.applyMove({ fromRow, fromCol, toRow, toCol });
+    const shouldContinueCapture =
+      isCaptureMove && !moveResult.shouldChangePlayer;
+
+    if (dispatch) {
+      const optimisticAction: BoardAction = allowMoveAnyPiece
+        ? {
+            type: "SANDBOX_APPLY_MOVE",
+            payload: { fromRow, fromCol, toRow, toCol },
+          }
+        : isCaptureMove
+          ? (() => {
+              const { capturedRow, capturedCol } = board.getCapturedPosition(
+                fromRow,
+                fromCol,
+                toRow,
+                toCol,
+              );
+
+              return {
+                type: "CAPTURE_PIECE",
+                payload: {
+                  fromRow,
+                  fromCol,
+                  toRow,
+                  toCol,
+                  capturedRow,
+                  capturedCol,
+                },
+              };
+            })()
+          : {
+              type: "MOVE_PIECE",
+              payload: { fromRow, fromCol, toRow, toCol },
+            };
+
+      // Commit optimistic state immediately so the piece does not wait on server round-trip.
+      flushSync(() => {
+        dispatch(optimisticAction);
+      });
+    }
+
+    const roomID = sessionStorage.getItem("currentRoomId");
+    socket?.emit("make-move", { roomID, fromRow, fromCol, toRow, toCol });
+    return {
+      moved: true,
+      shouldContinueCapture,
+      nextPosition: { row: toRow, col: toCol },
+      resultingBoard: moveResult.newBoard,
+    };
   };
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -34,20 +147,7 @@ export const useDragAndDrop = (
     const pieceId = active.id as string;
     const [, fromRow, fromCol] = pieceId.split("-").map(Number);
 
-    // Get the piece being dragged and determine its owner
-    const draggedPiece = boardState[fromRow][fromCol];
-    const owner =
-      draggedPiece >= 10 ? Math.floor(draggedPiece / 10) : draggedPiece;
-
-    setDraggedPieceOwner(owner);
-    setActivePiece(draggedPiece);
-
-    // Calculate and set valid moves for highlighting
-    const board = new Board(boardState);
-    const moves = allowMoveAnyPiece
-      ? board.getValidMoves(fromRow, fromCol)
-      : board.getValidMoves(fromRow, fromCol, currentPlayer);
-    setValidMoves(moves);
+    selectPiece(fromRow, fromCol);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -66,67 +166,7 @@ export const useDragAndDrop = (
     const cellId = over.id as string;
     const [, toRow, toCol] = cellId.split("-").map(Number);
 
-    // Only move if the position actually changed
-    if (fromRow !== toRow || fromCol !== toCol) {
-      const board = new Board(boardState);
-      const isCaptureMove = board.isCapture(fromRow, fromCol, toRow, toCol);
-
-      const isLocallyValidMove = allowMoveAnyPiece
-        ? true
-        : board.isValidMoveWithCaptures(
-            fromRow,
-            fromCol,
-            toRow,
-            toCol,
-            currentPlayer,
-          );
-
-      if (!isLocallyValidMove) {
-        clearDragState();
-        return;
-      }
-
-      if (dispatch) {
-        const optimisticAction: BoardAction = allowMoveAnyPiece
-          ? {
-              type: "SANDBOX_APPLY_MOVE",
-              payload: { fromRow, fromCol, toRow, toCol },
-            }
-          : isCaptureMove
-            ? (() => {
-                const { capturedRow, capturedCol } = board.getCapturedPosition(
-                  fromRow,
-                  fromCol,
-                  toRow,
-                  toCol,
-                );
-
-                return {
-                  type: "CAPTURE_PIECE",
-                  payload: {
-                    fromRow,
-                    fromCol,
-                    toRow,
-                    toCol,
-                    capturedRow,
-                    capturedCol,
-                  },
-                };
-              })()
-            : {
-                type: "MOVE_PIECE",
-                payload: { fromRow, fromCol, toRow, toCol },
-              };
-
-        // Commit optimistic state immediately so the piece does not wait on server round-trip.
-        flushSync(() => {
-          dispatch(optimisticAction);
-        });
-      }
-
-      const roomID = sessionStorage.getItem("currentRoomId");
-      socket?.emit("make-move", { roomID, fromRow, fromCol, toRow, toCol });
-    }
+    executeMove(fromRow, fromCol, toRow, toCol);
 
     clearDragState();
   };
@@ -136,12 +176,77 @@ export const useDragAndDrop = (
     clearDragState();
   };
 
+  const handlePieceClick = (row: number, col: number) => {
+    const clickedPiece = boardState[row][col];
+    if (clickedPiece <= 0) {
+      return;
+    }
+
+    const owner = getPieceOwner(clickedPiece);
+    if (!allowMoveAnyPiece && owner !== currentPlayer) {
+      return;
+    }
+
+    if (selectedPiece?.row === row && selectedPiece.col === col) {
+      clearDragState();
+      return;
+    }
+
+    selectPiece(row, col);
+  };
+
+  const handleCellClick = (row: number, col: number) => {
+    if (!selectedPiece) {
+      return;
+    }
+
+    if (selectedPiece.row === row && selectedPiece.col === col) {
+      clearDragState();
+      return;
+    }
+
+    const moveResult = executeMove(
+      selectedPiece.row,
+      selectedPiece.col,
+      row,
+      col,
+    );
+    if (!moveResult.moved) {
+      return;
+    }
+
+    if (
+      moveResult.shouldContinueCapture &&
+      moveResult.nextPosition &&
+      moveResult.resultingBoard
+    ) {
+      const { row: nextRow, col: nextCol } = moveResult.nextPosition;
+      const movedPiece = moveResult.resultingBoard[nextRow][nextCol];
+      const owner = getPieceOwner(movedPiece);
+      const nextBoard = new Board(moveResult.resultingBoard);
+      const nextMoves = allowMoveAnyPiece
+        ? nextBoard.getValidMoves(nextRow, nextCol)
+        : nextBoard.getValidMoves(nextRow, nextCol, currentPlayer);
+
+      setSelectedPiece({ row: nextRow, col: nextCol });
+      setDraggedPieceOwner(owner);
+      setActivePiece(movedPiece);
+      setValidMoves(nextMoves);
+      return;
+    }
+
+    clearDragState();
+  };
+
   return {
     validMoves,
     draggedPieceOwner,
     activePiece,
+    selectedPiece,
     handleDragStart,
     handleDragEnd,
     handleDragCancel,
+    handlePieceClick,
+    handleCellClick,
   };
 };

@@ -9,6 +9,7 @@ const Cell = ({
   isValidMove = false,
   isValidCapture = false,
   draggedPieceOwner = null,
+  onClick,
 }: {
   isDark: boolean;
   row: number;
@@ -17,6 +18,7 @@ const Cell = ({
   isValidMove?: boolean;
   isValidCapture?: boolean;
   draggedPieceOwner?: number | null;
+  onClick?: () => void;
 }) => {
   const {
     gameState: { currentPlayer, boardState },
@@ -57,6 +59,7 @@ const Cell = ({
       ref={setNodeRef}
       className={`${baseColor} border-2  flex items-center justify-center aspect-square w-20 h-20`}
       id={`cell-${row}-${column}`}
+      onClick={onClick}
     >
       {children}
       {validMoveMarkup}

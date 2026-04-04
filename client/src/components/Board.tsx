@@ -1,4 +1,10 @@
-import { DndContext, DragOverlay } from "@dnd-kit/core";
+import {
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
 import useGameState from "../hooks/useBoard";
 import { useDragAndDrop } from "../hooks/useDragAndDrop";
 import { generateBoardCells } from "../utils/boardRenderer";
@@ -19,10 +25,20 @@ const Board = ({ allowMoveAnyPiece = false }: BoardProps) => {
     validMoves,
     draggedPieceOwner,
     activePiece,
+    selectedPiece,
     handleDragStart,
     handleDragEnd,
     handleDragCancel,
+    handlePieceClick,
+    handleCellClick,
   } = useDragAndDrop(boardState, dispatch, allowMoveAnyPiece, currentPlayer);
+
+  // Keep click-to-select separate from drag by requiring small pointer movement.
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
+  );
 
   const renderOverlayPiece = () => {
     if (!activePiece || activePiece < 0) {
@@ -68,12 +84,16 @@ const Board = ({ allowMoveAnyPiece = false }: BoardProps) => {
     playerIndex,
     (gameStarted || false) && !gameOver,
     allowMoveAnyPiece,
+    selectedPiece,
+    handlePieceClick,
+    handleCellClick,
   );
 
   const boardSize = boardState.length;
 
   return (
     <DndContext
+      sensors={sensors}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}

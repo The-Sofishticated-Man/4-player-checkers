@@ -10,6 +10,9 @@ export const generateBoardCells = (
   playerIndex: number,
   gameStarted: boolean = false,
   allowMoveAnyPiece: boolean = false,
+  selectedPiece: { row: number; col: number } | null = null,
+  onPieceClick: (row: number, col: number) => void = () => {},
+  onCellClick: (row: number, col: number) => void = () => {},
 ) => {
   const cells = [];
   const boardSize = boardState.length;
@@ -25,6 +28,16 @@ export const generateBoardCells = (
       );
       const isValidMove = !!validMove && !validMove.isCapture;
       const isValidCapture = !!validMove && validMove.isCapture;
+      const isSelectedPiece =
+        selectedPiece?.row === row && selectedPiece.col === col;
+      const pieceValue = boardState[row][col];
+      const isPieceDisabled =
+        !gameStarted ||
+        (!allowMoveAnyPiece &&
+          (currentPlayer !== playerIndex ||
+            (pieceValue >= 10
+              ? Math.floor(pieceValue / 10) !== playerIndex
+              : pieceValue !== playerIndex)));
 
       cells.push(
         <Cell
@@ -35,19 +48,15 @@ export const generateBoardCells = (
           isValidMove={isValidMove}
           isValidCapture={isValidCapture}
           draggedPieceOwner={draggedPieceOwner}
+          onClick={() => onCellClick(row, col)}
         >
-          {boardState[row][col] !== 0 && (
+          {pieceValue !== 0 && (
             <Piece
               pieceID={`piece-${row}-${col}`}
-              player={boardState[row][col]}
-              disabled={
-                !gameStarted || // Game hasn't started yet
-                (!allowMoveAnyPiece &&
-                  (currentPlayer !== playerIndex || // Not player's turn
-                    (boardState[row][col] >= 10
-                      ? Math.floor(boardState[row][col] / 10) !== playerIndex // King doesn't belong to player
-                      : boardState[row][col] !== playerIndex))) // Regular piece doesn't belong to player
-              }
+              player={pieceValue}
+              disabled={isPieceDisabled}
+              isSelected={isSelectedPiece}
+              onClick={() => onPieceClick(row, col)}
             />
           )}
         </Cell>,

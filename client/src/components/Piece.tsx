@@ -1,3 +1,4 @@
+import type { MouseEvent } from "react";
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 
@@ -5,10 +6,14 @@ const Piece = ({
   pieceID,
   player,
   disabled = false,
+  isSelected = false,
+  onClick,
 }: {
   pieceID: string;
   player: number;
   disabled?: boolean;
+  isSelected?: boolean;
+  onClick?: () => void;
 }) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({
@@ -44,6 +49,12 @@ const Piece = ({
   const playerColor = getPlayerColor(playerNumber);
   const borderStyle = isKing ? "border-4 border-yellow-400" : "";
   const cursorStyle = !disabled && "cursor-pointer";
+  const selectedStyle = isSelected ? "ring-4 ring-white" : "";
+
+  const handleClick = (event: MouseEvent<HTMLDivElement>) => {
+    event.stopPropagation();
+    onClick?.();
+  };
 
   return (
     <div
@@ -51,7 +62,8 @@ const Piece = ({
       style={style}
       {...attributes}
       {...(disabled ? {} : listeners)}
-      className={`${playerColor} ${borderStyle} ${cursorStyle}  w-10 h-10 rounded-full mx-auto my-auto aspect-square flex items-center justify-center`}
+      className={`${playerColor} ${borderStyle} ${cursorStyle} ${selectedStyle} w-10 h-10 rounded-full mx-auto my-auto aspect-square flex items-center justify-center`}
+      onClick={handleClick}
     >
       {isKing && <span className="text-yellow-400 font-bold text-xs">♔</span>}
     </div>
