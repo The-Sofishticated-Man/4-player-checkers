@@ -10,6 +10,7 @@ export const useDragAndDrop = (
   boardState: BoardState,
   dispatch: React.Dispatch<BoardAction> | undefined,
   allowMoveAnyPiece: boolean = false,
+  currentPlayer?: number,
 ) => {
   const [validMoves, setValidMoves] = useState<
     { row: number; col: number; isCapture: boolean }[]
@@ -43,7 +44,9 @@ export const useDragAndDrop = (
 
     // Calculate and set valid moves for highlighting
     const board = new Board(boardState);
-    const moves = board.getValidMoves(fromRow, fromCol);
+    const moves = allowMoveAnyPiece
+      ? board.getValidMoves(fromRow, fromCol)
+      : board.getValidMoves(fromRow, fromCol, currentPlayer);
     setValidMoves(moves);
   };
 
@@ -67,14 +70,16 @@ export const useDragAndDrop = (
     if (fromRow !== toRow || fromCol !== toCol) {
       const board = new Board(boardState);
       const isCaptureMove = board.isCapture(fromRow, fromCol, toRow, toCol);
-      const isDestinationOccupied = board.isOccupied(toRow, toCol);
 
       const isLocallyValidMove = allowMoveAnyPiece
         ? true
-        : isCaptureMove
-          ? board.isValidCaptureForPlayer(fromRow, fromCol, toRow, toCol) &&
-            !isDestinationOccupied
-          : board.isValidMove(fromRow, fromCol, toRow, toCol);
+        : board.isValidMoveWithCaptures(
+            fromRow,
+            fromCol,
+            toRow,
+            toCol,
+            currentPlayer,
+          );
 
       if (!isLocallyValidMove) {
         clearDragState();

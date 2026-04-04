@@ -22,7 +22,7 @@ const Board = ({ allowMoveAnyPiece = false }: BoardProps) => {
     handleDragStart,
     handleDragEnd,
     handleDragCancel,
-  } = useDragAndDrop(boardState, dispatch, allowMoveAnyPiece);
+  } = useDragAndDrop(boardState, dispatch, allowMoveAnyPiece, currentPlayer);
 
   const renderOverlayPiece = () => {
     if (!activePiece || activePiece < 0) {

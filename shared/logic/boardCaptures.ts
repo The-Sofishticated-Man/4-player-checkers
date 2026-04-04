@@ -94,25 +94,67 @@ export function hasValidCapture(
   return false;
 }
 
+export function hasAnyCaptureForPlayer(
+  boardState: BoardState,
+  player: number,
+): boolean {
+  if (player < 1 || player > 4) {
+    return false;
+  }
+
+  for (let row = 0; row < boardState.length; row++) {
+    for (let col = 0; col < boardState[0].length; col++) {
+      if (getPlayerFromPiece(boardState[row][col]) !== player) {
+        continue;
+      }
+
+      if (hasValidCapture(boardState, row, col)) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
 export function getValidMoves(
   boardState: BoardState,
   fromRow: number,
   fromCol: number,
+  currentPlayer?: number,
 ): ValidMove[] {
+  if (
+    fromRow < 0 ||
+    fromRow >= boardState.length ||
+    fromCol < 0 ||
+    fromCol >= boardState[0].length
+  ) {
+    return [];
+  }
+
+  const piece = boardState[fromRow][fromCol];
+  if (piece <= 0) {
+    return [];
+  }
+
+  const piecePlayer = getPlayerFromPiece(piece);
+  const movingPlayer = currentPlayer ?? piecePlayer;
+
+  if (piecePlayer !== movingPlayer) {
+    return [];
+  }
+
+  const playerHasCapture = hasAnyCaptureForPlayer(boardState, movingPlayer);
   const validMoves: ValidMove[] = [];
 
   for (let toRow = 0; toRow < boardState.length; toRow++) {
     for (let toCol = 0; toCol < boardState[0].length; toCol++) {
-      const isRegularMove = isValidMove(
-        boardState,
-        fromRow,
-        fromCol,
-        toRow,
-        toCol,
-      );
       const isCaptureMove =
         isValidCaptureForPlayer(boardState, fromRow, fromCol, toRow, toCol) &&
         !isOccupied(boardState, toRow, toCol);
+      const isRegularMove =
+        !playerHasCapture &&
+        isValidMove(boardState, fromRow, fromCol, toRow, toCol);
 
       if (isRegularMove || isCaptureMove) {
         validMoves.push({ row: toRow, col: toCol, isCapture: isCaptureMove });
@@ -129,9 +171,38 @@ export function isValidMoveWithCaptures(
   fromCol: number,
   toRow: number,
   toCol: number,
+  currentPlayer?: number,
 ): boolean {
+  if (
+    fromRow < 0 ||
+    fromRow >= boardState.length ||
+    fromCol < 0 ||
+    fromCol >= boardState[0].length
+  ) {
+    return false;
+  }
+
+  const piece = boardState[fromRow][fromCol];
+  if (piece <= 0) {
+    return false;
+  }
+
+  const piecePlayer = getPlayerFromPiece(piece);
+  const movingPlayer = currentPlayer ?? piecePlayer;
+
+  if (piecePlayer !== movingPlayer) {
+    return false;
+  }
+
+  const isCaptureMove =
+    isValidCaptureForPlayer(boardState, fromRow, fromCol, toRow, toCol) &&
+    !isOccupied(boardState, toRow, toCol);
+
+  if (hasAnyCaptureForPlayer(boardState, movingPlayer)) {
+    return isCaptureMove;
+  }
+
   return (
-    isValidMove(boardState, fromRow, fromCol, toRow, toCol) ||
-    isValidCaptureForPlayer(boardState, fromRow, fromCol, toRow, toCol)
+    isCaptureMove || isValidMove(boardState, fromRow, fromCol, toRow, toCol)
   );
 }

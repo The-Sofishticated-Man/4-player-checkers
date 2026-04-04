@@ -124,21 +124,26 @@ export class MoveHandlers {
       move.toCol,
     );
 
-    if (isCapture) {
-      // Validate capture move
-      if (
-        !SANDBOX_MODE &&
-        !board.isValidCaptureForPlayer(fromRow, fromCol, toRow, toCol)
-      ) {
-        this.socket.emit("move-error", "Invalid capture move");
+    if (
+      !SANDBOX_MODE &&
+      !board.isValidMoveWithCaptures(
+        fromRow,
+        fromCol,
+        toRow,
+        toCol,
+        game.gameState.currentPlayer,
+      )
+    ) {
+      if (board.hasAnyCapture(game.gameState.currentPlayer) && !isCapture) {
+        this.socket.emit("move-error", "Capture available: you must capture");
         return;
       }
-    } else {
-      // Validate regular move
-      if (!SANDBOX_MODE && !board.isValidMove(fromRow, fromCol, toRow, toCol)) {
-        this.socket.emit("move-error", "Invalid move");
-        return;
-      }
+
+      this.socket.emit(
+        "move-error",
+        isCapture ? "Invalid capture move" : "Invalid move",
+      );
+      return;
     }
 
     const moveResult = board.applyMove(move);

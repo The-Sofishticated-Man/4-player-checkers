@@ -12,6 +12,7 @@ import {
 } from "./boardGeometry.ts";
 import {
   getValidMoves as calculateValidMoves,
+  hasAnyCaptureForPlayer as calculateHasAnyCaptureForPlayer,
   hasValidCapture as calculateHasValidCapture,
   isValidCaptureForPlayer as validateCaptureForPlayer,
   isValidMoveWithCaptures as validateMoveWithCaptures,
@@ -150,8 +151,21 @@ export class Board {
     return calculateHasValidCapture(this.boardState, fromRow, fromCol);
   }
 
-  public getValidMoves(fromRow: number, fromCol: number): ValidMove[] {
-    return calculateValidMoves(this.boardState, fromRow, fromCol);
+  public hasAnyCapture(player: number): boolean {
+    return calculateHasAnyCaptureForPlayer(this.boardState, player);
+  }
+
+  public getValidMoves(
+    fromRow: number,
+    fromCol: number,
+    currentPlayer?: number,
+  ): ValidMove[] {
+    return calculateValidMoves(
+      this.boardState,
+      fromRow,
+      fromCol,
+      currentPlayer,
+    );
   }
 
   public isValidMoveWithCaptures(
@@ -159,6 +173,7 @@ export class Board {
     fromCol: number,
     toRow: number,
     toCol: number,
+    currentPlayer?: number,
   ): boolean {
     return validateMoveWithCaptures(
       this.boardState,
@@ -166,6 +181,7 @@ export class Board {
       fromCol,
       toRow,
       toCol,
+      currentPlayer,
     );
   }
 

@@ -36,7 +36,15 @@ export const boardReducer = (
       const { fromRow, fromCol, toRow, toCol } = payload;
 
       // Validate the move before executing
-      if (!board.isValidMoveWithCaptures(fromRow, fromCol, toRow, toCol)) {
+      if (
+        !board.isValidMoveWithCaptures(
+          fromRow,
+          fromCol,
+          toRow,
+          toCol,
+          currentPlayer,
+        )
+      ) {
         return gameState; // Invalid move, return current state
       }
 
@@ -77,7 +85,15 @@ export const boardReducer = (
       }
 
       // Validate the capture is legal
-      if (!board.isValidMoveWithCaptures(fromRow, fromCol, toRow, toCol)) {
+      if (
+        !board.isValidMoveWithCaptures(
+          fromRow,
+          fromCol,
+          toRow,
+          toCol,
+          currentPlayer,
+        )
+      ) {
         return gameState; // Invalid capture
       }
 
