@@ -31,6 +31,14 @@ export class MoveHandlers {
 
     if (status.gameOver && status.winner) {
       game.gameState.currentPlayer = status.winner;
+    } else if (
+      status.activePlayers.length > 0 &&
+      !status.activePlayers.includes(game.gameState.currentPlayer)
+    ) {
+      game.gameState.currentPlayer = getNextActivePlayer(
+        game.gameState.currentPlayer,
+        status.activePlayers,
+      );
     }
 
     return status.activePlayers;
@@ -73,6 +81,9 @@ export class MoveHandlers {
       this.socket.emit("move-error", "Game is over");
       return;
     }
+
+    // Keep turn state resilient if the current player has been eliminated.
+    this.evaluateAndApplyGameStatus(game);
 
     const currentPlayerId = this.socket.data.playerId as string | undefined;
     if (!currentPlayerId) {

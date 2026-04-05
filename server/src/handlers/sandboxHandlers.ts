@@ -32,6 +32,14 @@ export class SandboxHandlers {
 
     if (status.gameOver && status.winner) {
       game.gameState.currentPlayer = status.winner;
+    } else if (
+      status.activePlayers.length > 0 &&
+      !status.activePlayers.includes(game.gameState.currentPlayer)
+    ) {
+      game.gameState.currentPlayer = getNextActivePlayer(
+        game.gameState.currentPlayer,
+        status.activePlayers,
+      );
     }
 
     return status.activePlayers;

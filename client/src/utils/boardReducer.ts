@@ -3,9 +3,26 @@ import type { GameState } from "../../../shared/types/gameTypes";
 
 import { Board } from "../../../shared/logic/boardModel";
 import {
+  evaluateGameStatus,
+  getNextActivePlayer,
+} from "../../../shared/logic/boardGameState";
+import {
   shouldPromoteToKing,
   promoteToKing,
 } from "../../../shared/logic/pieceUtils";
+
+const getNextTurn = (
+  gameState: GameState,
+  nextBoardState: GameState["boardState"],
+) => {
+  const status = evaluateGameStatus(nextBoardState);
+
+  if (status.activePlayers.length === 0) {
+    return gameState.currentPlayer;
+  }
+
+  return getNextActivePlayer(gameState.currentPlayer, status.activePlayers);
+};
 
 // Reducer function to handle board
 // Accepts current state and an  returns new state
@@ -26,7 +43,7 @@ export const boardReducer = (
         ...gameState,
         boardState: moveResult.newBoard,
         currentPlayer: moveResult.shouldChangePlayer
-          ? (((currentPlayer % 4) + 1) as 1 | 2 | 3 | 4)
+          ? getNextTurn(gameState, moveResult.newBoard)
           : currentPlayer,
       };
     }
@@ -70,7 +87,7 @@ export const boardReducer = (
       return {
         ...gameState,
         boardState: newBoard,
-        currentPlayer: ((currentPlayer % 4) + 1) as 1 | 2 | 3 | 4, // Cycle through players 1->2->3->4->1
+        currentPlayer: getNextTurn(gameState, newBoard),
       };
     }
 
@@ -128,7 +145,7 @@ export const boardReducer = (
         // Only switch players if no more captures are available
         currentPlayer: hasMoreCaptures
           ? currentPlayer
-          : (((currentPlayer % 4) + 1) as 1 | 2 | 3 | 4),
+          : getNextTurn(gameState, newBoard),
       };
     }
     case "UPDATE_GAME_STATE": {

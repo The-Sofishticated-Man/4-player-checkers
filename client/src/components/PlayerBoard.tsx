@@ -9,6 +9,7 @@ function PlayerBoard() {
       gameOver,
       winner,
       isDraw,
+      activePlayers,
     },
     playerIndex,
   } = useGameState();
@@ -17,6 +18,13 @@ function PlayerBoard() {
     ([, player]) => player.isConnected,
   );
   const connectedPlayerIds = connectedPlayers.map(([playerId]) => playerId);
+  const playerSlots = [1, 2, 3, 4] as const;
+  const defeatedPlayers = playerSlots.filter(
+    (slot) => !(activePlayers ?? playerSlots).includes(slot),
+  );
+  const isYouDefeated =
+    playerIndex > 0 &&
+    defeatedPlayers.includes(playerIndex as (typeof playerSlots)[number]);
 
   // Get the current room ID from session storage
   const roomId = sessionStorage.getItem("currentRoomId");
@@ -70,6 +78,9 @@ function PlayerBoard() {
     const playerEntry = playerEntries[slotNumber - 1];
     const playerId = playerEntry?.[0];
     const isConnected = Boolean(playerEntry?.[1].isConnected);
+    const isDefeated =
+      Boolean(playerId) &&
+      defeatedPlayers.includes(slotNumber as (typeof playerSlots)[number]);
 
     return (
       <div
@@ -81,13 +92,16 @@ function PlayerBoard() {
               ? `bg-gradient-to-r from-${playerColor.bg.split("-")[1]}-50 to-${
                   playerColor.bg.split("-")[1]
                 }-100 border-2 ${playerColor.border} shadow-lg`
-              : playerId
-                ? isConnected
-                  ? "bg-gradient-to-r from-gray-50 to-gray-100 border-2 border-gray-200"
-                  : "bg-gradient-to-r from-yellow-50 to-yellow-100 border-2 border-yellow-300"
-                : "bg-gradient-to-r from-gray-100 to-gray-200 border-2 border-dashed border-gray-300"
+              : isDefeated
+                ? "bg-gradient-to-r from-slate-100 to-slate-200 border-2 border-slate-400"
+                : playerId
+                  ? isConnected
+                    ? "bg-gradient-to-r from-gray-50 to-gray-100 border-2 border-gray-200"
+                    : "bg-gradient-to-r from-yellow-50 to-yellow-100 border-2 border-yellow-300"
+                  : "bg-gradient-to-r from-gray-100 to-gray-200 border-2 border-dashed border-gray-300"
           }
           ${isCurrentTurn ? "scale-105" : ""}
+          ${isDefeated ? "opacity-80" : ""}
         `}
       >
         {/* Glow effect for current turn */}
@@ -109,9 +123,11 @@ function PlayerBoard() {
               ${
                 !playerId
                   ? "opacity-50 grayscale"
-                  : !isConnected
-                    ? "opacity-75"
-                    : ""
+                  : isDefeated
+                    ? "opacity-60 grayscale"
+                    : !isConnected
+                      ? "opacity-75"
+                      : ""
               }
             `}
           >
@@ -121,7 +137,11 @@ function PlayerBoard() {
           <div className="flex flex-col">
             <div
               className={`font-semibold text-sm ${
-                playerId ? playerColor.text : "text-gray-500"
+                !playerId
+                  ? "text-gray-500"
+                  : isDefeated
+                    ? "text-slate-600"
+                    : playerColor.text
               }`}
             >
               {playerColor.name}
@@ -130,22 +150,29 @@ function PlayerBoard() {
               <div
                 className={`text-xs ${
                   playerId
-                    ? isConnected
-                      ? "text-green-600"
-                      : "text-yellow-600"
+                    ? isDefeated
+                      ? "text-rose-700"
+                      : isConnected
+                        ? "text-green-600"
+                        : "text-yellow-600"
                     : "text-gray-500"
                 }`}
               >
                 {playerId
-                  ? isConnected
-                    ? "Online"
-                    : "Disconnected"
+                  ? isDefeated
+                    ? "Defeated"
+                    : isConnected
+                      ? "Online"
+                      : "Disconnected"
                   : "Waiting..."}
               </div>
-              {playerId && isConnected && (
+              {playerId && isDefeated && (
+                <div className="w-2 h-2 bg-rose-500 rounded-full"></div>
+              )}
+              {playerId && !isDefeated && isConnected && (
                 <div className="w-2 h-2 bg-green-400 rounded-full animate-ping"></div>
               )}
-              {playerId && !isConnected && (
+              {playerId && !isDefeated && !isConnected && (
                 <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
               )}
             </div>
@@ -160,7 +187,13 @@ function PlayerBoard() {
             </div>
           )}
 
-          {isCurrentTurn && playerId && isConnected && (
+          {isDefeated && (
+            <div className="px-2 py-1 bg-gradient-to-r from-rose-500 to-red-600 text-white text-xs font-bold rounded-full shadow-sm">
+              DEFEATED
+            </div>
+          )}
+
+          {isCurrentTurn && playerId && isConnected && !isDefeated && (
             <div className="px-2 py-1 bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xs font-bold rounded-full animate-bounce shadow-sm">
               TURN
             </div>
@@ -196,7 +229,7 @@ function PlayerBoard() {
 
       {/* Players Grid - 2x2 layout for wider appearance */}
       <div className="grid grid-cols-2 gap-3 mb-4">
-        {[1, 2, 3, 4].map(renderPlayerSlot)}
+        {playerSlots.map(renderPlayerSlot)}
       </div>
 
       {/* Game Status - Horizontal layout */}
@@ -215,6 +248,17 @@ function PlayerBoard() {
                 <span className="text-gray-600">Connected:</span>
                 <span className="font-semibold ml-1 text-green-600">
                   {connectedPlayers.length}/{playerEntries.length}
+                </span>
+              </div>
+            )}
+
+            {defeatedPlayers.length > 0 && (
+              <div>
+                <span className="text-gray-600">Defeated:</span>
+                <span className="font-semibold ml-1 text-rose-600">
+                  {defeatedPlayers
+                    .map((slot) => getPlayerColor(slot).name)
+                    .join(", ")}
                 </span>
               </div>
             )}
@@ -267,6 +311,14 @@ function PlayerBoard() {
               </span>
             </div>
           )}
+
+        {isYouDefeated && gameStarted && !gameOver && (
+          <div className="mt-3 bg-gradient-to-r from-rose-500 to-red-600 text-white text-sm font-semibold text-center py-2 px-4 rounded-xl shadow-lg">
+            <span className="inline-flex items-center">
+              💥 <span className="ml-1">YOU ARE DEFEATED - TURN SKIPPED</span>
+            </span>
+          </div>
+        )}
 
         {/* Game status indicator */}
         {!gameStarted && !gameOver && (
