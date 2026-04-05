@@ -1,13 +1,23 @@
 import { Socket } from "socket.io";
 import { Game } from "../models/Game.ts";
 import { generateID } from "../utils/gameUtils.ts";
-import type { PlayerId } from "../../../shared/types/gameTypes.ts";
+import type { PlayerId, PlayerIndex } from "../../../shared/types/gameTypes.ts";
 import { SANDBOX_MODE } from "../utils/devSandbox.ts";
+import {
+  evaluateGameStatus,
+  getNextActivePlayer,
+} from "../../../shared/logic/boardGameState.ts";
+import { applyPlayerForfeit } from "../../../shared/logic/boardForfeit.ts";
 import {
   createGameStateEventPayload,
   createSandboxRoomStatePayload,
   serializeGameState,
 } from "../utils/sandboxEvents.ts";
+
+interface ForfeitAck {
+  ok: boolean;
+  message?: string;
+}
 
 export class RoomHandlers {
   constructor(
@@ -23,6 +33,28 @@ export class RoomHandlers {
     const payload = createSandboxRoomStatePayload(game);
     this.socket.to(game.gameId).emit("sandbox-room-state", payload);
     this.socket.emit("sandbox-room-state", payload);
+  }
+
+  private evaluateAndApplyGameStatus(game: Game): PlayerIndex[] {
+    const status = evaluateGameStatus(game.gameState.boardState);
+    game.gameState.activePlayers = status.activePlayers;
+    game.gameState.gameOver = status.gameOver;
+    game.gameState.winner = status.winner;
+    game.gameState.isDraw = status.isDraw;
+
+    if (status.gameOver && status.winner) {
+      game.gameState.currentPlayer = status.winner;
+    } else if (
+      status.activePlayers.length > 0 &&
+      !status.activePlayers.includes(game.gameState.currentPlayer)
+    ) {
+      game.gameState.currentPlayer = getNextActivePlayer(
+        game.gameState.currentPlayer,
+        status.activePlayers,
+      );
+    }
+
+    return status.activePlayers;
   }
 
   handleRoomCreation = () => {
@@ -45,6 +77,12 @@ export class RoomHandlers {
 
     // Check if player is already in the game (reconnecting)
     if (game.hasPlayer(playerId)) {
+      const existingPlayerState = game.players.get(playerId);
+      if (existingPlayerState?.leftGame) {
+        this.socket.emit("room-join-denied", "You already forfeited this game");
+        return;
+      }
+
       this.socket.join(roomID);
       game.reconnectPlayer(playerId);
       this.socket.data.playerId = playerId;
@@ -139,6 +177,93 @@ export class RoomHandlers {
     game.logGameState();
   };
 
+  handlePlayerForfeit = (
+    roomID?: string,
+    acknowledge?: (response: ForfeitAck) => void,
+  ) => {
+    const targetRoomId =
+      roomID ?? (this.socket.data.gameId as string | undefined);
+    const playerId = this.socket.data.playerId as string | undefined;
+
+    if (!targetRoomId || !playerId) {
+      acknowledge?.({ ok: false, message: "Not currently in a game room" });
+      return;
+    }
+
+    const game = this.games.get(targetRoomId);
+    if (!game) {
+      acknowledge?.({ ok: false, message: "Game not found" });
+      return;
+    }
+
+    const playerState = game.players.get(playerId);
+    if (!playerState) {
+      acknowledge?.({ ok: false, message: "Player not found in this game" });
+      return;
+    }
+
+    if (playerState.leftGame) {
+      acknowledge?.({ ok: false, message: "You already forfeited this game" });
+      return;
+    }
+
+    const playerIndex = game.getPlayerIndexFromId(playerId);
+    if (playerIndex < 1 || playerIndex > 4) {
+      acknowledge?.({ ok: false, message: "Could not resolve player slot" });
+      return;
+    }
+
+    const forfeitedPlayerIndex = playerIndex as PlayerIndex;
+
+    game.gameState.boardState = applyPlayerForfeit(
+      game.gameState.boardState,
+      forfeitedPlayerIndex,
+    );
+
+    playerState.leftGame = true;
+    playerState.isConnected = false;
+
+    const activePlayers = this.evaluateAndApplyGameStatus(game);
+    if (
+      !game.gameState.gameOver &&
+      activePlayers.length > 0 &&
+      !activePlayers.includes(game.gameState.currentPlayer)
+    ) {
+      game.gameState.currentPlayer = getNextActivePlayer(
+        game.gameState.currentPlayer,
+        activePlayers,
+      );
+    }
+
+    const roomPayload = {
+      roomID: game.gameId,
+      forfeitedPlayerId: playerId,
+      forfeitedPlayerIndex,
+      gameState: serializeGameState(game),
+    };
+
+    this.socket.to(game.gameId).emit("player-forfeited", roomPayload);
+    this.socket
+      .to(game.gameId)
+      .emit("move-made", createGameStateEventPayload(game));
+
+    if (game.gameState.gameOver) {
+      this.socket
+        .to(game.gameId)
+        .emit("game-over", createGameStateEventPayload(game));
+    }
+
+    this.socket.emit("forfeit-complete", roomPayload);
+
+    this.socket.leave(game.gameId);
+    this.socket.data.gameId = undefined;
+    this.socket.data.playerId = undefined;
+
+    this.emitSandboxRoomState(game);
+
+    acknowledge?.({ ok: true });
+  };
+
   handlePlayerDisconnect = () => {
     console.log(`Player disconnected: ${this.socket.id}`);
 
@@ -159,6 +284,7 @@ export class RoomHandlers {
         playerId: disconnectedPlayerId,
         players: Array.from(game.players.keys()),
         connectedPlayers: game.getConnectedPlayerIds(),
+        gameState: serializeGameState(game),
       });
 
       this.emitSandboxRoomState(game);

@@ -1,6 +1,12 @@
+import { useState } from "react";
+import { useNavigate } from "react-router";
 import useGameState from "../hooks/useBoard";
+import { useSocket } from "../hooks/useSocket";
 
 function PlayerBoard() {
+  const navigate = useNavigate();
+  const { socket } = useSocket();
+  const [isForfeiting, setIsForfeiting] = useState(false);
   const {
     gameState: {
       currentPlayer,
@@ -19,15 +25,57 @@ function PlayerBoard() {
   );
   const connectedPlayerIds = connectedPlayers.map(([playerId]) => playerId);
   const playerSlots = [1, 2, 3, 4] as const;
+  const forfeitedPlayers = playerSlots.filter((slot) =>
+    Boolean(playerEntries[slot - 1]?.[1].leftGame),
+  );
   const defeatedPlayers = playerSlots.filter(
     (slot) => !(activePlayers ?? playerSlots).includes(slot),
   );
+  const isYouForfeited =
+    playerIndex > 0 &&
+    forfeitedPlayers.includes(playerIndex as (typeof playerSlots)[number]);
   const isYouDefeated =
     playerIndex > 0 &&
     defeatedPlayers.includes(playerIndex as (typeof playerSlots)[number]);
 
   // Get the current room ID from session storage
   const roomId = sessionStorage.getItem("currentRoomId");
+
+  const handleForfeitGame = () => {
+    if (
+      !socket ||
+      !roomId ||
+      playerIndex <= 0 ||
+      isForfeiting ||
+      isYouForfeited
+    ) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "Forfeit this game and leave the room? This cannot be undone.",
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    setIsForfeiting(true);
+    socket.emit(
+      "forfeit-game",
+      roomId,
+      (response?: { ok: boolean; message?: string }) => {
+        setIsForfeiting(false);
+
+        if (!response?.ok) {
+          alert(response?.message ?? "Unable to forfeit right now");
+          return;
+        }
+
+        sessionStorage.removeItem("currentRoomId");
+        navigate("/");
+      },
+    );
+  };
 
   // Player colors for display
   const getPlayerColor = (playerNum: number) => {
@@ -78,6 +126,7 @@ function PlayerBoard() {
     const playerEntry = playerEntries[slotNumber - 1];
     const playerId = playerEntry?.[0];
     const isConnected = Boolean(playerEntry?.[1].isConnected);
+    const hasLeftGame = Boolean(playerEntry?.[1].leftGame);
     const isDefeated =
       Boolean(playerId) &&
       defeatedPlayers.includes(slotNumber as (typeof playerSlots)[number]);
@@ -92,13 +141,15 @@ function PlayerBoard() {
               ? `bg-gradient-to-r from-${playerColor.bg.split("-")[1]}-50 to-${
                   playerColor.bg.split("-")[1]
                 }-100 border-2 ${playerColor.border} shadow-lg`
-              : isDefeated
-                ? "bg-gradient-to-r from-slate-100 to-slate-200 border-2 border-slate-400"
-                : playerId
-                  ? isConnected
-                    ? "bg-gradient-to-r from-gray-50 to-gray-100 border-2 border-gray-200"
-                    : "bg-gradient-to-r from-yellow-50 to-yellow-100 border-2 border-yellow-300"
-                  : "bg-gradient-to-r from-gray-100 to-gray-200 border-2 border-dashed border-gray-300"
+              : hasLeftGame
+                ? "bg-gradient-to-r from-rose-100 to-red-100 border-2 border-rose-400"
+                : isDefeated
+                  ? "bg-gradient-to-r from-slate-100 to-slate-200 border-2 border-slate-400"
+                  : playerId
+                    ? isConnected
+                      ? "bg-gradient-to-r from-gray-50 to-gray-100 border-2 border-gray-200"
+                      : "bg-gradient-to-r from-yellow-50 to-yellow-100 border-2 border-yellow-300"
+                    : "bg-gradient-to-r from-gray-100 to-gray-200 border-2 border-dashed border-gray-300"
           }
           ${isCurrentTurn ? "scale-105" : ""}
           ${isDefeated ? "opacity-80" : ""}
@@ -123,11 +174,13 @@ function PlayerBoard() {
               ${
                 !playerId
                   ? "opacity-50 grayscale"
-                  : isDefeated
+                  : hasLeftGame
                     ? "opacity-60 grayscale"
-                    : !isConnected
-                      ? "opacity-75"
-                      : ""
+                    : isDefeated
+                      ? "opacity-60 grayscale"
+                      : !isConnected
+                        ? "opacity-75"
+                        : ""
               }
             `}
           >
@@ -139,9 +192,11 @@ function PlayerBoard() {
               className={`font-semibold text-sm ${
                 !playerId
                   ? "text-gray-500"
-                  : isDefeated
-                    ? "text-slate-600"
-                    : playerColor.text
+                  : hasLeftGame
+                    ? "text-rose-700"
+                    : isDefeated
+                      ? "text-slate-600"
+                      : playerColor.text
               }`}
             >
               {playerColor.name}
@@ -150,29 +205,36 @@ function PlayerBoard() {
               <div
                 className={`text-xs ${
                   playerId
-                    ? isDefeated
+                    ? hasLeftGame
                       ? "text-rose-700"
-                      : isConnected
-                        ? "text-green-600"
-                        : "text-yellow-600"
+                      : isDefeated
+                        ? "text-rose-700"
+                        : isConnected
+                          ? "text-green-600"
+                          : "text-yellow-600"
                     : "text-gray-500"
                 }`}
               >
                 {playerId
-                  ? isDefeated
-                    ? "Defeated"
-                    : isConnected
-                      ? "Online"
-                      : "Disconnected"
+                  ? hasLeftGame
+                    ? "Forfeited"
+                    : isDefeated
+                      ? "Defeated"
+                      : isConnected
+                        ? "Online"
+                        : "Disconnected"
                   : "Waiting..."}
               </div>
+              {playerId && hasLeftGame && (
+                <div className="w-2 h-2 bg-rose-600 rounded-full"></div>
+              )}
               {playerId && isDefeated && (
                 <div className="w-2 h-2 bg-rose-500 rounded-full"></div>
               )}
-              {playerId && !isDefeated && isConnected && (
+              {playerId && !hasLeftGame && !isDefeated && isConnected && (
                 <div className="w-2 h-2 bg-green-400 rounded-full animate-ping"></div>
               )}
-              {playerId && !isDefeated && !isConnected && (
+              {playerId && !hasLeftGame && !isDefeated && !isConnected && (
                 <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
               )}
             </div>
@@ -187,17 +249,27 @@ function PlayerBoard() {
             </div>
           )}
 
-          {isDefeated && (
+          {hasLeftGame && (
+            <div className="px-2 py-1 bg-gradient-to-r from-rose-600 to-red-700 text-white text-xs font-bold rounded-full shadow-sm">
+              FORFEITED
+            </div>
+          )}
+
+          {!hasLeftGame && isDefeated && (
             <div className="px-2 py-1 bg-gradient-to-r from-rose-500 to-red-600 text-white text-xs font-bold rounded-full shadow-sm">
               DEFEATED
             </div>
           )}
 
-          {isCurrentTurn && playerId && isConnected && !isDefeated && (
-            <div className="px-2 py-1 bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xs font-bold rounded-full animate-bounce shadow-sm">
-              TURN
-            </div>
-          )}
+          {isCurrentTurn &&
+            playerId &&
+            isConnected &&
+            !isDefeated &&
+            !hasLeftGame && (
+              <div className="px-2 py-1 bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xs font-bold rounded-full animate-bounce shadow-sm">
+                TURN
+              </div>
+            )}
 
           {!playerId && (
             <div className="w-6 h-6 border-2 border-dashed border-gray-400 rounded-full flex items-center justify-center">
@@ -217,14 +289,42 @@ function PlayerBoard() {
           <div className="w-3 h-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>
           <h2 className="text-lg font-bold text-gray-800">Players</h2>
         </div>
-        {roomId && (
-          <div className="bg-gray-100 px-3 py-1 rounded-full">
-            <span className="text-sm text-gray-600">Room:</span>
-            <span className="font-mono font-semibold text-sm ml-1 text-gray-800">
-              {roomId}
-            </span>
-          </div>
-        )}
+        <div className="flex items-center space-x-2">
+          {roomId && (
+            <div className="bg-gray-100 px-3 py-1 rounded-full">
+              <span className="text-sm text-gray-600">Room:</span>
+              <span className="font-mono font-semibold text-sm ml-1 text-gray-800">
+                {roomId}
+              </span>
+            </div>
+          )}
+          {playerIndex > 0 && !gameOver && (
+            <button
+              type="button"
+              onClick={handleForfeitGame}
+              disabled={isForfeiting || isYouForfeited}
+              className="px-3 py-1 rounded-lg text-xs font-semibold text-white bg-gradient-to-r from-rose-600 to-red-700 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isYouForfeited
+                ? "FORFEITED"
+                : isForfeiting
+                  ? "FORFEITING..."
+                  : "FORFEIT"}
+            </button>
+          )}
+          {playerIndex > 0 && gameOver && (
+            <button
+              type="button"
+              onClick={() => {
+                sessionStorage.removeItem("currentRoomId");
+                navigate("/");
+              }}
+              className="px-3 py-1 rounded-lg text-xs font-semibold text-white bg-gradient-to-r from-slate-600 to-slate-700 shadow-sm"
+            >
+              EXIT
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Players Grid - 2x2 layout for wider appearance */}
@@ -257,6 +357,17 @@ function PlayerBoard() {
                 <span className="text-gray-600">Defeated:</span>
                 <span className="font-semibold ml-1 text-rose-600">
                   {defeatedPlayers
+                    .map((slot) => getPlayerColor(slot).name)
+                    .join(", ")}
+                </span>
+              </div>
+            )}
+
+            {forfeitedPlayers.length > 0 && (
+              <div>
+                <span className="text-gray-600">Forfeited:</span>
+                <span className="font-semibold ml-1 text-red-700">
+                  {forfeitedPlayers
                     .map((slot) => getPlayerColor(slot).name)
                     .join(", ")}
                 </span>
@@ -312,7 +423,15 @@ function PlayerBoard() {
             </div>
           )}
 
-        {isYouDefeated && gameStarted && !gameOver && (
+        {isYouForfeited && gameStarted && !gameOver && (
+          <div className="mt-3 bg-gradient-to-r from-rose-600 to-red-700 text-white text-sm font-semibold text-center py-2 px-4 rounded-xl shadow-lg">
+            <span className="inline-flex items-center">
+              🚪 <span className="ml-1">YOU FORFEITED THIS GAME</span>
+            </span>
+          </div>
+        )}
+
+        {!isYouForfeited && isYouDefeated && gameStarted && !gameOver && (
           <div className="mt-3 bg-gradient-to-r from-rose-500 to-red-600 text-white text-sm font-semibold text-center py-2 px-4 rounded-xl shadow-lg">
             <span className="inline-flex items-center">
               💥 <span className="ml-1">YOU ARE DEFEATED - TURN SKIPPED</span>

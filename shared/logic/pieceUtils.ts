@@ -1,9 +1,12 @@
+export const NEUTRAL_PIECE = 5;
+
 export function isKing(piece: number): boolean {
   return piece >= 10; // Kings are 10, 20, 30, 40 (player * 10)
 }
 
 export function getPlayerFromPiece(piece: number): number {
   if (piece === 0) return 0; // Empty
+  if (piece === NEUTRAL_PIECE) return 0; // Neutral/capturable by anyone
   if (piece >= 10) return Math.floor(piece / 10); // Kings: 10->1, 20->2, 30->3, 40->4
   return piece; // Regular pieces: 1, 2, 3, 4
 }
@@ -12,10 +15,10 @@ export function shouldPromoteToKing(
   piece: number,
   toRow: number,
   toCol: number,
-  boardSize: number
+  boardSize: number,
 ): boolean {
   // Only regular pieces can be promoted (not already kings)
-  if (piece >= 10) return false;
+  if (piece >= 10 || piece <= 0 || piece === NEUTRAL_PIECE) return false;
 
   // Player 1 pieces promote when reaching top row (row 0)
   if (piece === 1 && toRow === 0) return true;
@@ -30,6 +33,6 @@ export function shouldPromoteToKing(
 }
 
 export function promoteToKing(piece: number): number {
-  if (piece >= 10) return piece; // Already a king
+  if (piece >= 10 || piece <= 0 || piece === NEUTRAL_PIECE) return piece;
   return piece * 10; // Convert to king: 1->10, 2->20, 3->30, 4->40
 }

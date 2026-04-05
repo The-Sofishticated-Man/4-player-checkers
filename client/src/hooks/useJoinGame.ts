@@ -101,7 +101,8 @@ export function useJoinGame(roomId: string) {
           nextPlayerId,
           {
             isConnected: (connectedPlayers ?? []).includes(nextPlayerId),
-            leftGame: false,
+            leftGame:
+              gameStateRef.current.players.get(nextPlayerId)?.leftGame ?? false,
           },
         ]),
       );
@@ -140,6 +141,13 @@ export function useJoinGame(roomId: string) {
       console.error(`Room ${roomID} not found`);
       setError("Room not found");
       alert("Room not found");
+      navigate("/");
+      setIsConnecting(false);
+    };
+
+    const handleRoomJoinDenied = (reason: string) => {
+      setError(reason);
+      alert(reason);
       navigate("/");
       setIsConnecting(false);
     };
@@ -270,8 +278,22 @@ export function useJoinGame(roomId: string) {
     const handlePlayerDisconnected = (data: {
       players: string[];
       connectedPlayers: string[];
+      gameState?: SerializedGameState;
     }) => {
       syncPlayersFromEvent(data);
+    };
+
+    const handlePlayerForfeited = (data: {
+      roomID: string;
+      forfeitedPlayerId: string;
+      forfeitedPlayerIndex: PlayerIndex;
+      gameState: SerializedGameState;
+    }) => {
+      if (data.roomID !== roomId) {
+        return;
+      }
+
+      dispatchNewGameState(hydrateGameState(data.gameState));
     };
 
     const handlePlayerReconnected = (data: {
@@ -327,10 +349,12 @@ export function useJoinGame(roomId: string) {
     socket.on("room-joined", handleRoomJoined);
     socket.on("room-full", handleRoomFull);
     socket.on("room-not-found", handleRoomNotFound);
+    socket.on("room-join-denied", handleRoomJoinDenied);
     socket.on("move-made", handleMoveMade);
     socket.on("player-joined", handlePlayerJoined);
     socket.on("player-disconnected", handlePlayerDisconnected);
     socket.on("player-reconnected", handlePlayerReconnected);
+    socket.on("player-forfeited", handlePlayerForfeited);
     socket.on("game-started", handleGameStarted);
     socket.on("game-over", handleGameOver);
     socket.on("sandbox-room-state", handleSandboxRoomState);
@@ -344,10 +368,12 @@ export function useJoinGame(roomId: string) {
       socket.off("room-joined", handleRoomJoined);
       socket.off("room-full", handleRoomFull);
       socket.off("room-not-found", handleRoomNotFound);
+      socket.off("room-join-denied", handleRoomJoinDenied);
       socket.off("move-made", handleMoveMade);
       socket.off("player-joined", handlePlayerJoined);
       socket.off("player-disconnected", handlePlayerDisconnected);
       socket.off("player-reconnected", handlePlayerReconnected);
+      socket.off("player-forfeited", handlePlayerForfeited);
       socket.off("game-started", handleGameStarted);
       socket.off("game-over", handleGameOver);
       socket.off("sandbox-room-state", handleSandboxRoomState);

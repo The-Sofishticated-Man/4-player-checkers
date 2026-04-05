@@ -7,5 +7,6 @@ export const setupRoomHandlers = (socket: Socket, games: Map<string, Game>) => {
   const handlers = new RoomHandlers(socket, games);
   socket.on("create-room", handlers.handleRoomCreation);
   socket.on("join-room", handlers.handleRoomJoin);
+  socket.on("forfeit-game", handlers.handlePlayerForfeit);
   socket.on("disconnect", handlers.handlePlayerDisconnect);
 };
