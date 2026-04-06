@@ -9,7 +9,25 @@ export interface BoardGameStatus {
   isDraw: boolean;
 }
 
+export interface BoardGameStatusOptions {
+  turnsWithoutProgress?: number;
+  stallDrawFullRounds?: number;
+}
+
 const ALL_PLAYERS: PlayerIndex[] = [1, 2, 3, 4];
+export const DEFAULT_STALL_DRAW_FULL_ROUNDS = 20;
+
+function isStallDraw(
+  turnsWithoutProgress: number | undefined,
+  activePlayerCount: number,
+  fullRoundLimit: number,
+): boolean {
+  if (turnsWithoutProgress === undefined || activePlayerCount <= 1) {
+    return false;
+  }
+
+  return turnsWithoutProgress >= fullRoundLimit * activePlayerCount;
+}
 
 export function getActivePlayers(boardState: BoardState): PlayerIndex[] {
   const board = new Board(boardState);
@@ -40,7 +58,10 @@ export function getActivePlayers(boardState: BoardState): PlayerIndex[] {
   return activePlayers;
 }
 
-export function evaluateGameStatus(boardState: BoardState): BoardGameStatus {
+export function evaluateGameStatus(
+  boardState: BoardState,
+  options: BoardGameStatusOptions = {},
+): BoardGameStatus {
   const activePlayers = getActivePlayers(boardState);
 
   if (activePlayers.length === 0) {
@@ -58,6 +79,24 @@ export function evaluateGameStatus(boardState: BoardState): BoardGameStatus {
       gameOver: true,
       winner: activePlayers[0],
       isDraw: false,
+    };
+  }
+
+  const fullRoundLimit =
+    options.stallDrawFullRounds ?? DEFAULT_STALL_DRAW_FULL_ROUNDS;
+
+  if (
+    isStallDraw(
+      options.turnsWithoutProgress,
+      activePlayers.length,
+      fullRoundLimit,
+    )
+  ) {
+    return {
+      activePlayers,
+      gameOver: true,
+      winner: null,
+      isDraw: true,
     };
   }
 

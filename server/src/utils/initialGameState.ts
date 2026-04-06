@@ -36,6 +36,8 @@ export const createInitialGameState = (): GameState => ({
   winner: null,
   isDraw: false,
   activePlayers: [1, 2, 3, 4],
+  turnsWithoutProgress: 0,
+  stallDrawFullRounds: 20,
 });
 
 const initialGameState: GameState = createInitialGameState();

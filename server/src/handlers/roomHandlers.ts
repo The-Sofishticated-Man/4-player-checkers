@@ -4,6 +4,7 @@ import { generateID } from "../utils/gameUtils.ts";
 import type { PlayerId, PlayerIndex } from "../../../shared/types/gameTypes.ts";
 import { SANDBOX_MODE } from "../utils/devSandbox.ts";
 import {
+  DEFAULT_STALL_DRAW_FULL_ROUNDS,
   evaluateGameStatus,
   getNextActivePlayer,
 } from "../../../shared/logic/boardGameState.ts";
@@ -36,7 +37,11 @@ export class RoomHandlers {
   }
 
   private evaluateAndApplyGameStatus(game: Game): PlayerIndex[] {
-    const status = evaluateGameStatus(game.gameState.boardState);
+    const status = evaluateGameStatus(game.gameState.boardState, {
+      turnsWithoutProgress: game.gameState.turnsWithoutProgress,
+      stallDrawFullRounds:
+        game.gameState.stallDrawFullRounds ?? DEFAULT_STALL_DRAW_FULL_ROUNDS,
+    });
     game.gameState.activePlayers = status.activePlayers;
     game.gameState.gameOver = status.gameOver;
     game.gameState.winner = status.winner;
@@ -219,6 +224,7 @@ export class RoomHandlers {
       game.gameState.boardState,
       forfeitedPlayerIndex,
     );
+    game.gameState.turnsWithoutProgress = 0;
 
     playerState.leftGame = true;
     playerState.isConnected = false;

@@ -1,4 +1,5 @@
 import type { BoardState } from "../../../shared/types/gameTypes";
+import { getSoftPromotionTargetsForPiece } from "../../../shared/logic/pieceUtils";
 import Cell from "../components/Cell";
 import Piece from "../components/Piece";
 import {
@@ -21,6 +22,19 @@ export const generateBoardCells = (
   const cells = [];
   const boardSize = boardState.length;
   const boardRotation = getBoardRotationForPlayer(playerIndex);
+  const softPromotionTargets = new Set<string>();
+
+  if (selectedPiece) {
+    const selectedPieceValue =
+      boardState[selectedPiece.row]?.[selectedPiece.col] ?? 0;
+
+    for (const target of getSoftPromotionTargetsForPiece(
+      selectedPieceValue,
+      boardState,
+    )) {
+      softPromotionTargets.add(`${target.row},${target.col}`);
+    }
+  }
 
   for (let visualRow = 0; visualRow < boardSize; visualRow++) {
     for (let visualCol = 0; visualCol < boardSize; visualCol++) {
@@ -42,6 +56,7 @@ export const generateBoardCells = (
       const isValidCapture = !!validMove && validMove.isCapture;
       const isSelectedPiece =
         selectedPiece?.row === row && selectedPiece.col === col;
+      const isSoftPromotionHint = softPromotionTargets.has(`${row},${col}`);
       const pieceValue = boardState[row][col];
       const isPieceDisabled =
         !gameStarted ||
@@ -59,6 +74,7 @@ export const generateBoardCells = (
           isDark={isDark}
           isValidMove={isValidMove}
           isValidCapture={isValidCapture}
+          isSoftPromotionHint={isSoftPromotionHint}
           draggedPieceOwner={draggedPieceOwner}
           onClick={() => onCellClick(row, col)}
         >

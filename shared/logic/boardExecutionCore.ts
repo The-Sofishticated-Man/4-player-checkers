@@ -20,16 +20,22 @@ export function executeCaptureMove(
 
   newBoard[fromRow][fromCol] = 0;
   newBoard[capturedRow][capturedCol] = 0;
-
-  if (shouldPromoteToKing(piece, toRow, toCol, newBoard.length)) {
-    piece = promoteToKing(piece);
-  }
-
   newBoard[toRow][toCol] = piece;
+
+  const shouldContinueCapture = hasValidCapture(newBoard, toRow, toCol);
+  const shouldChangePlayer = !shouldContinueCapture;
+
+  // Crown only once the entire capture turn is complete.
+  if (
+    shouldChangePlayer &&
+    shouldPromoteToKing(piece, toRow, toCol, newBoard)
+  ) {
+    newBoard[toRow][toCol] = promoteToKing(piece);
+  }
 
   return {
     newBoard,
-    shouldChangePlayer: !hasValidCapture(newBoard, toRow, toCol),
+    shouldChangePlayer,
   };
 }
 
@@ -42,7 +48,7 @@ export function executeRegularMove(
 
   newBoard[fromRow][fromCol] = 0;
 
-  if (shouldPromoteToKing(piece, toRow, toCol, newBoard.length)) {
+  if (shouldPromoteToKing(piece, toRow, toCol, newBoard)) {
     piece = promoteToKing(piece);
   }
 

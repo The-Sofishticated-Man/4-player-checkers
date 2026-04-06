@@ -18,6 +18,8 @@ interface DebugSetStatePayload {
   boardState?: BoardState;
   currentPlayer?: PlayerIndex;
   gameStarted?: boolean;
+  turnsWithoutProgress?: number;
+  stallDrawFullRounds?: number;
 }
 
 type StatusKind = "info" | "success" | "error";
@@ -54,6 +56,27 @@ const createKingPromotionBoard = (): BoardState => {
   const board = createEmptyPlayableBoard(initialState.boardState);
 
   board[1][3] = 1;
+  board[10][10] = 2;
+
+  return board;
+};
+
+const createSoftCrownBoard = (): BoardState => {
+  const board = createEmptyPlayableBoard(initialState.boardState);
+
+  // Player 1 can move from (4,2) -> (3,1), a soft-end square.
+  board[4][2] = 1;
+  board[10][10] = 2;
+
+  return board;
+};
+
+const createStallDrawNextMoveBoard = (): BoardState => {
+  const board = createEmptyPlayableBoard(initialState.boardState);
+
+  // Two active players with non-capturing moves available.
+  board[8][4] = 1;
+  board[5][9] = 2;
 
   return board;
 };
@@ -226,6 +249,10 @@ function DevSandboxPanel({
         Players: {snapshot?.connectedPlayerCount ?? 0}/
         {snapshot?.playerCount ?? 0} connected
       </p>
+      <p className="mb-2 text-xs text-orange-700">
+        Quiet turns: {snapshot?.gameState.turnsWithoutProgress ?? 0}/
+        {snapshot?.gameState.stallDrawFullRounds ?? 20} rounds
+      </p>
 
       <div className="mb-2 flex flex-wrap gap-2">
         <button
@@ -291,6 +318,21 @@ function DevSandboxPanel({
         </button>
 
         <button
+          className="rounded bg-violet-700 px-2 py-1 text-xs font-semibold text-white"
+          onClick={() =>
+            emitDebugState("Soft Crown Test", {
+              boardState: createSoftCrownBoard(),
+              currentPlayer: 1,
+              gameStarted: true,
+              turnsWithoutProgress: 0,
+            })
+          }
+          type="button"
+        >
+          Soft Crown Test
+        </button>
+
+        <button
           className="rounded bg-rose-700 px-2 py-1 text-xs font-semibold text-white"
           onClick={() =>
             emitDebugState("One Move To Win", {
@@ -330,6 +372,22 @@ function DevSandboxPanel({
           type="button"
         >
           Force Draw
+        </button>
+
+        <button
+          className="rounded bg-fuchsia-700 px-2 py-1 text-xs font-semibold text-white"
+          onClick={() =>
+            emitDebugState("Stall Draw Next Move", {
+              boardState: createStallDrawNextMoveBoard(),
+              currentPlayer: 1,
+              gameStarted: true,
+              stallDrawFullRounds: 1,
+              turnsWithoutProgress: 1,
+            })
+          }
+          type="button"
+        >
+          Stall Draw Next Move
         </button>
       </div>
 

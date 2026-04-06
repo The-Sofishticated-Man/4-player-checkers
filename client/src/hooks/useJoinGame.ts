@@ -159,6 +159,8 @@ export function useJoinGame(roomId: string) {
       winner,
       isDraw,
       activePlayers,
+      turnsWithoutProgress,
+      stallDrawFullRounds,
       players,
       connectedPlayers,
     }: {
@@ -169,6 +171,8 @@ export function useJoinGame(roomId: string) {
       winner?: PlayerIndex | null;
       isDraw?: boolean;
       activePlayers?: PlayerIndex[];
+      turnsWithoutProgress?: number;
+      stallDrawFullRounds?: number;
       players?: SerializedPlayerMap;
       connectedPlayers?: string[];
     }) => {
@@ -192,6 +196,10 @@ export function useJoinGame(roomId: string) {
           winner: winner ?? gameStateRef.current.winner,
           isDraw: isDraw ?? gameStateRef.current.isDraw,
           activePlayers: activePlayers ?? gameStateRef.current.activePlayers,
+          turnsWithoutProgress:
+            turnsWithoutProgress ?? gameStateRef.current.turnsWithoutProgress,
+          stallDrawFullRounds:
+            stallDrawFullRounds ?? gameStateRef.current.stallDrawFullRounds,
         });
       } catch (error) {
         console.error("Dispatch failed with error:", error);
@@ -206,6 +214,8 @@ export function useJoinGame(roomId: string) {
       winner,
       isDraw,
       activePlayers,
+      turnsWithoutProgress,
+      stallDrawFullRounds,
       players,
       connectedPlayers,
     }: {
@@ -216,6 +226,8 @@ export function useJoinGame(roomId: string) {
       winner: PlayerIndex | null;
       isDraw: boolean;
       activePlayers: PlayerIndex[];
+      turnsWithoutProgress?: number;
+      stallDrawFullRounds?: number;
       players?: SerializedPlayerMap;
       connectedPlayers?: string[];
     }) => {
@@ -233,6 +245,10 @@ export function useJoinGame(roomId: string) {
         winner,
         isDraw,
         activePlayers,
+        turnsWithoutProgress:
+          turnsWithoutProgress ?? gameStateRef.current.turnsWithoutProgress,
+        stallDrawFullRounds:
+          stallDrawFullRounds ?? gameStateRef.current.stallDrawFullRounds,
       });
     };
 

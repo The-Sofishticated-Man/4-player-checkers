@@ -1,6 +1,7 @@
 import { Socket } from "socket.io";
 import { Game } from "../models/Game.ts";
 import {
+  DEFAULT_STALL_DRAW_FULL_ROUNDS,
   evaluateGameStatus,
   getNextActivePlayer,
 } from "../../../shared/logic/boardGameState.ts";
@@ -24,7 +25,11 @@ export class SandboxHandlers {
   ) {}
 
   private evaluateAndApplyGameStatus(game: Game): PlayerIndex[] {
-    const status = evaluateGameStatus(game.gameState.boardState);
+    const status = evaluateGameStatus(game.gameState.boardState, {
+      turnsWithoutProgress: game.gameState.turnsWithoutProgress,
+      stallDrawFullRounds:
+        game.gameState.stallDrawFullRounds ?? DEFAULT_STALL_DRAW_FULL_ROUNDS,
+    });
     game.gameState.activePlayers = status.activePlayers;
     game.gameState.gameOver = status.gameOver;
     game.gameState.winner = status.winner;
@@ -93,7 +98,14 @@ export class SandboxHandlers {
   };
 
   handleSandboxSetState = (payload: SandboxSetStateParams) => {
-    const { roomID, boardState, currentPlayer, gameStarted } = payload ?? {};
+    const {
+      roomID,
+      boardState,
+      currentPlayer,
+      gameStarted,
+      turnsWithoutProgress,
+      stallDrawFullRounds,
+    } = payload ?? {};
 
     if (!roomID) {
       this.emitSandboxError("Missing roomID");
@@ -115,6 +127,7 @@ export class SandboxHandlers {
 
     if (boardState) {
       game.gameState.boardState = boardState.map((row) => [...row]);
+      game.gameState.turnsWithoutProgress = 0;
     }
 
     if (currentPlayer !== undefined) {
@@ -125,6 +138,17 @@ export class SandboxHandlers {
       game.gameStarted = gameStarted;
     }
     game.gameState.gameStarted = game.gameStarted;
+
+    if (turnsWithoutProgress !== undefined) {
+      game.gameState.turnsWithoutProgress = Math.max(0, turnsWithoutProgress);
+    }
+
+    if (stallDrawFullRounds !== undefined) {
+      game.gameState.stallDrawFullRounds =
+        stallDrawFullRounds > 0
+          ? stallDrawFullRounds
+          : DEFAULT_STALL_DRAW_FULL_ROUNDS;
+    }
 
     const activePlayers = this.evaluateAndApplyGameStatus(game);
     if (

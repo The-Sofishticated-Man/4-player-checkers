@@ -16,6 +16,8 @@ export interface SandboxSetStateParams {
   boardState?: BoardState;
   currentPlayer?: PlayerIndex;
   gameStarted?: boolean;
+  turnsWithoutProgress?: number;
+  stallDrawFullRounds?: number;
 }
 
 export interface GameStateEventPayload {
@@ -26,6 +28,8 @@ export interface GameStateEventPayload {
   winner: PlayerIndex | null;
   isDraw: boolean;
   activePlayers: PlayerIndex[];
+  turnsWithoutProgress: number;
+  stallDrawFullRounds: number;
 }
 
 export interface SandboxRoomStatePayload {
@@ -59,6 +63,8 @@ export const createGameStateEventPayload = (
   winner: game.gameState.winner ?? null,
   isDraw: game.gameState.isDraw ?? false,
   activePlayers: game.gameState.activePlayers ?? [],
+  turnsWithoutProgress: game.gameState.turnsWithoutProgress ?? 0,
+  stallDrawFullRounds: game.gameState.stallDrawFullRounds ?? 20,
 });
 
 export const createSandboxRoomStatePayload = (

@@ -6,10 +6,6 @@ import {
   evaluateGameStatus,
   getNextActivePlayer,
 } from "../../../shared/logic/boardGameState";
-import {
-  shouldPromoteToKing,
-  promoteToKing,
-} from "../../../shared/logic/pieceUtils";
 
 const getNextTurn = (
   gameState: GameState,
@@ -70,31 +66,20 @@ export const boardReducer = (
         return gameState; // Not this player's piece
       }
 
-      // Create a new board state (immutable update)
-      const newBoard = boardState.map((row) => [...row]);
-
-      // Move the piece from source to destination
-      let movedPiece = newBoard[fromRow][fromCol];
-      newBoard[fromRow][fromCol] = 0; // Clear the source cell
-
-      // Check for king promotion
-      if (shouldPromoteToKing(movedPiece, toRow, toCol, newBoard.length)) {
-        movedPiece = promoteToKing(movedPiece);
-      }
-
-      newBoard[toRow][toCol] = movedPiece;
+      const moveResult = board.applyMove({ fromRow, fromCol, toRow, toCol });
 
       return {
         ...gameState,
-        boardState: newBoard,
-        currentPlayer: getNextTurn(gameState, newBoard),
+        boardState: moveResult.newBoard,
+        currentPlayer: moveResult.shouldChangePlayer
+          ? getNextTurn(gameState, moveResult.newBoard)
+          : currentPlayer,
       };
     }
 
     case "CAPTURE_PIECE": {
       if (!payload) return gameState;
-      const { fromRow, fromCol, toRow, toCol, capturedRow, capturedCol } =
-        payload;
+      const { fromRow, fromCol, toRow, toCol } = payload;
 
       // Validate this is actually a capture move
       if (!board.isCapture(fromRow, fromCol, toRow, toCol)) {
@@ -119,33 +104,14 @@ export const boardReducer = (
         return gameState; // Not this player's piece
       }
 
-      // Create a new board state (immutable update)
-      const newBoard = boardState.map((row) => [...row]);
-
-      // Move the piece from source to destination
-      let movedPiece = newBoard[fromRow][fromCol];
-      newBoard[fromRow][fromCol] = 0; // Clear the source cell
-
-      // Remove the captured piece
-      newBoard[capturedRow][capturedCol] = 0;
-
-      // Check for king promotion
-      if (shouldPromoteToKing(movedPiece, toRow, toCol, newBoard.length)) {
-        movedPiece = promoteToKing(movedPiece);
-      }
-
-      newBoard[toRow][toCol] = movedPiece;
-
-      // Check if the same piece has another valid capture available
-      const hasMoreCaptures = new Board(newBoard).hasValidCapture(toRow, toCol);
+      const moveResult = board.applyMove({ fromRow, fromCol, toRow, toCol });
 
       return {
         ...gameState,
-        boardState: newBoard,
-        // Only switch players if no more captures are available
-        currentPlayer: hasMoreCaptures
-          ? currentPlayer
-          : getNextTurn(gameState, newBoard),
+        boardState: moveResult.newBoard,
+        currentPlayer: moveResult.shouldChangePlayer
+          ? getNextTurn(gameState, moveResult.newBoard)
+          : currentPlayer,
       };
     }
     case "UPDATE_GAME_STATE": {

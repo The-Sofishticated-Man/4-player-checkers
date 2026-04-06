@@ -28,6 +28,8 @@ export interface GameState {
   winner?: PlayerIndex | null;
   isDraw?: boolean;
   activePlayers?: PlayerIndex[];
+  turnsWithoutProgress?: number;
+  stallDrawFullRounds?: number;
 }
 
 export type SerializedGameState = Omit<GameState, "players"> & {

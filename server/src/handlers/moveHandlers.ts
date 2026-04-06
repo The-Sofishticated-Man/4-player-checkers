@@ -2,6 +2,7 @@ import { Socket } from "socket.io";
 import { Game } from "../models/Game.ts";
 import { Board } from "../../../shared/logic/boardModel.ts";
 import {
+  DEFAULT_STALL_DRAW_FULL_ROUNDS,
   evaluateGameStatus,
   getNextActivePlayer,
 } from "../../../shared/logic/boardGameState.ts";
@@ -16,6 +17,20 @@ interface MoveParams extends MoveCoordinates {
   roomID: string;
 }
 
+const countMaterialPieces = (boardState: number[][]): number => {
+  let pieceCount = 0;
+
+  for (const row of boardState) {
+    for (const cell of row) {
+      if (cell > 0) {
+        pieceCount++;
+      }
+    }
+  }
+
+  return pieceCount;
+};
+
 export class MoveHandlers {
   constructor(
     private socket: Socket,
@@ -23,7 +38,11 @@ export class MoveHandlers {
   ) {}
 
   private evaluateAndApplyGameStatus(game: Game): PlayerIndex[] {
-    const status = evaluateGameStatus(game.gameState.boardState);
+    const status = evaluateGameStatus(game.gameState.boardState, {
+      turnsWithoutProgress: game.gameState.turnsWithoutProgress,
+      stallDrawFullRounds:
+        game.gameState.stallDrawFullRounds ?? DEFAULT_STALL_DRAW_FULL_ROUNDS,
+    });
     game.gameState.activePlayers = status.activePlayers;
     game.gameState.gameOver = status.gameOver;
     game.gameState.winner = status.winner;
@@ -157,10 +176,25 @@ export class MoveHandlers {
       return;
     }
 
+    const materialCountBefore = countMaterialPieces(game.gameState.boardState);
     const moveResult = board.applyMove(move);
 
     // Update game state
     game.gameState.boardState = moveResult.newBoard;
+
+    const materialCountAfter = countMaterialPieces(moveResult.newBoard);
+    const materialChanged = materialCountAfter !== materialCountBefore;
+
+    if (materialChanged) {
+      game.gameState.turnsWithoutProgress = 0;
+    } else {
+      game.gameState.turnsWithoutProgress =
+        (game.gameState.turnsWithoutProgress ?? 0) + 1;
+    }
+
+    if ((game.gameState.stallDrawFullRounds ?? 0) < 1) {
+      game.gameState.stallDrawFullRounds = DEFAULT_STALL_DRAW_FULL_ROUNDS;
+    }
 
     const activePlayers = this.evaluateAndApplyGameStatus(game);
 

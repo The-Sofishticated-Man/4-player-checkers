@@ -8,6 +8,7 @@ const Cell = ({
   children,
   isValidMove = false,
   isValidCapture = false,
+  isSoftPromotionHint = false,
   draggedPieceOwner = null,
   onClick,
 }: {
@@ -17,6 +18,7 @@ const Cell = ({
   children?: React.ReactNode;
   isValidMove?: boolean;
   isValidCapture?: boolean;
+  isSoftPromotionHint?: boolean;
   draggedPieceOwner?: number | null;
   onClick?: () => void;
 }) => {
@@ -54,13 +56,23 @@ const Cell = ({
     ></div>
   );
 
+  const softPromotionHintMarkup = isSoftPromotionHint && (
+    <>
+      <div className="pointer-events-none absolute inset-1 rounded-sm border-2 border-dashed border-yellow-700"></div>
+      <div className="pointer-events-none absolute top-1 right-1 text-[10px] leading-none text-yellow-900">
+        ♔
+      </div>
+    </>
+  );
+
   return (
     <div
       ref={setNodeRef}
-      className={`${baseColor} border-2  flex items-center justify-center aspect-square w-20 h-20`}
+      className={`${baseColor} border-2 relative flex items-center justify-center aspect-square w-20 h-20`}
       id={`cell-${row}-${column}`}
       onClick={onClick}
     >
+      {softPromotionHintMarkup}
       {children}
       {validMoveMarkup}
     </div>
