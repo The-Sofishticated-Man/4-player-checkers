@@ -7,6 +7,7 @@ function PlayerBoard() {
   const navigate = useNavigate();
   const { socket } = useSocket();
   const [isForfeiting, setIsForfeiting] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
   const {
     gameState: {
       currentPlayer,
@@ -40,6 +41,52 @@ function PlayerBoard() {
 
   // Get the current room ID from session storage
   const roomId = sessionStorage.getItem("currentRoomId");
+
+  const fallbackCopyToClipboard = (text: string): boolean => {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.setAttribute("readonly", "");
+    textArea.style.position = "fixed";
+    textArea.style.left = "-9999px";
+    document.body.appendChild(textArea);
+    textArea.select();
+    const copied = document.execCommand("copy");
+    document.body.removeChild(textArea);
+    return copied;
+  };
+
+  const handleCopyGameLink = async () => {
+    if (!roomId) {
+      return;
+    }
+
+    const gameLink = new URL(
+      `/game/${roomId}`,
+      window.location.origin,
+    ).toString();
+    let copied = false;
+
+    if (navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(gameLink);
+        copied = true;
+      } catch {
+        copied = false;
+      }
+    }
+
+    if (!copied) {
+      copied = fallbackCopyToClipboard(gameLink);
+    }
+
+    if (!copied) {
+      alert("Unable to copy the game link right now.");
+      return;
+    }
+
+    setLinkCopied(true);
+    window.setTimeout(() => setLinkCopied(false), 1800);
+  };
 
   const handleForfeitGame = () => {
     if (
@@ -302,6 +349,15 @@ function PlayerBoard() {
                 {roomId}
               </span>
             </div>
+          )}
+          {roomId && (
+            <button
+              type="button"
+              onClick={handleCopyGameLink}
+              className="px-3 py-1 rounded-lg text-xs font-semibold text-white bg-gradient-to-r from-indigo-600 to-blue-700 shadow-sm"
+            >
+              {linkCopied ? "LINK COPIED" : "COPY LINK"}
+            </button>
           )}
           {playerIndex > 0 && !gameOver && (
             <button
