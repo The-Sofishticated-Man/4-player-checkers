@@ -1,4 +1,5 @@
 const PLAYER_ID_STORAGE_KEY = "playerId";
+const PLAYER_NICKNAME_STORAGE_KEY = "playerNickname";
 
 export const getOrCreatePlayerId = (): string => {
   const existingPlayerId = localStorage.getItem(PLAYER_ID_STORAGE_KEY);
@@ -13,6 +14,20 @@ export const getOrCreatePlayerId = (): string => {
 
 export const getDefaultNicknameForPlayerId = (playerId: string): string =>
   `P_${playerId}`;
+
+export const getStoredNickname = (): string | null => {
+  const storedNickname = localStorage.getItem(PLAYER_NICKNAME_STORAGE_KEY);
+  if (!storedNickname) {
+    return null;
+  }
+
+  const trimmedNickname = storedNickname.trim();
+  return trimmedNickname.length > 0 ? trimmedNickname : null;
+};
+
+export const setStoredNickname = (nickname: string): void => {
+  localStorage.setItem(PLAYER_NICKNAME_STORAGE_KEY, nickname.trim());
+};
 
 export const resolveNickname = (
   nickname: string | null | undefined,

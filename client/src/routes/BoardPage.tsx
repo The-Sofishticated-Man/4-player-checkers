@@ -9,7 +9,9 @@ import DevSandboxPanel from "../components/DevSandboxPanel";
 import {
   getDefaultNicknameForPlayerId,
   getOrCreatePlayerId,
+  getStoredNickname,
   resolveNickname,
+  setStoredNickname,
 } from "../utils/playerIdentity";
 
 // Inner component that uses the joined game data and has access to context
@@ -39,14 +41,18 @@ function BoardPageInner({
 function BoardPage() {
   const { roomId } = useParams();
   const [allowMoveAnyPiece, setAllowMoveAnyPiece] = useState(false);
-  const [nicknameInput, setNicknameInput] = useState("");
-  const [nickname, setNickname] = useState<string | null>(null);
   const playerId = getOrCreatePlayerId();
   const defaultNickname = getDefaultNicknameForPlayerId(playerId);
+  const [nicknameInput, setNicknameInput] = useState("");
+  const [nickname, setNickname] = useState<string | null>(() =>
+    getStoredNickname(),
+  );
 
   const handleNicknameSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setNickname(resolveNickname(nicknameInput, playerId));
+    const resolvedNickname = resolveNickname(nicknameInput, playerId);
+    setStoredNickname(resolvedNickname);
+    setNickname(resolvedNickname);
   };
 
   if (!roomId) {
