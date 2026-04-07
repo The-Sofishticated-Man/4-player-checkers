@@ -26,6 +26,15 @@ export class RoomHandlers {
     private games: Map<string, Game>,
   ) {}
 
+  private resolveNickname(playerId: PlayerId, nickname?: string): string {
+    const trimmedNickname = nickname?.trim();
+    if (trimmedNickname) {
+      return trimmedNickname;
+    }
+
+    return `P_${playerId}`;
+  }
+
   private emitSandboxRoomState(game: Game): void {
     if (!SANDBOX_MODE) {
       return;
@@ -69,9 +78,11 @@ export class RoomHandlers {
     this.socket.emit("room-created", { roomID });
   };
 
-  handleRoomJoin = (roomID: string, playerId: PlayerId) => {
+  handleRoomJoin = (roomID: string, playerId: PlayerId, nickname?: string) => {
+    const resolvedNickname = this.resolveNickname(playerId, nickname);
+
     console.log(
-      `User ${this.socket.id} (${playerId}) trying to join room: ${roomID}`,
+      `User ${this.socket.id} (${playerId}, ${resolvedNickname}) trying to join room: ${roomID}`,
     );
 
     const game = this.games.get(roomID);
@@ -89,7 +100,7 @@ export class RoomHandlers {
       }
 
       this.socket.join(roomID);
-      game.reconnectPlayer(playerId);
+      game.reconnectPlayer(playerId, resolvedNickname);
       this.socket.data.playerId = playerId;
       this.socket.data.gameId = roomID;
       const playerIndex = game.getPlayerIndexFromId(playerId);
@@ -128,7 +139,7 @@ export class RoomHandlers {
 
     // New player joining
     const wasStartedBeforeJoin = game.gameStarted;
-    game.addNewPlayer(playerId);
+    game.addNewPlayer(playerId, resolvedNickname);
     this.socket.join(roomID);
     this.socket.data.playerId = playerId;
     this.socket.data.gameId = roomID;

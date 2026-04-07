@@ -10,8 +10,13 @@ import type {
 } from "../../../shared/types/gameTypes";
 import { useNavigate } from "react-router";
 import useGameState from "./useBoard";
+import {
+  getDefaultNicknameForPlayerId,
+  getOrCreatePlayerId,
+  resolveNickname,
+} from "../utils/playerIdentity";
 
-export function useJoinGame(roomId: string) {
+export function useJoinGame(roomId: string, nickname: string | null) {
   const { socket } = useSocket();
   const navigate = useNavigate();
   const initialStateFromServerRef = useRef<GameState | null>(null);
@@ -33,16 +38,12 @@ export function useJoinGame(roomId: string) {
   }, [gameState]);
 
   useEffect(() => {
-    if (!socket) {
+    if (!socket || !nickname) {
       return;
     }
 
-    // Get or create persistent player ID
-    let playerId = localStorage.getItem("playerId");
-    if (!playerId) {
-      playerId = Math.random().toString(36).substring(2, 15);
-      localStorage.setItem("playerId", playerId);
-    }
+    const playerId = getOrCreatePlayerId();
+    const resolvedNickname = resolveNickname(nickname, playerId);
     setIsConnecting(true);
 
     const dispatchNewGameState = (newGameState: GameState) => {
@@ -103,6 +104,9 @@ export function useJoinGame(roomId: string) {
             isConnected: (connectedPlayers ?? []).includes(nextPlayerId),
             leftGame:
               gameStateRef.current.players.get(nextPlayerId)?.leftGame ?? false,
+            nickname:
+              gameStateRef.current.players.get(nextPlayerId)?.nickname ??
+              getDefaultNicknameForPlayerId(nextPlayerId),
           },
         ]),
       );
@@ -377,7 +381,7 @@ export function useJoinGame(roomId: string) {
 
     // Register listeners before emitting join-room so the initial response
     // can't race ahead of subscriptions.
-    socket.emit("join-room", roomId, playerId);
+    socket.emit("join-room", roomId, playerId, resolvedNickname);
 
     // Cleanup listeners on unmount
     return () => {
@@ -394,7 +398,7 @@ export function useJoinGame(roomId: string) {
       socket.off("game-over", handleGameOver);
       socket.off("sandbox-room-state", handleSandboxRoomState);
     };
-  }, [socket, roomId, navigate, dispatch, setPlayerIndex]);
+  }, [socket, roomId, nickname, navigate, dispatch, setPlayerIndex]);
 
   return {
     initialStateFromServer: initialStateFromServerRef.current,

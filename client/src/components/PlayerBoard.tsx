@@ -125,6 +125,10 @@ function PlayerBoard() {
     const isYou = playerIndex === slotNumber;
     const playerEntry = playerEntries[slotNumber - 1];
     const playerId = playerEntry?.[0];
+    const nickname = playerEntry?.[1].nickname;
+    const displayName = playerId
+      ? (nickname ?? `P_${playerId}`)
+      : `${playerColor.name} Slot`;
     const isConnected = Boolean(playerEntry?.[1].isConnected);
     const hasLeftGame = Boolean(playerEntry?.[1].leftGame);
     const isDefeated =
@@ -199,9 +203,10 @@ function PlayerBoard() {
                       : playerColor.text
               }`}
             >
-              {playerColor.name}
+              {displayName}
             </div>
             <div className="flex items-center space-x-2">
+              <div className="text-xs text-gray-500">{playerColor.name}</div>
               <div
                 className={`text-xs ${
                   playerId

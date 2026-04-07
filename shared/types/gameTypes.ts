@@ -15,6 +15,7 @@ export type PlayerMap = Map<PlayerId, PlayerState>;
 export interface PlayerState {
   isConnected: boolean;
   leftGame: boolean;
+  nickname: string;
 }
 
 export type SerializedPlayerMap = [PlayerId, PlayerState][];

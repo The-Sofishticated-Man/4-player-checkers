@@ -22,8 +22,12 @@ export class Game {
     return this.players.has(playerId);
   }
 
-  addNewPlayer(playerId: PlayerId): void {
-    this.players.set(playerId, { isConnected: true, leftGame: false });
+  addNewPlayer(playerId: PlayerId, nickname: string): void {
+    this.players.set(playerId, {
+      isConnected: true,
+      leftGame: false,
+      nickname,
+    });
     this.playerCount++;
 
     // In sandbox mode, allow instant start with fewer players.
@@ -48,11 +52,12 @@ export class Game {
   /**
    * Handles player reconnection by updating socket mapping
    */
-  reconnectPlayer(playerId: PlayerId): void {
+  reconnectPlayer(playerId: PlayerId, nickname: string): void {
     // Update player connection status
     const playerData = this.players.get(playerId);
     if (playerData) {
       playerData.isConnected = true;
+      playerData.nickname = nickname;
     }
 
     console.log(`Player ${playerId} reconnected to room: ${this.gameId}`);
