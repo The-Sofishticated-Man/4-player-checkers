@@ -53,6 +53,9 @@ const Piece = ({
 
   const handleClick = (event: MouseEvent<HTMLDivElement>) => {
     event.stopPropagation();
+    if (disabled) {
+      return;
+    }
     onClick?.();
   };
 

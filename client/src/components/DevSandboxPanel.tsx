@@ -31,6 +31,8 @@ interface SandboxStatus {
 
 interface SandboxRoomSnapshot {
   roomID: string;
+  sandboxMode: boolean;
+  minPlayersToStart: number;
   playerCount: number;
   connectedPlayerCount: number;
   gameState: SerializedGameState;
@@ -114,6 +116,13 @@ function DevSandboxPanel({
     message: "Ready",
   });
   const [snapshot, setSnapshot] = useState<SandboxRoomSnapshot | null>(null);
+  const sandboxEnabled = snapshot?.sandboxMode === true;
+
+  useEffect(() => {
+    if (!sandboxEnabled && allowMoveAnyPiece) {
+      onToggleMoveAnyPiece(false);
+    }
+  }, [sandboxEnabled, allowMoveAnyPiece, onToggleMoveAnyPiece]);
 
   useEffect(() => {
     if (!socket) {
@@ -211,6 +220,14 @@ function DevSandboxPanel({
       return;
     }
 
+    if (!sandboxEnabled) {
+      setStatus({
+        kind: "error",
+        message: "Server sandbox mode is OFF",
+      });
+      return;
+    }
+
     setPendingAction(actionLabel);
     setStatus({ kind: "info", message: `${actionLabel} sent...` });
 
@@ -221,6 +238,15 @@ function DevSandboxPanel({
   };
 
   const handleToggleMoveAnyPiece = () => {
+    if (!sandboxEnabled) {
+      onToggleMoveAnyPiece(false);
+      setStatus({
+        kind: "error",
+        message: "Move Any Piece requires server sandbox mode",
+      });
+      return;
+    }
+
     const nextValue = !allowMoveAnyPiece;
     onToggleMoveAnyPiece(nextValue);
     setStatus({
@@ -242,6 +268,12 @@ function DevSandboxPanel({
       <p className="mb-1 text-xs text-orange-700">
         Runs only in Vite dev. Requires CHECKERS_SANDBOX=true on server.
       </p>
+      <p className="mb-1 text-xs text-orange-700">
+        Server sandbox: {sandboxEnabled ? "ON" : "OFF"}
+      </p>
+      <p className="mb-1 text-xs text-orange-700">
+        Min players to start: {snapshot?.minPlayersToStart ?? "-"}
+      </p>
       <p className="mb-2 text-xs text-orange-700">
         Socket: {isConnected ? "Connected" : "Disconnected"}
       </p>
@@ -261,12 +293,16 @@ function DevSandboxPanel({
           }`}
           onClick={handleToggleMoveAnyPiece}
           type="button"
+          disabled={!sandboxEnabled}
         >
           {allowMoveAnyPiece ? "Move Any Piece: ON" : "Move Any Piece: OFF"}
         </button>
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <fieldset
+        className="flex flex-wrap gap-2 disabled:opacity-60"
+        disabled={!sandboxEnabled || !isConnected}
+      >
         <button
           className="rounded bg-orange-600 px-2 py-1 text-xs font-semibold text-white"
           onClick={() => emitDebugState("Force Start", { gameStarted: true })}
@@ -389,9 +425,12 @@ function DevSandboxPanel({
         >
           Stall Draw Next Move
         </button>
-      </div>
+      </fieldset>
 
-      <div className="mt-2 flex gap-1">
+      <fieldset
+        className="mt-2 flex gap-1 disabled:opacity-60"
+        disabled={!sandboxEnabled || !isConnected}
+      >
         {[1, 2, 3, 4].map((turn) => (
           <button
             key={turn}
@@ -406,7 +445,7 @@ function DevSandboxPanel({
             Turn {turn}
           </button>
         ))}
-      </div>
+      </fieldset>
 
       <div
         className={`mt-2 rounded border px-2 py-1 text-xs ${statusClassName}`}

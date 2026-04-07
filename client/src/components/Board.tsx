@@ -31,7 +31,14 @@ const Board = ({ allowMoveAnyPiece = false }: BoardProps) => {
     handleDragCancel,
     handlePieceClick,
     handleCellClick,
-  } = useDragAndDrop(boardState, dispatch, allowMoveAnyPiece, currentPlayer);
+  } = useDragAndDrop(
+    boardState,
+    dispatch,
+    allowMoveAnyPiece,
+    currentPlayer,
+    playerIndex,
+    gameStarted,
+  );
 
   // Keep click-to-select separate from drag by requiring small pointer movement.
   const sensors = useSensors(

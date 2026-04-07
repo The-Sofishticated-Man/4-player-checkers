@@ -355,17 +355,6 @@ export function useJoinGame(roomId: string, nickname: string | null) {
       });
     };
 
-    const handleSandboxRoomState = (data: {
-      roomID: string;
-      gameState: SerializedGameState;
-    }) => {
-      if (data.roomID !== roomId) {
-        return;
-      }
-
-      dispatchNewGameState(hydrateGameState(data.gameState));
-    };
-
     socket.on("room-joined", handleRoomJoined);
     socket.on("room-full", handleRoomFull);
     socket.on("room-not-found", handleRoomNotFound);
@@ -377,7 +366,6 @@ export function useJoinGame(roomId: string, nickname: string | null) {
     socket.on("player-forfeited", handlePlayerForfeited);
     socket.on("game-started", handleGameStarted);
     socket.on("game-over", handleGameOver);
-    socket.on("sandbox-room-state", handleSandboxRoomState);
 
     // Register listeners before emitting join-room so the initial response
     // can't race ahead of subscriptions.
@@ -396,7 +384,6 @@ export function useJoinGame(roomId: string, nickname: string | null) {
       socket.off("player-forfeited", handlePlayerForfeited);
       socket.off("game-started", handleGameStarted);
       socket.off("game-over", handleGameOver);
-      socket.off("sandbox-room-state", handleSandboxRoomState);
     };
   }, [socket, roomId, nickname, navigate, dispatch, setPlayerIndex]);
 

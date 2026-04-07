@@ -19,6 +19,8 @@ export const useDragAndDrop = (
   dispatch: React.Dispatch<BoardAction> | undefined,
   allowMoveAnyPiece: boolean = false,
   currentPlayer?: number,
+  playerIndex?: number,
+  gameStarted: boolean = false,
 ) => {
   const [validMoves, setValidMoves] = useState<
     { row: number; col: number; isCapture: boolean }[]
@@ -42,6 +44,14 @@ export const useDragAndDrop = (
   const getPieceOwner = (piece: number) =>
     piece >= 10 ? Math.floor(piece / 10) : piece;
 
+  const canControlPiece = (owner: number): boolean => {
+    if (allowMoveAnyPiece) {
+      return true;
+    }
+
+    return Boolean(gameStarted && playerIndex && owner === playerIndex);
+  };
+
   const selectPiece = (fromRow: number, fromCol: number) => {
     const selected = boardState[fromRow][fromCol];
     if (selected <= 0) {
@@ -50,6 +60,11 @@ export const useDragAndDrop = (
     }
 
     const owner = getPieceOwner(selected);
+    if (!canControlPiece(owner)) {
+      clearDragState();
+      return;
+    }
+
     const board = new Board(boardState);
     const moves = allowMoveAnyPiece
       ? board.getValidMoves(fromRow, fromCol)
@@ -68,6 +83,12 @@ export const useDragAndDrop = (
     toCol: number,
   ): MoveResult => {
     if (fromRow === toRow && fromCol === toCol) {
+      return { moved: false, shouldContinueCapture: false };
+    }
+
+    const piece = boardState[fromRow]?.[fromCol] ?? 0;
+    const owner = getPieceOwner(piece);
+    if (piece <= 0 || !canControlPiece(owner)) {
       return { moved: false, shouldContinueCapture: false };
     }
 
@@ -177,13 +198,17 @@ export const useDragAndDrop = (
   };
 
   const handlePieceClick = (row: number, col: number) => {
+    if (!gameStarted && !allowMoveAnyPiece) {
+      return;
+    }
+
     const clickedPiece = boardState[row][col];
     if (clickedPiece <= 0) {
       return;
     }
 
     const owner = getPieceOwner(clickedPiece);
-    if (!allowMoveAnyPiece && owner !== currentPlayer) {
+    if (!canControlPiece(owner)) {
       return;
     }
 
