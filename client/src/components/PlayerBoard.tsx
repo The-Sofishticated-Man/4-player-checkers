@@ -3,6 +3,44 @@ import { useNavigate } from "react-router";
 import useGameState from "../hooks/useBoard";
 import { useSocket } from "../hooks/useSocket";
 
+const loadingSlots = [1, 2, 3, 4] as const;
+
+export function PlayerBoardSkeleton() {
+  return (
+    <div className="fixed top-4 right-4 bg-white rounded-2xl shadow-xl p-4 min-w-[450px] max-w-[500px] border border-gray-200 backdrop-blur-sm">
+      <div className="animate-pulse">
+        <div className="flex items-center justify-between mb-4">
+          <div className="h-6 w-24 rounded-md bg-slate-200"></div>
+          <div className="h-8 w-44 rounded-full bg-slate-200"></div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          {loadingSlots.map((slot) => (
+            <div
+              key={slot}
+              className="flex items-center justify-between p-3 rounded-xl border-2 border-slate-200 bg-slate-50"
+            >
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-full bg-slate-300"></div>
+                <div className="space-y-2">
+                  <div className="h-3 w-20 rounded bg-slate-300"></div>
+                  <div className="h-2 w-14 rounded bg-slate-200"></div>
+                </div>
+              </div>
+              <div className="h-6 w-14 rounded-md bg-slate-300"></div>
+            </div>
+          ))}
+        </div>
+
+        <div className="border-t pt-3 space-y-2">
+          <div className="h-4 w-full rounded bg-slate-200"></div>
+          <div className="h-10 w-full rounded-xl bg-slate-200"></div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function PlayerBoard() {
   const navigate = useNavigate();
   const { socket } = useSocket();

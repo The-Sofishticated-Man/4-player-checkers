@@ -3,8 +3,7 @@ import { useParams } from "react-router";
 import Board from "../components/Board";
 import GameContextProvider from "../context/BoardContextProvider";
 import { useJoinGame } from "../hooks/useJoinGame";
-import { printBoard } from "../utils/debugUtils";
-import PlayerBoard from "../components/PlayerBoard";
+import PlayerBoard, { PlayerBoardSkeleton } from "../components/PlayerBoard";
 import DevSandboxPanel from "../components/DevSandboxPanel";
 import {
   getDefaultNicknameForPlayerId,
@@ -14,28 +13,53 @@ import {
   setStoredNickname,
 } from "../utils/playerIdentity";
 
-// Inner component that uses the joined game data and has access to context
-function BoardPageInner({
+function BoardSession({
   roomId,
   allowMoveAnyPiece,
+  onToggleMoveAnyPiece,
   nickname,
 }: {
   roomId: string;
   allowMoveAnyPiece: boolean;
+  onToggleMoveAnyPiece: React.Dispatch<React.SetStateAction<boolean>>;
   nickname: string;
 }) {
-  const { initialStateFromServer, playerIndex } = useJoinGame(roomId, nickname);
+  const { isConnecting, error } = useJoinGame(roomId, nickname);
 
-  console.log("BoardPage loaded with roomId:", roomId);
-  if (initialStateFromServer?.boardState) {
-    printBoard(initialStateFromServer.boardState);
-    console.log("Current player: " + initialStateFromServer.currentPlayer);
-    console.log(`Player index:`, playerIndex);
-  } else {
-    console.log("No initial board state received from server.");
+  if (isConnecting) {
+    return (
+      <>
+        <PlayerBoardSkeleton />
+        <div className="min-h-screen flex items-center justify-center p-4 bg-slate-100">
+          <div className="rounded-xl border border-slate-200 bg-white px-5 py-3 shadow-sm text-sm font-medium text-slate-600">
+            Syncing game state...
+          </div>
+        </div>
+      </>
+    );
   }
 
-  return <Board allowMoveAnyPiece={allowMoveAnyPiece} />;
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 bg-slate-100">
+        <div className="rounded-xl border border-rose-200 bg-rose-50 px-5 py-3 shadow-sm text-sm font-medium text-rose-700">
+          {error}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <PlayerBoard />
+      <Board allowMoveAnyPiece={allowMoveAnyPiece} />
+      <DevSandboxPanel
+        roomId={roomId}
+        allowMoveAnyPiece={allowMoveAnyPiece}
+        onToggleMoveAnyPiece={onToggleMoveAnyPiece}
+      />
+    </>
+  );
 }
 
 function BoardPage() {
@@ -88,16 +112,11 @@ function BoardPage() {
 
   return (
     <GameContextProvider>
-      <PlayerBoard />
-      <BoardPageInner
-        roomId={roomId}
-        allowMoveAnyPiece={allowMoveAnyPiece}
-        nickname={nickname}
-      />
-      <DevSandboxPanel
+      <BoardSession
         roomId={roomId}
         allowMoveAnyPiece={allowMoveAnyPiece}
         onToggleMoveAnyPiece={setAllowMoveAnyPiece}
+        nickname={nickname}
       />
     </GameContextProvider>
   );
