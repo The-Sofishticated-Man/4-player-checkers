@@ -1,6 +1,7 @@
 import { useRef, useEffect, useState } from "react";
 import { useSocket } from "./useSocket";
 import type {
+  GameClockState,
   GameState,
   BoardState,
   PlayerIndex,
@@ -51,6 +52,8 @@ export function useJoinGame(roomId: string, nickname: string | null) {
         return;
       }
 
+      gameStateRef.current = newGameState;
+
       dispatch({
         type: "UPDATE_GAME_STATE",
         payload: {
@@ -59,9 +62,62 @@ export function useJoinGame(roomId: string, nickname: string | null) {
       });
     };
 
-    const hydrateGameState = (serialized: SerializedGameState): GameState => ({
+    const dispatchClockUpdate = (clock: GameClockState) => {
+      if (!dispatch) {
+        return;
+      }
+
+      gameStateRef.current = {
+        ...gameStateRef.current,
+        clock,
+      };
+
+      dispatch({
+        type: "UPDATE_CLOCK",
+        payload: {
+          clock,
+        },
+      });
+    };
+
+    const cloneClock = (clock: GameClockState): GameClockState => ({
+      ...clock,
+      remainingMs: {
+        1: clock.remainingMs[1],
+        2: clock.remainingMs[2],
+        3: clock.remainingMs[3],
+        4: clock.remainingMs[4],
+      },
+    });
+
+    const normalizeClockFromServer = (
+      clock: GameClockState,
+      serverNowMs?: number,
+    ): GameClockState => {
+      const nextClock = cloneClock(clock);
+
+      if (nextClock.lastUpdatedAtMs === null) {
+        return nextClock;
+      }
+
+      if (typeof serverNowMs === "number") {
+        nextClock.lastUpdatedAtMs += Date.now() - serverNowMs;
+        return nextClock;
+      }
+
+      // For payloads without serverNowMs (for example room-joined), treat the
+      // receipt time as the local synchronization point.
+      nextClock.lastUpdatedAtMs = Date.now();
+      return nextClock;
+    };
+
+    const hydrateGameState = (
+      serialized: SerializedGameState,
+      serverNowMs?: number,
+    ): GameState => ({
       ...serialized,
       players: new Map(serialized.players),
+      clock: normalizeClockFromServer(serialized.clock, serverNowMs),
     });
 
     const isSerializedPlayerMap = (
@@ -165,6 +221,8 @@ export function useJoinGame(roomId: string, nickname: string | null) {
       activePlayers,
       turnsWithoutProgress,
       stallDrawFullRounds,
+      clock,
+      serverNowMs,
       players,
       connectedPlayers,
     }: {
@@ -177,6 +235,8 @@ export function useJoinGame(roomId: string, nickname: string | null) {
       activePlayers?: PlayerIndex[];
       turnsWithoutProgress?: number;
       stallDrawFullRounds?: number;
+      clock?: GameClockState;
+      serverNowMs?: number;
       players?: SerializedPlayerMap;
       connectedPlayers?: string[];
     }) => {
@@ -204,6 +264,9 @@ export function useJoinGame(roomId: string, nickname: string | null) {
             turnsWithoutProgress ?? gameStateRef.current.turnsWithoutProgress,
           stallDrawFullRounds:
             stallDrawFullRounds ?? gameStateRef.current.stallDrawFullRounds,
+          clock: clock
+            ? normalizeClockFromServer(clock, serverNowMs)
+            : gameStateRef.current.clock,
         });
       } catch (error) {
         console.error("Dispatch failed with error:", error);
@@ -220,6 +283,8 @@ export function useJoinGame(roomId: string, nickname: string | null) {
       activePlayers,
       turnsWithoutProgress,
       stallDrawFullRounds,
+      clock,
+      serverNowMs,
       players,
       connectedPlayers,
     }: {
@@ -232,6 +297,8 @@ export function useJoinGame(roomId: string, nickname: string | null) {
       activePlayers: PlayerIndex[];
       turnsWithoutProgress?: number;
       stallDrawFullRounds?: number;
+      clock?: GameClockState;
+      serverNowMs?: number;
       players?: SerializedPlayerMap;
       connectedPlayers?: string[];
     }) => {
@@ -253,6 +320,9 @@ export function useJoinGame(roomId: string, nickname: string | null) {
           turnsWithoutProgress ?? gameStateRef.current.turnsWithoutProgress,
         stallDrawFullRounds:
           stallDrawFullRounds ?? gameStateRef.current.stallDrawFullRounds,
+        clock: clock
+          ? normalizeClockFromServer(clock, serverNowMs)
+          : gameStateRef.current.clock,
       });
     };
 
@@ -335,6 +405,8 @@ export function useJoinGame(roomId: string, nickname: string | null) {
       roomID: string;
       boardState: BoardState;
       currentPlayer: PlayerIndex;
+      clock?: GameClockState;
+      serverNowMs?: number;
       players?: SerializedPlayerMap;
       connectedPlayers?: string[];
     }) => {
@@ -352,7 +424,30 @@ export function useJoinGame(roomId: string, nickname: string | null) {
         currentPlayer: data.currentPlayer,
         players: nextPlayers,
         gameStarted: true,
+        clock: data.clock
+          ? normalizeClockFromServer(data.clock, data.serverNowMs)
+          : gameStateRef.current.clock,
       });
+    };
+
+    const handleClockSync = (data: {
+      roomID: string;
+      currentPlayer: PlayerIndex;
+      gameStarted: boolean;
+      gameOver: boolean;
+      winner: PlayerIndex | null;
+      isDraw: boolean;
+      activePlayers: PlayerIndex[];
+      clock: GameClockState;
+      serverNowMs: number;
+    }) => {
+      if (data.roomID !== roomId) {
+        return;
+      }
+
+      dispatchClockUpdate(
+        normalizeClockFromServer(data.clock, data.serverNowMs),
+      );
     };
 
     socket.on("room-joined", handleRoomJoined);
@@ -366,6 +461,7 @@ export function useJoinGame(roomId: string, nickname: string | null) {
     socket.on("player-forfeited", handlePlayerForfeited);
     socket.on("game-started", handleGameStarted);
     socket.on("game-over", handleGameOver);
+    socket.on("clock-sync", handleClockSync);
 
     // Register listeners before emitting join-room so the initial response
     // can't race ahead of subscriptions.
@@ -384,6 +480,7 @@ export function useJoinGame(roomId: string, nickname: string | null) {
       socket.off("player-forfeited", handlePlayerForfeited);
       socket.off("game-started", handleGameStarted);
       socket.off("game-over", handleGameOver);
+      socket.off("clock-sync", handleClockSync);
     };
   }, [socket, roomId, nickname, navigate, dispatch, setPlayerIndex]);
 

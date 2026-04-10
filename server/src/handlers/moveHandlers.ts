@@ -1,17 +1,20 @@
 import { Socket } from "socket.io";
 import { Game } from "../models/Game.ts";
 import { Board } from "../../../shared/logic/boardModel.ts";
-import {
-  DEFAULT_STALL_DRAW_FULL_ROUNDS,
-  evaluateGameStatus,
-  getNextActivePlayer,
-} from "../../../shared/logic/boardGameState.ts";
-import type {
-  MoveCoordinates,
-  PlayerIndex,
-} from "../../../shared/types/gameTypes.ts";
+import { getNextActivePlayer } from "../../../shared/logic/boardGameState.ts";
+import type { MoveCoordinates } from "../../../shared/types/gameTypes.ts";
 import { SANDBOX_MODE } from "../utils/devSandbox.ts";
 import { createGameStateEventPayload } from "../utils/sandboxEvents.ts";
+import {
+  advanceClock,
+  grantIncrement,
+  pauseClock,
+  setRunningClockPlayer,
+} from "../utils/gameClock.ts";
+import {
+  eliminatePlayerFromGame,
+  evaluateAndApplyGameStatus,
+} from "../utils/gameLifecycle.ts";
 
 interface MoveParams extends MoveCoordinates {
   roomID: string;
@@ -37,30 +40,22 @@ export class MoveHandlers {
     private games: Map<string, Game>,
   ) {}
 
-  private evaluateAndApplyGameStatus(game: Game): PlayerIndex[] {
-    const status = evaluateGameStatus(game.gameState.boardState, {
-      turnsWithoutProgress: game.gameState.turnsWithoutProgress,
-      stallDrawFullRounds:
-        game.gameState.stallDrawFullRounds ?? DEFAULT_STALL_DRAW_FULL_ROUNDS,
-    });
-    game.gameState.activePlayers = status.activePlayers;
-    game.gameState.gameOver = status.gameOver;
-    game.gameState.winner = status.winner;
-    game.gameState.isDraw = status.isDraw;
-
-    if (status.gameOver && status.winner) {
-      game.gameState.currentPlayer = status.winner;
-    } else if (
-      status.activePlayers.length > 0 &&
-      !status.activePlayers.includes(game.gameState.currentPlayer)
-    ) {
-      game.gameState.currentPlayer = getNextActivePlayer(
-        game.gameState.currentPlayer,
-        status.activePlayers,
-      );
+  private advanceClockAndHandleTimeout(roomID: string, game: Game): boolean {
+    const timedOutPlayer = advanceClock(game.gameState);
+    if (timedOutPlayer === null) {
+      return false;
     }
 
-    return status.activePlayers;
+    eliminatePlayerFromGame(game, timedOutPlayer);
+
+    const shouldEmitGameOver = game.gameState.gameOver ?? false;
+    this.emitGameStateUpdate(roomID, game, shouldEmitGameOver);
+    this.socket.emit(
+      "move-error",
+      "Time expired before your move was submitted",
+    );
+
+    return true;
   }
 
   private emitGameStateUpdate(
@@ -101,8 +96,12 @@ export class MoveHandlers {
       return;
     }
 
+    if (this.advanceClockAndHandleTimeout(roomID, game)) {
+      return;
+    }
+
     // Keep turn state resilient if the current player has been eliminated.
-    this.evaluateAndApplyGameStatus(game);
+    evaluateAndApplyGameStatus(game);
 
     const currentPlayerId = this.socket.data.playerId as string | undefined;
     if (!currentPlayerId) {
@@ -176,6 +175,7 @@ export class MoveHandlers {
       return;
     }
 
+    const movingPlayer = game.gameState.currentPlayer;
     const materialCountBefore = countMaterialPieces(game.gameState.boardState);
     const moveResult = board.applyMove(move);
 
@@ -192,11 +192,7 @@ export class MoveHandlers {
         (game.gameState.turnsWithoutProgress ?? 0) + 1;
     }
 
-    if ((game.gameState.stallDrawFullRounds ?? 0) < 1) {
-      game.gameState.stallDrawFullRounds = DEFAULT_STALL_DRAW_FULL_ROUNDS;
-    }
-
-    const activePlayers = this.evaluateAndApplyGameStatus(game);
+    const activePlayers = evaluateAndApplyGameStatus(game);
 
     if (moveResult.shouldChangePlayer && !game.gameState.gameOver) {
       game.gameState.currentPlayer = getNextActivePlayer(
@@ -209,6 +205,16 @@ export class MoveHandlers {
       !activePlayers.includes(game.gameState.currentPlayer)
     ) {
       game.gameState.currentPlayer = activePlayers[0];
+    }
+
+    if (game.gameState.gameOver) {
+      pauseClock(game.gameState);
+    } else {
+      if (moveResult.shouldChangePlayer) {
+        grantIncrement(game.gameState, movingPlayer);
+      }
+
+      setRunningClockPlayer(game.gameState, game.gameState.currentPlayer);
     }
 
     // Emit new game state to all players in the room (exactly once)

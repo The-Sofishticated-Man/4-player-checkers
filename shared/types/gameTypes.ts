@@ -20,6 +20,17 @@ export interface PlayerState {
 
 export type SerializedPlayerMap = [PlayerId, PlayerState][];
 
+export type PlayerClockMap = Record<PlayerIndex, number>;
+
+export interface GameClockState {
+  baseTimeMs: number;
+  incrementMs: number;
+  remainingMs: PlayerClockMap;
+  runningPlayer: PlayerIndex | null;
+  lastUpdatedAtMs: number | null;
+  paused: boolean;
+}
+
 export interface GameState {
   boardState: BoardState; // 2D array representing the board
   players: PlayerMap;
@@ -31,6 +42,7 @@ export interface GameState {
   activePlayers?: PlayerIndex[];
   turnsWithoutProgress?: number;
   stallDrawFullRounds?: number;
+  clock: GameClockState;
 }
 
 export type SerializedGameState = Omit<GameState, "players"> & {

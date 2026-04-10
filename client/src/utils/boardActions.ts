@@ -1,4 +1,5 @@
 import type {
+  GameClockState,
   GameState,
   MoveCoordinates,
 } from "../../../shared/types/gameTypes";
@@ -24,6 +25,12 @@ export type BoardAction =
       payload: MoveCoordinates & {
         capturedRow: number;
         capturedCol: number;
+      };
+    }
+  | {
+      type: "UPDATE_CLOCK";
+      payload: {
+        clock: GameClockState;
       };
     }
   | {

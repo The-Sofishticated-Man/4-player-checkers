@@ -122,6 +122,16 @@ export const boardReducer = (
 
       return newGameState;
     }
+
+    case "UPDATE_CLOCK": {
+      if (!payload) return gameState;
+
+      return {
+        ...gameState,
+        clock: payload.clock,
+      };
+    }
+
     default:
       return gameState; // Return current state by default
   }

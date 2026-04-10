@@ -5,6 +5,31 @@ import {
 } from "../../../shared/types/gameTypes.ts";
 import { createInitialGameState } from "../utils/initialGameState.ts";
 import { MIN_PLAYERS_TO_START, SANDBOX_MODE } from "../utils/devSandbox.ts";
+import {
+  DEFAULT_CLOCK_BASE_TIME_MS,
+  DEFAULT_CLOCK_INCREMENT_MS,
+  clampClockMs,
+  resetClock,
+  setRunningClockPlayer,
+} from "../utils/gameClock.ts";
+
+const parseClockEnvMs = (rawValue: string | undefined, fallbackMs: number) => {
+  if (!rawValue) {
+    return fallbackMs;
+  }
+
+  const parsed = Number(rawValue);
+  return clampClockMs(parsed, fallbackMs);
+};
+
+const SERVER_CLOCK_BASE_TIME_MS = parseClockEnvMs(
+  process.env.CHECKERS_BASE_TIME_MS,
+  DEFAULT_CLOCK_BASE_TIME_MS,
+);
+const SERVER_CLOCK_INCREMENT_MS = parseClockEnvMs(
+  process.env.CHECKERS_INCREMENT_MS,
+  DEFAULT_CLOCK_INCREMENT_MS,
+);
 
 export class Game {
   gameId: string;
@@ -15,6 +40,11 @@ export class Game {
 
   constructor(gameId: string) {
     this.gameId = gameId;
+    resetClock(
+      this.gameState,
+      SERVER_CLOCK_BASE_TIME_MS,
+      SERVER_CLOCK_INCREMENT_MS,
+    );
     console.log(`Room created: ${gameId}`);
   }
 
@@ -42,6 +72,8 @@ export class Game {
 
   startGame() {
     this.gameStarted = true;
+    this.gameState.gameStarted = true;
+    setRunningClockPlayer(this.gameState, this.gameState.currentPlayer);
     console.log(
       SANDBOX_MODE
         ? `🎮 Sandbox game started in room: ${this.gameId} (${this.playerCount} player connected)`

@@ -2,7 +2,6 @@ import { Socket } from "socket.io";
 import { Game } from "../models/Game.ts";
 import {
   DEFAULT_STALL_DRAW_FULL_ROUNDS,
-  evaluateGameStatus,
   getNextActivePlayer,
 } from "../../../shared/logic/boardGameState.ts";
 import type { PlayerIndex } from "../../../shared/types/gameTypes.ts";
@@ -13,6 +12,8 @@ import {
   type SandboxGetRoomStateParams,
   type SandboxSetStateParams,
 } from "../utils/sandboxEvents.ts";
+import { pauseClock, setRunningClockPlayer } from "../utils/gameClock.ts";
+import { evaluateAndApplyGameStatus } from "../utils/gameLifecycle.ts";
 
 interface SandboxStateAppliedPayload {
   roomID: string;
@@ -23,32 +24,6 @@ export class SandboxHandlers {
     private socket: Socket,
     private games: Map<string, Game>,
   ) {}
-
-  private evaluateAndApplyGameStatus(game: Game): PlayerIndex[] {
-    const status = evaluateGameStatus(game.gameState.boardState, {
-      turnsWithoutProgress: game.gameState.turnsWithoutProgress,
-      stallDrawFullRounds:
-        game.gameState.stallDrawFullRounds ?? DEFAULT_STALL_DRAW_FULL_ROUNDS,
-    });
-    game.gameState.activePlayers = status.activePlayers;
-    game.gameState.gameOver = status.gameOver;
-    game.gameState.winner = status.winner;
-    game.gameState.isDraw = status.isDraw;
-
-    if (status.gameOver && status.winner) {
-      game.gameState.currentPlayer = status.winner;
-    } else if (
-      status.activePlayers.length > 0 &&
-      !status.activePlayers.includes(game.gameState.currentPlayer)
-    ) {
-      game.gameState.currentPlayer = getNextActivePlayer(
-        game.gameState.currentPlayer,
-        status.activePlayers,
-      );
-    }
-
-    return status.activePlayers;
-  }
 
   private emitGameStateUpdate(
     roomID: string,
@@ -150,7 +125,7 @@ export class SandboxHandlers {
           : DEFAULT_STALL_DRAW_FULL_ROUNDS;
     }
 
-    const activePlayers = this.evaluateAndApplyGameStatus(game);
+    const activePlayers = evaluateAndApplyGameStatus(game);
     if (
       !game.gameState.gameOver &&
       activePlayers.length > 0 &&
@@ -160,6 +135,12 @@ export class SandboxHandlers {
         game.gameState.currentPlayer,
         activePlayers,
       );
+    }
+
+    if (!game.gameStarted || game.gameState.gameOver) {
+      pauseClock(game.gameState);
+    } else {
+      setRunningClockPlayer(game.gameState, game.gameState.currentPlayer);
     }
 
     const shouldEmitGameOver =

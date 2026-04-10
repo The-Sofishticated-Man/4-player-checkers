@@ -4,16 +4,11 @@ import { generateID } from "../utils/gameUtils.ts";
 import type { PlayerId, PlayerIndex } from "../../../shared/types/gameTypes.ts";
 import { SANDBOX_MODE } from "../utils/devSandbox.ts";
 import {
-  DEFAULT_STALL_DRAW_FULL_ROUNDS,
-  evaluateGameStatus,
-  getNextActivePlayer,
-} from "../../../shared/logic/boardGameState.ts";
-import { applyPlayerForfeit } from "../../../shared/logic/boardForfeit.ts";
-import {
   createGameStateEventPayload,
   createSandboxRoomStatePayload,
   serializeGameState,
 } from "../utils/sandboxEvents.ts";
+import { eliminatePlayerFromGame } from "../utils/gameLifecycle.ts";
 
 interface ForfeitAck {
   ok: boolean;
@@ -43,32 +38,6 @@ export class RoomHandlers {
     const payload = createSandboxRoomStatePayload(game);
     this.socket.to(game.gameId).emit("sandbox-room-state", payload);
     this.socket.emit("sandbox-room-state", payload);
-  }
-
-  private evaluateAndApplyGameStatus(game: Game): PlayerIndex[] {
-    const status = evaluateGameStatus(game.gameState.boardState, {
-      turnsWithoutProgress: game.gameState.turnsWithoutProgress,
-      stallDrawFullRounds:
-        game.gameState.stallDrawFullRounds ?? DEFAULT_STALL_DRAW_FULL_ROUNDS,
-    });
-    game.gameState.activePlayers = status.activePlayers;
-    game.gameState.gameOver = status.gameOver;
-    game.gameState.winner = status.winner;
-    game.gameState.isDraw = status.isDraw;
-
-    if (status.gameOver && status.winner) {
-      game.gameState.currentPlayer = status.winner;
-    } else if (
-      status.activePlayers.length > 0 &&
-      !status.activePlayers.includes(game.gameState.currentPlayer)
-    ) {
-      game.gameState.currentPlayer = getNextActivePlayer(
-        game.gameState.currentPlayer,
-        status.activePlayers,
-      );
-    }
-
-    return status.activePlayers;
   }
 
   handleRoomCreation = () => {
@@ -230,27 +199,7 @@ export class RoomHandlers {
     }
 
     const forfeitedPlayerIndex = playerIndex as PlayerIndex;
-
-    game.gameState.boardState = applyPlayerForfeit(
-      game.gameState.boardState,
-      forfeitedPlayerIndex,
-    );
-    game.gameState.turnsWithoutProgress = 0;
-
-    playerState.leftGame = true;
-    playerState.isConnected = false;
-
-    const activePlayers = this.evaluateAndApplyGameStatus(game);
-    if (
-      !game.gameState.gameOver &&
-      activePlayers.length > 0 &&
-      !activePlayers.includes(game.gameState.currentPlayer)
-    ) {
-      game.gameState.currentPlayer = getNextActivePlayer(
-        game.gameState.currentPlayer,
-        activePlayers,
-      );
-    }
+    eliminatePlayerFromGame(game, forfeitedPlayerIndex);
 
     const roomPayload = {
       roomID: game.gameId,

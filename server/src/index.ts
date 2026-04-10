@@ -6,6 +6,15 @@ import { setupRoomHandlers } from "./utils/setupRoomHandlers.ts";
 import { setupMoveHandlers } from "./utils/setupMoveHandlers.ts";
 import { setupSandboxHandlers } from "./utils/setupSandboxHandlers.ts";
 import { MIN_PLAYERS_TO_START, SANDBOX_MODE } from "./utils/devSandbox.ts";
+import {
+  DEFAULT_CLOCK_SYNC_INTERVAL_MS,
+  advanceClock,
+} from "./utils/gameClock.ts";
+import { eliminatePlayerFromGame } from "./utils/gameLifecycle.ts";
+import {
+  createClockSyncPayload,
+  createGameStateEventPayload,
+} from "./utils/sandboxEvents.ts";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -37,6 +46,30 @@ const io = new Server(expressServer, {
 });
 
 const games = new Map<string, Game>();
+
+setInterval(() => {
+  for (const [roomID, game] of games.entries()) {
+    if (!game.gameStarted || game.gameState.gameOver) {
+      continue;
+    }
+
+    const timedOutPlayer = advanceClock(game.gameState);
+    if (timedOutPlayer !== null) {
+      eliminatePlayerFromGame(game, timedOutPlayer);
+
+      const payload = createGameStateEventPayload(game);
+      io.to(roomID).emit("move-made", payload);
+
+      if (payload.gameOver) {
+        io.to(roomID).emit("game-over", payload);
+      }
+
+      continue;
+    }
+
+    io.to(roomID).emit("clock-sync", createClockSyncPayload(game));
+  }
+}, DEFAULT_CLOCK_SYNC_INTERVAL_MS);
 
 io.on("connection", (socket) => {
   console.log(`User connected: ${socket.id}`);

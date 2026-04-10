@@ -1,5 +1,6 @@
 import type {
   BoardState,
+  PlayerClockMap,
   PlayerIndex,
   GameState,
 } from "../../../shared/types/gameTypes.ts";
@@ -24,6 +25,16 @@ const initialBoard: BoardState = [
 
 const initialPlayer: PlayerIndex = 1; // Red starts first
 
+const DEFAULT_BASE_TIME_MS = 5 * 60 * 1000;
+const DEFAULT_INCREMENT_MS = 0;
+
+const createInitialClockMap = (baseTimeMs: number): PlayerClockMap => ({
+  1: baseTimeMs,
+  2: baseTimeMs,
+  3: baseTimeMs,
+  4: baseTimeMs,
+});
+
 const cloneBoardState = (boardState: BoardState): BoardState =>
   boardState.map((row) => [...row]);
 
@@ -38,6 +49,14 @@ export const createInitialGameState = (): GameState => ({
   activePlayers: [1, 2, 3, 4],
   turnsWithoutProgress: 0,
   stallDrawFullRounds: 20,
+  clock: {
+    baseTimeMs: DEFAULT_BASE_TIME_MS,
+    incrementMs: DEFAULT_INCREMENT_MS,
+    remainingMs: createInitialClockMap(DEFAULT_BASE_TIME_MS),
+    runningPlayer: null,
+    lastUpdatedAtMs: null,
+    paused: true,
+  },
 });
 
 const initialGameState: GameState = createInitialGameState();

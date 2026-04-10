@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import useGameState from "../hooks/useBoard";
 import { useSocket } from "../hooks/useSocket";
@@ -17,9 +17,48 @@ function PlayerBoard() {
       winner,
       isDraw,
       activePlayers,
+      clock,
     },
     playerIndex,
   } = useGameState();
+  const [clockNowMs, setClockNowMs] = useState(() => Date.now());
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setClockNowMs(Date.now());
+    }, 200);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, []);
+
+  const formatClock = (remainingMs: number): string => {
+    const totalSeconds = Math.max(0, Math.ceil(remainingMs / 1000));
+    const minutes = Math.floor(totalSeconds / 60)
+      .toString()
+      .padStart(2, "0");
+    const seconds = (totalSeconds % 60).toString().padStart(2, "0");
+
+    return `${minutes}:${seconds}`;
+  };
+
+  const getDisplayRemainingMs = (slotNumber: number): number => {
+    const slot = slotNumber as 1 | 2 | 3 | 4;
+    const baseRemainingMs = clock.remainingMs[slot] ?? 0;
+
+    if (
+      clock.paused ||
+      clock.runningPlayer !== slot ||
+      clock.lastUpdatedAtMs === null ||
+      gameOver
+    ) {
+      return baseRemainingMs;
+    }
+
+    const elapsedMs = Math.max(0, clockNowMs - clock.lastUpdatedAtMs);
+    return Math.max(0, baseRemainingMs - elapsedMs);
+  };
   const playerEntries = Array.from(players.entries());
   const connectedPlayers = playerEntries.filter(
     ([, player]) => player.isConnected,
@@ -181,6 +220,10 @@ function PlayerBoard() {
     const isDefeated =
       Boolean(playerId) &&
       defeatedPlayers.includes(slotNumber as (typeof playerSlots)[number]);
+    const remainingMs = getDisplayRemainingMs(slotNumber);
+    const clockLabel = formatClock(remainingMs);
+    const isLowTime = remainingMs <= 10_000;
+    const isOutOfTime = remainingMs === 0;
 
     return (
       <div
@@ -295,6 +338,18 @@ function PlayerBoard() {
 
         {/* Right side - Status indicators */}
         <div className="flex items-center space-x-2 z-10">
+          <div
+            className={`px-2 py-1 rounded-md text-xs font-semibold tabular-nums border shadow-sm ${
+              isOutOfTime
+                ? "bg-rose-700 text-white border-rose-700"
+                : isLowTime
+                  ? "bg-amber-100 text-amber-800 border-amber-300"
+                  : "bg-slate-100 text-slate-700 border-slate-300"
+            }`}
+          >
+            {clockLabel}
+          </div>
+
           {isYou && (
             <div className="px-2 py-1 bg-gradient-to-r from-purple-500 to-purple-600 text-white text-xs font-bold rounded-full shadow-sm">
               YOU
