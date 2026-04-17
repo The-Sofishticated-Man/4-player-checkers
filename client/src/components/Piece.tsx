@@ -34,22 +34,26 @@ const Piece = ({
   const getPlayerColor = (playerNum: number) => {
     switch (playerNum) {
       case 1:
-        return "bg-red-500";
+        return "bg-[var(--player-1)]";
       case 2:
-        return "bg-blue-500";
+        return "bg-[var(--player-2)]";
       case 3:
-        return "bg-green-500";
+        return "bg-[var(--player-3)]";
       case 4:
-        return "bg-yellow-500";
+        return "bg-[var(--player-4)]";
       default:
-        return "bg-gray-500";
+        return "bg-[var(--app-muted)]";
     }
   };
 
   const playerColor = getPlayerColor(playerNumber);
-  const borderStyle = isKing ? "border-4 border-yellow-400" : "";
+  const borderStyle = isKing
+    ? "border-4 border-[var(--board-promotion-border)]"
+    : "";
   const cursorStyle = !disabled && "cursor-pointer";
-  const selectedStyle = isSelected ? "ring-4 ring-white" : "";
+  const selectedStyle = isSelected
+    ? "ring-4 ring-[color:var(--app-surface-strong)]"
+    : "";
 
   const handleClick = (event: MouseEvent<HTMLDivElement>) => {
     event.stopPropagation();
@@ -68,7 +72,11 @@ const Piece = ({
       className={`${playerColor} ${borderStyle} ${cursorStyle} ${selectedStyle} w-10 h-10 rounded-full mx-auto my-auto aspect-square flex items-center justify-center`}
       onClick={handleClick}
     >
-      {isKing && <span className="text-yellow-400 font-bold text-xs">♔</span>}
+      {isKing && (
+        <span className="text-[var(--board-promotion-mark)] font-bold text-xs">
+          ♔
+        </span>
+      )}
     </div>
   );
 };

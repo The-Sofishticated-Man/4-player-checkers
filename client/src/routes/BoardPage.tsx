@@ -30,8 +30,18 @@ function BoardSession({
     return (
       <>
         <PlayerBoardSkeleton />
-        <div className="min-h-screen flex items-center justify-center p-4 bg-slate-100">
-          <div className="rounded-xl border border-slate-200 bg-white px-5 py-3 shadow-sm text-sm font-medium text-slate-600">
+        <div
+          className="min-h-screen flex items-center justify-center p-4"
+          style={{ background: "var(--page-bg)" }}
+        >
+          <div
+            className="rounded-xl border px-5 py-3 shadow-sm text-sm font-medium"
+            style={{
+              background: "var(--app-surface-strong)",
+              borderColor: "var(--app-border)",
+              color: "var(--app-muted)",
+            }}
+          >
             Syncing game state...
           </div>
         </div>
@@ -41,8 +51,18 @@ function BoardSession({
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-slate-100">
-        <div className="rounded-xl border border-rose-200 bg-rose-50 px-5 py-3 shadow-sm text-sm font-medium text-rose-700">
+      <div
+        className="min-h-screen flex items-center justify-center p-4"
+        style={{ background: "var(--page-bg)" }}
+      >
+        <div
+          className="rounded-xl border px-5 py-3 shadow-sm text-sm font-medium"
+          style={{
+            background: "rgba(255, 238, 239, 0.95)",
+            borderColor: "rgba(225, 164, 170, 0.6)",
+            color: "#8f4550",
+          }}
+        >
           {error}
         </div>
       </div>
@@ -85,23 +105,37 @@ function BoardPage() {
 
   if (!nickname) {
     return (
-      <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
+      <div
+        className="min-h-screen flex items-center justify-center p-4"
+        style={{ background: "var(--page-bg)" }}
+      >
         <form
           onSubmit={handleNicknameSubmit}
-          className="w-full max-w-xs bg-white border border-slate-200 rounded-lg p-4 shadow-sm"
+          className="w-full max-w-xs rounded-lg p-4 shadow-sm"
+          style={{
+            background: "var(--app-surface-strong)",
+            border: "1px solid var(--app-border)",
+          }}
         >
-          <p className="text-sm text-slate-600 mb-3">Enter a username</p>
+          <p className="mb-3 text-sm" style={{ color: "var(--app-muted)" }}>
+            Enter a username
+          </p>
           <input
             type="text"
             value={nicknameInput}
             onChange={(event) => setNicknameInput(event.target.value)}
             placeholder={defaultNickname}
-            className="w-full px-3 py-2 text-sm border border-slate-300 rounded-md mb-3 focus:outline-none focus:ring-2 focus:ring-blue-200"
+            className="mb-3 w-full rounded-md border px-3 py-2 text-sm focus:outline-none"
+            style={{ borderColor: "var(--app-border)" }}
             maxLength={24}
           />
           <button
             type="submit"
-            className="w-full py-2 text-sm font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
+            className="w-full rounded-md py-2 text-sm font-semibold text-white transition-colors"
+            style={{
+              background:
+                "linear-gradient(135deg, var(--player-2-accent), var(--player-1-accent))",
+            }}
           >
             Enter Game
           </button>

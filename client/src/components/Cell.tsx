@@ -43,7 +43,15 @@ const Cell = ({
   }
 
   // Determine cell styling for accessible cells
-  const baseColor = isDark ? "bg-amber-700" : "bg-amber-200";
+  const baseStyle = isDark
+    ? {
+        backgroundColor: "var(--board-dark)",
+        borderColor: "var(--board-border)",
+      }
+    : {
+        backgroundColor: "var(--board-light)",
+        borderColor: "var(--board-border)",
+      };
 
   // Check if the dragged piece belongs to the current player
   const isCurrentPlayerPiece = draggedPieceOwner === currentPlayer;
@@ -51,15 +59,26 @@ const Cell = ({
   const validMoveMarkup = (isValidMove || isValidCapture) && (
     <div
       className={`rounded-full w-[30%] h-[30%] ${
-        isCurrentPlayerPiece ? "bg-green-800" : "bg-gray-500"
+        isCurrentPlayerPiece ? "" : ""
       }`}
+      style={{
+        backgroundColor: isCurrentPlayerPiece
+          ? "var(--board-valid-move-current)"
+          : "var(--board-valid-move-other)",
+      }}
     ></div>
   );
 
   const softPromotionHintMarkup = isSoftPromotionHint && (
     <>
-      <div className="pointer-events-none absolute inset-1 rounded-sm border-2 border-dashed border-yellow-700"></div>
-      <div className="pointer-events-none absolute top-1 right-1 text-[10px] leading-none text-yellow-900">
+      <div
+        className="pointer-events-none absolute inset-1 rounded-sm border-2 border-dashed"
+        style={{ borderColor: "var(--board-promotion-border)" }}
+      ></div>
+      <div
+        className="pointer-events-none absolute top-1 right-1 text-[10px] leading-none"
+        style={{ color: "var(--board-promotion-mark)" }}
+      >
         ♔
       </div>
     </>
@@ -68,7 +87,8 @@ const Cell = ({
   return (
     <div
       ref={setNodeRef}
-      className={`${baseColor} border-2 relative flex items-center justify-center aspect-square w-20 h-20`}
+      className="border-2 relative flex items-center justify-center aspect-square w-20 h-20"
+      style={baseStyle}
       id={`cell-${row}-${column}`}
       onClick={onClick}
     >

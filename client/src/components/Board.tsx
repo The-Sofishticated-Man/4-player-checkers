@@ -58,26 +58,28 @@ const Board = ({ allowMoveAnyPiece = false }: BoardProps) => {
     const getPlayerColor = (playerNum: number) => {
       switch (playerNum) {
         case 1:
-          return "bg-red-500";
+          return "bg-[var(--player-1)]";
         case 2:
-          return "bg-blue-500";
+          return "bg-[var(--player-2)]";
         case 3:
-          return "bg-green-500";
+          return "bg-[var(--player-3)]";
         case 4:
-          return "bg-yellow-500";
+          return "bg-[var(--player-4)]";
         default:
-          return "bg-gray-500";
+          return "bg-[var(--app-muted)]";
       }
     };
 
     return (
       <div
         className={`${getPlayerColor(owner)} ${
-          kingPiece ? "border-4 border-yellow-400" : ""
+          kingPiece ? "border-4 border-[var(--board-promotion-border)]" : ""
         } w-10 h-10 rounded-full aspect-square flex items-center justify-center`}
       >
         {kingPiece && (
-          <span className="text-yellow-400 font-bold text-xs">♔</span>
+          <span className="text-[var(--board-promotion-mark)] font-bold text-xs">
+            ♔
+          </span>
         )}
       </div>
     );

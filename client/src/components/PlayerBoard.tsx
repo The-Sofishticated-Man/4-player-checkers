@@ -206,37 +206,52 @@ function PlayerBoard() {
     switch (playerNum) {
       case 1:
         return {
-          bg: "bg-red-500",
-          text: "text-red-500",
-          border: "border-red-500",
+          bgClass: "bg-[var(--player-1)]",
+          textClass: "text-[var(--player-1-text)]",
+          borderClass: "border-[var(--player-1-border)]",
+          fromClass: "from-[color:var(--player-1-surface-strong)]",
+          toClass: "to-[color:var(--player-1-surface)]",
+          glowFromClass: "from-[color:var(--player-1)]",
           name: "Red",
         };
       case 2:
         return {
-          bg: "bg-blue-500",
-          text: "text-blue-500",
-          border: "border-blue-500",
+          bgClass: "bg-[var(--player-2)]",
+          textClass: "text-[var(--player-2-text)]",
+          borderClass: "border-[var(--player-2-border)]",
+          fromClass: "from-[color:var(--player-2-surface-strong)]",
+          toClass: "to-[color:var(--player-2-surface)]",
+          glowFromClass: "from-[color:var(--player-2)]",
           name: "Blue",
         };
       case 3:
         return {
-          bg: "bg-green-500",
-          text: "text-green-500",
-          border: "border-green-500",
+          bgClass: "bg-[var(--player-3)]",
+          textClass: "text-[var(--player-3-text)]",
+          borderClass: "border-[var(--player-3-border)]",
+          fromClass: "from-[color:var(--player-3-surface-strong)]",
+          toClass: "to-[color:var(--player-3-surface)]",
+          glowFromClass: "from-[color:var(--player-3)]",
           name: "Green",
         };
       case 4:
         return {
-          bg: "bg-yellow-500",
-          text: "text-yellow-500",
-          border: "border-yellow-500",
+          bgClass: "bg-[var(--player-4)]",
+          textClass: "text-[var(--player-4-text)]",
+          borderClass: "border-[var(--player-4-border)]",
+          fromClass: "from-[color:var(--player-4-surface-strong)]",
+          toClass: "to-[color:var(--player-4-surface)]",
+          glowFromClass: "from-[color:var(--player-4)]",
           name: "Yellow",
         };
       default:
         return {
-          bg: "bg-gray-500",
-          text: "text-gray-500",
-          border: "border-gray-500",
+          bgClass: "bg-[var(--app-muted)]",
+          textClass: "text-[var(--app-muted)]",
+          borderClass: "border-[var(--app-muted)]",
+          fromClass: "from-[color:var(--app-surface-strong)]",
+          toClass: "to-[color:var(--app-surface)]",
+          glowFromClass: "from-[color:var(--app-muted)]",
           name: "Unknown",
         };
     }
@@ -270,9 +285,7 @@ function PlayerBoard() {
           relative flex items-center justify-between p-3 rounded-xl transition-all duration-300 overflow-hidden
           ${
             isCurrentTurn
-              ? `bg-gradient-to-r from-${playerColor.bg.split("-")[1]}-50 to-${
-                  playerColor.bg.split("-")[1]
-                }-100 border-2 ${playerColor.border} shadow-lg`
+              ? `bg-gradient-to-r ${playerColor.fromClass} ${playerColor.toClass} border-2 ${playerColor.borderClass} shadow-lg`
               : hasLeftGame
                 ? "bg-gradient-to-r from-rose-100 to-red-100 border-2 border-rose-400"
                 : isDefeated
@@ -290,9 +303,7 @@ function PlayerBoard() {
         {/* Glow effect for current turn */}
         {isCurrentTurn && (
           <div
-            className={`absolute inset-0 bg-gradient-to-r from-${
-              playerColor.bg.split("-")[1]
-            }-200 to-transparent opacity-50 animate-pulse`}
+            className={`absolute inset-0 bg-gradient-to-r ${playerColor.glowFromClass} to-transparent opacity-50 animate-pulse`}
           ></div>
         )}
 
@@ -301,7 +312,7 @@ function PlayerBoard() {
           <div
             className={`
               w-10 h-10 rounded-full flex items-center justify-center border-2 shadow-md
-              ${playerColor.bg} ${playerColor.border}
+              ${playerColor.bgClass} ${playerColor.borderClass}
               ${isCurrentTurn ? "animate-pulse shadow-lg" : ""}
               ${
                 !playerId
@@ -328,7 +339,7 @@ function PlayerBoard() {
                     ? "text-rose-700"
                     : isDefeated
                       ? "text-slate-600"
-                      : playerColor.text
+                      : playerColor.textClass
               }`}
             >
               {displayName}
@@ -533,7 +544,7 @@ function PlayerBoard() {
                 <span className="text-gray-600">You: {playerIndex}</span>
                 <span
                   className={`font-semibold ml-1 ${
-                    getPlayerColor(playerIndex).text
+                    getPlayerColor(playerIndex).textClass
                   }`}
                 >
                   {getPlayerColor(playerIndex).name}
@@ -546,17 +557,17 @@ function PlayerBoard() {
             <span className="text-gray-600 text-sm">Turn:{currentPlayer}</span>
             <div
               className={`flex items-center space-x-1 px-2 py-1 rounded-full ${
-                getPlayerColor(currentPlayer).bg
+                getPlayerColor(currentPlayer).bgClass
               } bg-opacity-20`}
             >
               <div
                 className={`w-2 h-2 rounded-full ${
-                  getPlayerColor(currentPlayer).bg
+                  getPlayerColor(currentPlayer).bgClass
                 }`}
               ></div>
               <span
                 className={`font-semibold text-sm ${
-                  getPlayerColor(currentPlayer).text
+                  getPlayerColor(currentPlayer).textClass
                 }`}
               >
                 {getPlayerColor(currentPlayer).name}
