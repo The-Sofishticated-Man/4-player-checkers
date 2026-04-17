@@ -9,6 +9,7 @@ import useGameState from "../hooks/useBoard";
 import { useDragAndDrop } from "../hooks/useDragAndDrop";
 import { generateBoardCells } from "../utils/boardRenderer";
 import BoardGrid from "./BoardGrid";
+import { PieceSvg } from "./Piece";
 
 interface BoardProps {
   allowMoveAnyPiece?: boolean;
@@ -55,33 +56,12 @@ const Board = ({ allowMoveAnyPiece = false }: BoardProps) => {
     const kingPiece = activePiece >= 10;
     const owner = kingPiece ? Math.floor(activePiece / 10) : activePiece;
 
-    const getPlayerColor = (playerNum: number) => {
-      switch (playerNum) {
-        case 1:
-          return "bg-[var(--player-1)]";
-        case 2:
-          return "bg-[var(--player-2)]";
-        case 3:
-          return "bg-[var(--player-3)]";
-        case 4:
-          return "bg-[var(--player-4)]";
-        default:
-          return "bg-[var(--app-muted)]";
-      }
-    };
-
     return (
-      <div
-        className={`${getPlayerColor(owner)} ${
-          kingPiece ? "border-4 border-[var(--board-promotion-border)]" : ""
-        } w-10 h-10 rounded-full aspect-square flex items-center justify-center`}
-      >
-        {kingPiece && (
-          <span className="text-[var(--board-promotion-mark)] font-bold text-xs">
-            ♔
-          </span>
-        )}
-      </div>
+      <PieceSvg
+        playerNumber={owner}
+        isKing={kingPiece}
+        className="h-[3.3rem] w-[3.3rem]"
+      />
     );
   };
 
