@@ -3,21 +3,31 @@
 :root {
   color-scheme: light;
 
-  --app-bg: #f5f1ec;
-  --app-bg-alt: #ece6e0;
+  --app-bg: #f7f5ef;
+  --app-bg-alt: #f7f5ef;
   --app-surface: rgba(255, 252, 248, 0.92);
   --app-surface-strong: rgba(255, 255, 255, 0.96);
   --app-border: rgba(207, 191, 180, 0.62);
   --app-text: #4f433d;
   --app-muted: #84746c;
 
-  --board-light: #e2c9a5;
-  --board-dark: #b57d43;
-  --board-border: rgba(99, 69, 38, 0.22);
+  --board-light: #dadada;
+  --board-dark: #adadad;
   --board-valid-move-current: #3a7d49;
   --board-valid-move-other: #7b818c;
   --board-promotion-border: #8f6a14;
   --board-promotion-mark: #6d520e;
+
+  --piece-1-fill: #d64545;
+
+  --piece-2-fill: #2f6fd6;
+
+  --piece-3-fill: #1f9a6c;
+
+  --piece-4-fill: #d8891f;
+
+  --piece-default-fill: #a3a3a3;
+  --piece-outline: rgba(0, 0, 0, 0.48);
 
   --player-1: #dda0a2;
   --player-1-surface: rgba(252, 231, 232, 0.96);
@@ -51,9 +61,9 @@
   --player-4-accent: #caa24a;
   --player-4-muted: #9a855b;
 
-  --page-bg: linear-gradient(135deg, var(--app-bg) 0%, var(--app-bg-alt) 100%);
+  --page-bg: var(--app-bg);
   --card-bg: var(--app-surface);
-  --card-shadow: 0 24px 70px rgba(114, 92, 86, 0.16);
+  --card-shadow: 0 24px 70px rgba(38, 58, 88, 0.2);
 }
 
 html,

@@ -39,18 +39,16 @@ const Cell = ({
 
   // Return invisible cell for inaccessible positions
   if (isInaccessible) {
-    return <div className="aspect-square w-20 h-20"></div>;
+    return <div className="aspect-square h-17 w-17"></div>;
   }
 
   // Determine cell styling for accessible cells
   const baseStyle = isDark
     ? {
         backgroundColor: "var(--board-dark)",
-        borderColor: "var(--board-border)",
       }
     : {
         backgroundColor: "var(--board-light)",
-        borderColor: "var(--board-border)",
       };
 
   // Check if the dragged piece belongs to the current player
@@ -87,7 +85,7 @@ const Cell = ({
   return (
     <div
       ref={setNodeRef}
-      className="border-2 relative flex items-center justify-center aspect-square w-20 h-20"
+      className="relative flex aspect-square h-17 w-17 items-center justify-center"
       style={baseStyle}
       id={`cell-${row}-${column}`}
       onClick={onClick}
