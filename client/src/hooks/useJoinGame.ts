@@ -153,19 +153,24 @@ export function useJoinGame(roomId: string, nickname: string | null) {
         return new Map(players);
       }
 
-      return new Map<string, PlayerState>(
-        players.map((nextPlayerId) => [
-          nextPlayerId,
-          {
-            isConnected: (connectedPlayers ?? []).includes(nextPlayerId),
-            leftGame:
-              gameStateRef.current.players.get(nextPlayerId)?.leftGame ?? false,
-            nickname:
-              gameStateRef.current.players.get(nextPlayerId)?.nickname ??
-              getDefaultNicknameForPlayerId(nextPlayerId),
-          },
-        ]),
-      );
+      const nextPlayers = new Map<string, PlayerState>();
+      const knownPlayerIds = new Set<string>([
+        ...Array.from(gameStateRef.current.players.keys()),
+        ...players,
+        ...(connectedPlayers ?? []),
+      ]);
+
+      for (const nextPlayerId of knownPlayerIds) {
+        const previous = gameStateRef.current.players.get(nextPlayerId);
+        nextPlayers.set(nextPlayerId, {
+          isConnected: (connectedPlayers ?? players).includes(nextPlayerId),
+          leftGame: previous?.leftGame ?? false,
+          nickname:
+            previous?.nickname ?? getDefaultNicknameForPlayerId(nextPlayerId),
+        });
+      }
+
+      return nextPlayers;
     };
 
     // Listen for success response
