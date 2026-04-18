@@ -18,6 +18,7 @@ import {
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 
 // Middleware
 app.use(express.json()); // Parse JSON bodies
@@ -26,7 +27,7 @@ app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
 // CORS middleware
 app.use(
   cors({
-    origin: "*", // Allow all origins for simplicity, adjust as needed
+    origin: FRONTEND_URL,
   }),
 );
 
@@ -39,7 +40,7 @@ const expressServer = app.listen(PORT, () => {
 
 const io = new Server(expressServer, {
   cors: {
-    origin: "*", // Allow all origins for development
+    origin: FRONTEND_URL,
     methods: ["GET", "POST"],
     credentials: true,
   },

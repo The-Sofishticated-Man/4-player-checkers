@@ -3,9 +3,10 @@ services:
     build:
       context: .
       dockerfile: server/Dockerfile
-    command: npm run dev:strict
+    command: npm run dev:sandbox
     environment:
       PORT: 3000
+      FRONTEND_URL: "http://localhost:5173"
     ports:
       - "3000:3000"
     volumes:
