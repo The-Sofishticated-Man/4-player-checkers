@@ -2,7 +2,6 @@
   "compilerOptions": {
     "target": "ES2022",
     "module": "ESNext",
-    "allowImportingTsExtensions": true,
     "noEmit": true,
     "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true,
@@ -25,7 +24,7 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "skipLibCheck": true,
+    "skipLibCheck": true
   },
   "include": ["src/**/*", "../shared/**/*"],
   "exclude": [
