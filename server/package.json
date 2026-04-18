@@ -17,6 +17,6 @@
     "dev": "nodemon",
     "dev:sandbox": "cross-env CHECKERS_SANDBOX=true nodemon",
     "dev:strict": "cross-env CHECKERS_SANDBOX=false nodemon",
-    "build": "tsc --noEmit false"
+    "build": "tsc --noEmit"
   }
 }
