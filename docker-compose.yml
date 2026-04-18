@@ -1,0 +1,30 @@
+services:
+  server:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    command: npm run dev:strict
+    environment:
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - server-node-modules:/app/server/node_modules
+
+  client:
+    build:
+      context: .
+      dockerfile: client/Dockerfile
+    command: npm run dev -- --host 0.0.0.0 --port 5173
+    depends_on:
+      - server
+    ports:
+      - "5173:5173"
+    volumes:
+      - .:/app
+      - client-node-modules:/app/client/node_modules
+
+volumes:
+  client-node-modules:
+  server-node-modules:
