@@ -4,9 +4,8 @@ import React, {
   useState,
   type ReactNode,
 } from "react";
-import { io, Socket} from "socket.io-client";
+import { io, Socket } from "socket.io-client";
 import type { SocketContextType } from "../types/contextTypes";
-
 
 const SocketContext = createContext<SocketContextType | undefined>(undefined);
 
@@ -17,7 +16,7 @@ interface SocketProviderProps {
 
 export const SocketProvider: React.FC<SocketProviderProps> = ({
   children,
-  serverURL = "http://localhost:3000",
+  serverURL = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000",
 }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
