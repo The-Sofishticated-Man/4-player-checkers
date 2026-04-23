@@ -27,6 +27,8 @@ services:
       - client-node-modules:/app/client/node_modules
     environment:
       VITE_BACKEND_URL: http://localhost:3000
+      CHOKIDAR_USEPOLLING: "true"
+      CHOKIDAR_INTERVAL: "100"
 
 volumes:
   client-node-modules:
