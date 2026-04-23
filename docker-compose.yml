@@ -26,7 +26,7 @@ services:
       - .:/app
       - client-node-modules:/app/client/node_modules
     environment:
-      VITE_BACKEND_URL: http://server:3000
+      VITE_BACKEND_URL: http://localhost:3000
 
 volumes:
   client-node-modules:
