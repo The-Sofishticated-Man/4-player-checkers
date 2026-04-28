@@ -58,9 +58,9 @@ function BoardSession({
         <div
           className="rounded-xl border px-5 py-3 shadow-sm text-sm font-medium"
           style={{
-            background: "rgba(255, 238, 239, 0.95)",
-            borderColor: "rgba(225, 164, 170, 0.6)",
-            color: "#8f4550",
+            background: "var(--app-error-surface)",
+            borderColor: "var(--app-error-border)",
+            color: "var(--app-error-text)",
           }}
         >
           {error}
