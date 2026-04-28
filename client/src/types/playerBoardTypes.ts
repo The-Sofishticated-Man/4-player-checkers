@@ -11,6 +11,4 @@ export type PlayerTheme = {
   accent: string;
   text: string;
   mutedText: string;
-  glow: string;
-  chipText: string;
 };

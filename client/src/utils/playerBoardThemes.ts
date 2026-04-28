@@ -11,8 +11,6 @@ export const playerThemes: Record<PlayerSlot, PlayerTheme> = {
     accent: "var(--player-1-accent)",
     text: "var(--player-1-text)",
     mutedText: "var(--player-1-muted)",
-    glow: "rgba(190, 111, 120, 0.24)",
-    chipText: "var(--player-1-text)",
   },
   2: {
     name: "Blue",
@@ -23,8 +21,6 @@ export const playerThemes: Record<PlayerSlot, PlayerTheme> = {
     accent: "var(--player-2-accent)",
     text: "var(--player-2-text)",
     mutedText: "var(--player-2-muted)",
-    glow: "rgba(111, 151, 204, 0.24)",
-    chipText: "var(--player-2-text)",
   },
   3: {
     name: "Green",
@@ -35,8 +31,6 @@ export const playerThemes: Record<PlayerSlot, PlayerTheme> = {
     accent: "var(--player-3-accent)",
     text: "var(--player-3-text)",
     mutedText: "var(--player-3-muted)",
-    glow: "rgba(103, 172, 137, 0.24)",
-    chipText: "var(--player-3-text)",
   },
   4: {
     name: "Yellow",
@@ -47,15 +41,13 @@ export const playerThemes: Record<PlayerSlot, PlayerTheme> = {
     accent: "var(--player-4-accent)",
     text: "var(--player-4-text)",
     mutedText: "var(--player-4-muted)",
-    glow: "rgba(202, 162, 74, 0.24)",
-    chipText: "var(--player-4-text)",
   },
 };
 
 export const panelTheme = {
   fontFamily:
     '"Avenir Next", "Nunito", "Segoe UI", "SF Pro Rounded", sans-serif',
-  background: "rgba(255, 255, 255, 0.96)",
+  background: "var(--app-surface-strong)",
   borderColor: "var(--app-border)",
   color: "var(--app-text)",
   boxShadow: "var(--card-shadow)",
