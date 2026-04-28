@@ -31,7 +31,7 @@ function PlayerCornerCard({
   const isDisconnected = Boolean(playerId) && !isConnected && !hasLeftGame;
   const displayName = playerId
     ? (nickname ?? `P_${playerId}`)
-    : `${theme.name} Slot`;
+    : `Player ${slotNumber}`;
 
   const statusLabel = playerId
     ? hasLeftGame
@@ -41,7 +41,7 @@ function PlayerCornerCard({
         : isConnected
           ? "Online"
           : "Disconnected"
-    : "Waiting";
+    : "Waiting for player";
 
   const statusColor = hasLeftGame
     ? "#586779"
@@ -92,13 +92,13 @@ function PlayerCornerCard({
       }}
     >
       <div
-        className="inline-flex h-7 w-7 items-center justify-center rounded-md"
+        className="inline-flex h-8 w-8 items-center justify-center rounded-md"
         style={{
           background: timerButtonColor,
           color: "rgba(244, 248, 255, 0.95)",
         }}
       >
-        <FiClock className="h-4 w-4" />
+        <FiClock className="h-5 w-5" />
       </div>
 
       <div className="min-w-0 text-right">
@@ -112,39 +112,56 @@ function PlayerCornerCard({
     </div>
   );
 
+  const showStatus = Boolean(statusLabel);
+
+  const slotBadgeBackground = playerId
+    ? theme.accent
+    : "rgba(141, 155, 174, 0.42)";
+  const slotBadgeBorderColor = playerId
+    ? theme.border
+    : "rgba(141, 155, 174, 0.62)";
+  const slotBadgeTextColor = "rgba(244, 248, 255, 0.98)";
+
   const playerMeta = (
-    <div className="flex items-start justify-between gap-2">
-      <div className="min-w-0">
+    <div className="-mx-2.5 flex items-start gap-2">
+      <div
+        className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border text-[13px] font-extrabold leading-none tabular-nums"
+        style={{
+          color: slotBadgeTextColor,
+          background: slotBadgeBackground,
+          borderColor: slotBadgeBorderColor,
+        }}
+      >
+        {slotNumber}
+      </div>
+
+      <div className="min-w-0 flex-1 pl-2">
         <div
           className="truncate text-[15px] font-bold tracking-tight"
           style={{ color: "#111111" }}
         >
-          {displayName}
+          {!playerId ? (
+            <span className="animate-pulse">{displayName}</span>
+          ) : (
+            displayName
+          )}
           {isYou && playerId ? " (You)" : ""}
         </div>
-        <div
-          className="mt-0.5 inline-flex min-w-0 items-center gap-1.5 truncate text-[11px] font-semibold"
-          style={{ color: statusColor }}
-        >
-          {statusIcon}
-          <span className="truncate">{statusLabel}</span>
-        </div>
-      </div>
-
-      <div
-        className="inline-flex h-5 min-w-5 items-center justify-center rounded-md px-1.5 text-[10px] font-bold"
-        style={{
-          color: "rgba(233, 239, 248, 0.95)",
-          background: "rgba(141, 155, 174, 0.32)",
-        }}
-      >
-        {slotNumber}
+        {showStatus && (
+          <div
+            className="mt-0.5 inline-flex min-w-0 items-center gap-1.5 truncate text-[11px] font-semibold"
+            style={{ color: statusColor }}
+          >
+            {statusIcon}
+            <span className="truncate">{statusLabel}</span>
+          </div>
+        )}
       </div>
     </div>
   );
 
   return (
-    <div className="pointer-events-none z-20 h-full w-full">
+    <div className="pointer-events-none z-20 h-full w-full p-1.5">
       <div
         className={`flex h-full w-full flex-col rounded-none px-2.5 pb-2 pt-2.5 transition-all duration-300 ${
           hasLeftGame || isDefeated ? "opacity-85" : ""
