@@ -3,13 +3,36 @@
 :root {
   color-scheme: light;
 
+  --ui-white: #ffffff;
+  --ui-black: #000000;
+
   --app-bg: #f7f5ef;
-  --app-bg-alt: #f7f5ef;
   --app-surface: rgba(255, 252, 248, 0.92);
   --app-surface-strong: rgba(255, 255, 255, 0.96);
   --app-border: rgba(207, 191, 180, 0.62);
   --app-text: #4f433d;
+  --app-ink: #111111;
   --app-muted: #84746c;
+  --app-on-dark: rgba(244, 248, 255, 0.98);
+  --app-on-dark-muted: rgba(244, 248, 255, 0.95);
+
+  --status-online: #22c55e;
+  --status-forfeited: #586779;
+  --status-disconnected: #5b6b7f;
+  --status-defeated: #5f6e82;
+
+  --corner-ribbon-empty: rgba(111, 123, 140, 0.88);
+  --corner-ribbon-muted: #374151;
+  --corner-timer-empty: rgba(20, 30, 45, 0.32);
+  --corner-slot-empty: rgba(141, 155, 174, 0.42);
+  --corner-slot-empty-border: rgba(141, 155, 174, 0.62);
+
+  --app-error-surface: rgba(255, 238, 239, 0.95);
+  --app-error-border: rgba(225, 164, 170, 0.6);
+  --app-error-text: #8f4550;
+
+  --game-result-draw: linear-gradient(135deg, #8f98a7, #6f7884);
+  --game-result-win: linear-gradient(135deg, #d8788d, #c86074);
 
   --board-light: #dadada;
   --board-dark: #adadad;
@@ -29,7 +52,6 @@
   --piece-default-fill: #a3a3a3;
   --piece-outline: rgba(0, 0, 0, 0.48);
 
-  --player-1: #dda0a2;
   --player-1-surface: rgba(252, 231, 232, 0.96);
   --player-1-surface-strong: rgba(248, 219, 220, 0.98);
   --player-1-border: #d78288;
@@ -37,7 +59,6 @@
   --player-1-accent: #be6f78;
   --player-1-muted: #a17377;
 
-  --player-2: #9fc0ea;
   --player-2-surface: rgba(232, 242, 252, 0.96);
   --player-2-surface-strong: rgba(219, 235, 250, 0.98);
   --player-2-border: #84a9dc;
@@ -45,7 +66,6 @@
   --player-2-accent: #6f97cc;
   --player-2-muted: #6c849b;
 
-  --player-3: #a8d9be;
   --player-3-surface: rgba(232, 249, 240, 0.96);
   --player-3-surface-strong: rgba(220, 244, 231, 0.98);
   --player-3-border: #86c7a5;
@@ -53,7 +73,6 @@
   --player-3-accent: #67ac89;
   --player-3-muted: #6a8d7a;
 
-  --player-4: #f0d58f;
   --player-4-surface: rgba(255, 246, 225, 0.96);
   --player-4-surface-strong: rgba(252, 238, 200, 0.98);
   --player-4-border: #ddb95b;
@@ -62,7 +81,6 @@
   --player-4-muted: #9a855b;
 
   --page-bg: var(--app-bg);
-  --card-bg: var(--app-surface);
   --card-shadow: 0 24px 70px rgba(38, 58, 88, 0.2);
 }
 
