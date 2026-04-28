@@ -44,11 +44,11 @@ function PlayerCornerCard({
     : "Waiting for player";
 
   const statusColor = hasLeftGame
-    ? "#586779"
+    ? "var(--status-forfeited)"
     : isDisconnected
-      ? "#5b6b7f"
+      ? "var(--status-disconnected)"
       : isDefeated
-        ? "#5f6e82"
+        ? "var(--status-defeated)"
         : playerId
           ? theme.mutedText
           : "var(--app-muted)";
@@ -62,27 +62,27 @@ function PlayerCornerCard({
   ) : (
     <span
       className="h-2.5 w-2.5 rounded-full"
-      style={{ background: "#22c55e" }}
+      style={{ background: "var(--status-online)" }}
       aria-hidden="true"
     />
   );
 
   const baseRibbonColor = !playerId
-    ? "rgba(111, 123, 140, 0.88)"
+    ? "var(--corner-ribbon-empty)"
     : isCurrentTurn
-      ? `color-mix(in srgb, ${theme.accent} 74%, white 26%)`
-      : `color-mix(in srgb, ${theme.accent} 72%, black 28%)`;
+      ? `color-mix(in srgb, ${theme.accent} 74%, var(--ui-white) 26%)`
+      : `color-mix(in srgb, ${theme.accent} 72%, var(--ui-black) 28%)`;
 
   const ribbonColor =
     hasLeftGame || isDefeated
-      ? `color-mix(in srgb, ${baseRibbonColor} 62%, #374151 38%)`
+      ? `color-mix(in srgb, ${baseRibbonColor} 62%, var(--corner-ribbon-muted) 38%)`
       : baseRibbonColor;
 
   const timerButtonColor = playerId
     ? isCurrentTurn
       ? theme.pieceFill
-      : `color-mix(in srgb, ${theme.pieceFill} 84%, black 16%)`
-    : "rgba(20, 30, 45, 0.32)";
+      : `color-mix(in srgb, ${theme.pieceFill} 84%, var(--ui-black) 16%)`
+    : "var(--corner-timer-empty)";
 
   const timerStrip = (
     <div
@@ -95,7 +95,7 @@ function PlayerCornerCard({
         className="inline-flex h-8 w-8 items-center justify-center rounded-md"
         style={{
           background: timerButtonColor,
-          color: "rgba(244, 248, 255, 0.95)",
+          color: "var(--app-on-dark-muted)",
         }}
       >
         <FiClock className="h-5 w-5" />
@@ -104,7 +104,7 @@ function PlayerCornerCard({
       <div className="min-w-0 text-right">
         <span
           className="block text-[1.62rem] font-extrabold leading-none tabular-nums tracking-[-0.04em]"
-          style={{ color: "rgba(244, 248, 255, 0.98)" }}
+          style={{ color: "var(--app-on-dark)" }}
         >
           {clockLabel}
         </span>
@@ -116,11 +116,11 @@ function PlayerCornerCard({
 
   const slotBadgeBackground = playerId
     ? theme.accent
-    : "rgba(141, 155, 174, 0.42)";
+    : "var(--corner-slot-empty)";
   const slotBadgeBorderColor = playerId
     ? theme.border
-    : "rgba(141, 155, 174, 0.62)";
-  const slotBadgeTextColor = "rgba(244, 248, 255, 0.98)";
+    : "var(--corner-slot-empty-border)";
+  const slotBadgeTextColor = "var(--app-on-dark)";
 
   const playerMeta = (
     <div className="-mx-2.5 flex items-start gap-2">
@@ -138,7 +138,7 @@ function PlayerCornerCard({
       <div className="min-w-0 flex-1 pl-2">
         <div
           className="truncate text-[15px] font-bold tracking-tight"
-          style={{ color: "#111111" }}
+          style={{ color: "var(--app-ink)" }}
         >
           {!playerId ? (
             <span className="animate-pulse">{displayName}</span>
