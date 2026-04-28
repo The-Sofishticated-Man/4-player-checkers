@@ -277,8 +277,8 @@ function PlayerBoard() {
           className="mb-3 rounded-2xl px-4 py-3 text-center text-sm font-semibold text-white shadow-lg"
           style={{
             background: isDraw
-              ? "linear-gradient(135deg, #8f98a7, #6f7884)"
-              : "linear-gradient(135deg, #d8788d, #c86074)",
+              ? "var(--game-result-draw)"
+              : "var(--game-result-win)",
           }}
         >
           {isDraw ? "DRAW" : `GAME OVER - PLAYER ${winner} WINS`}
