@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { BoardState } from "../../../shared/types/gameTypes";
 import { getSoftPromotionTargetsForPiece } from "../../../shared/logic/pieceUtils";
 import Cell from "../components/Cell";
@@ -18,6 +19,12 @@ export const generateBoardCells = (
   selectedPiece: { row: number; col: number } | null = null,
   onPieceClick: (row: number, col: number) => void = () => {},
   onCellClick: (row: number, col: number) => void = () => {},
+  renderInaccessibleCell: (
+    row: number,
+    col: number,
+    visualRow: number,
+    visualCol: number,
+  ) => ReactNode = () => null,
 ) => {
   const cells = [];
   const boardSize = boardState.length;
@@ -58,6 +65,10 @@ export const generateBoardCells = (
         selectedPiece?.row === row && selectedPiece.col === col;
       const isSoftPromotionHint = softPromotionTargets.has(`${row},${col}`);
       const pieceValue = boardState[row][col];
+      const inaccessibleContent =
+        pieceValue === -1
+          ? renderInaccessibleCell(row, col, visualRow, visualCol)
+          : null;
       const isPieceDisabled =
         !gameStarted ||
         (!allowMoveAnyPiece &&
@@ -76,6 +87,7 @@ export const generateBoardCells = (
           isValidCapture={isValidCapture}
           isSoftPromotionHint={isSoftPromotionHint}
           draggedPieceOwner={draggedPieceOwner}
+          inaccessibleContent={inaccessibleContent}
           onClick={() => onCellClick(row, col)}
         >
           {pieceValue !== 0 && (

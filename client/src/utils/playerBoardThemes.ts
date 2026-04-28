@@ -4,6 +4,7 @@ import type { PlayerSlot, PlayerTheme } from "../types/playerBoardTypes";
 export const playerThemes: Record<PlayerSlot, PlayerTheme> = {
   1: {
     name: "Red",
+    pieceFill: "var(--piece-1-fill)",
     surface: "var(--player-1-surface)",
     surfaceActive: "var(--player-1-surface-strong)",
     border: "var(--player-1-border)",
@@ -15,6 +16,7 @@ export const playerThemes: Record<PlayerSlot, PlayerTheme> = {
   },
   2: {
     name: "Blue",
+    pieceFill: "var(--piece-2-fill)",
     surface: "var(--player-2-surface)",
     surfaceActive: "var(--player-2-surface-strong)",
     border: "var(--player-2-border)",
@@ -26,6 +28,7 @@ export const playerThemes: Record<PlayerSlot, PlayerTheme> = {
   },
   3: {
     name: "Green",
+    pieceFill: "var(--piece-3-fill)",
     surface: "var(--player-3-surface)",
     surfaceActive: "var(--player-3-surface-strong)",
     border: "var(--player-3-border)",
@@ -37,6 +40,7 @@ export const playerThemes: Record<PlayerSlot, PlayerTheme> = {
   },
   4: {
     name: "Yellow",
+    pieceFill: "var(--piece-4-fill)",
     surface: "var(--player-4-surface)",
     surfaceActive: "var(--player-4-surface-strong)",
     border: "var(--player-4-border)",

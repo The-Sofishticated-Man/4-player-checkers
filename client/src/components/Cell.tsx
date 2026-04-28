@@ -6,6 +6,7 @@ const Cell = ({
   row,
   column,
   children,
+  inaccessibleContent,
   isValidMove = false,
   isValidCapture = false,
   isSoftPromotionHint = false,
@@ -16,6 +17,7 @@ const Cell = ({
   row: number;
   column: number;
   children?: React.ReactNode;
+  inaccessibleContent?: React.ReactNode;
   isValidMove?: boolean;
   isValidCapture?: boolean;
   isSoftPromotionHint?: boolean;
@@ -39,7 +41,11 @@ const Cell = ({
 
   // Return invisible cell for inaccessible positions
   if (isInaccessible) {
-    return <div className="aspect-square h-17 w-17"></div>;
+    return (
+      <div className="relative aspect-square h-17 w-17 overflow-visible">
+        {inaccessibleContent}
+      </div>
+    );
   }
 
   // Determine cell styling for accessible cells
