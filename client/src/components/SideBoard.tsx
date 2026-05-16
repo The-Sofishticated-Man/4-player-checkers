@@ -3,10 +3,10 @@ import { FiCopy, FiClock, FiUserX, FiWifiOff } from "react-icons/fi";
 import { useNavigate } from "react-router";
 import useGameState from "../hooks/useBoard";
 import { useSocket } from "../hooks/useSocket";
-import { loadingSlots } from "../types/playerBoardTypes";
-import { panelTheme } from "../utils/playerBoardThemes";
+import { loadingSlots } from "../types/sideBoardTypes";
+import { panelTheme } from "../utils/sideBoardThemes";
 
-export function PlayerBoardSkeleton() {
+export function SideBoardSkeleton() {
   return (
     <div
       className="fixed top-4 right-4 w-[340px] max-w-[calc(100vw-2rem)] rounded-3xl border p-4 backdrop-blur-md"
@@ -131,7 +131,7 @@ function StatusBanner({ icon, text, className = "" }: StatusBannerProps) {
   );
 }
 
-function PlayerBoard() {
+function SideBoard() {
   const navigate = useNavigate();
   const { socket } = useSocket();
   const [isForfeiting, setIsForfeiting] = useState(false);
@@ -330,4 +330,4 @@ function PlayerBoard() {
   );
 }
 
-export default PlayerBoard;
+export default SideBoard;
