@@ -6,6 +6,7 @@ import { useJoinGame } from "../hooks/useJoinGame";
 import SideBoard, { SideBoardSkeleton } from "../components/SideBoard";
 import DevSandboxPanel from "../components/DevSandboxPanel";
 import {
+  MAX_NICKNAME_LENGTH,
   getDefaultNicknameForPlayerId,
   getOrCreatePlayerId,
   getStoredNickname,
@@ -91,12 +92,23 @@ function BoardPage() {
   const [nickname, setNickname] = useState<string | null>(() =>
     getStoredNickname(),
   );
+  const [nicknameError, setNicknameError] = useState<string | null>(null);
 
   const handleNicknameSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    const trimmedNickname = nicknameInput.trim();
+    if (trimmedNickname.length > MAX_NICKNAME_LENGTH) {
+      setNicknameError(
+        `Nickname must be ${MAX_NICKNAME_LENGTH} characters or fewer.`,
+      );
+      return;
+    }
+
     const resolvedNickname = resolveNickname(nicknameInput, playerId);
     setStoredNickname(resolvedNickname);
     setNickname(resolvedNickname);
+    setNicknameError(null);
   };
 
   if (!roomId) {
@@ -123,12 +135,23 @@ function BoardPage() {
           <input
             type="text"
             value={nicknameInput}
-            onChange={(event) => setNicknameInput(event.target.value)}
+            onChange={(event) => {
+              setNicknameInput(event.target.value);
+              setNicknameError(null);
+            }}
             placeholder={defaultNickname}
             className="mb-3 w-full rounded-md border px-3 py-2 text-sm focus:outline-none"
             style={{ borderColor: "var(--app-border)" }}
-            maxLength={24}
+            maxLength={MAX_NICKNAME_LENGTH}
           />
+          {nicknameError ? (
+            <p
+              className="mb-3 text-sm"
+              style={{ color: "var(--app-error-text)" }}
+            >
+              {nicknameError}
+            </p>
+          ) : null}
           <button
             type="submit"
             className="w-full rounded-md py-2 text-sm font-semibold text-white transition-colors"

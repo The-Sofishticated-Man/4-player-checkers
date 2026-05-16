@@ -1,3 +1,5 @@
+import { isNicknameWithinLimit } from "../../../shared/logic/nicknameValidation";
+
 const PLAYER_ID_STORAGE_KEY = "playerId";
 const PLAYER_NICKNAME_STORAGE_KEY = "playerNickname";
 
@@ -22,11 +24,19 @@ export const getStoredNickname = (): string | null => {
   }
 
   const trimmedNickname = storedNickname.trim();
-  return trimmedNickname.length > 0 ? trimmedNickname : null;
+  return trimmedNickname.length > 0 && isNicknameWithinLimit(trimmedNickname)
+    ? trimmedNickname
+    : null;
 };
 
 export const setStoredNickname = (nickname: string): void => {
-  localStorage.setItem(PLAYER_NICKNAME_STORAGE_KEY, nickname.trim());
+  const trimmedNickname = nickname.trim();
+
+  if (!isNicknameWithinLimit(trimmedNickname)) {
+    return;
+  }
+
+  localStorage.setItem(PLAYER_NICKNAME_STORAGE_KEY, trimmedNickname);
 };
 
 export const resolveNickname = (

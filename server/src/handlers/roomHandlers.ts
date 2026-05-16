@@ -4,6 +4,10 @@ import { generateID } from "../utils/gameUtils.ts";
 import type { PlayerId, PlayerIndex } from "../../../shared/types/gameTypes.ts";
 import { SANDBOX_MODE } from "../utils/devSandbox.ts";
 import {
+  MAX_NICKNAME_LENGTH,
+  isNicknameWithinLimit,
+} from "../../../shared/logic/nicknameValidation.ts";
+import {
   createGameStateEventPayload,
   createSandboxRoomStatePayload,
   serializeGameState,
@@ -21,10 +25,13 @@ export class RoomHandlers {
     private games: Map<string, Game>,
   ) {}
 
-  private resolveNickname(playerId: PlayerId, nickname?: string): string {
+  private resolveNickname(
+    playerId: PlayerId,
+    nickname?: string,
+  ): string | null {
     const trimmedNickname = nickname?.trim();
     if (trimmedNickname) {
-      return trimmedNickname;
+      return isNicknameWithinLimit(trimmedNickname) ? trimmedNickname : null;
     }
 
     return `P_${playerId}`;
@@ -49,6 +56,13 @@ export class RoomHandlers {
 
   handleRoomJoin = (roomID: string, playerId: PlayerId, nickname?: string) => {
     const resolvedNickname = this.resolveNickname(playerId, nickname);
+    if (resolvedNickname === null) {
+      this.socket.emit(
+        "room-join-denied",
+        `Nickname must be ${MAX_NICKNAME_LENGTH} characters or fewer`,
+      );
+      return;
+    }
 
     console.log(
       `User ${this.socket.id} (${playerId}, ${resolvedNickname}) trying to join room: ${roomID}`,
