@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import type { PlayerSlot, PlayerTheme } from "../types/playerBoardTypes";
+import type { PlayerSlot, PlayerTheme } from "../types/sideBoardTypes";
 
 export const playerThemes: Record<PlayerSlot, PlayerTheme> = {
   1: {
