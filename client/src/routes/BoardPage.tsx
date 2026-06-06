@@ -6,7 +6,6 @@ import { useJoinGame } from "../hooks/useJoinGame";
 import SideBoard, { SideBoardSkeleton } from "../components/SideBoard";
 import DevSandboxPanel from "../components/DevSandboxPanel";
 import {
-  MAX_NICKNAME_LENGTH,
   getDefaultNicknameForPlayerId,
   getOrCreatePlayerId,
   getStoredNickname,
@@ -14,6 +13,7 @@ import {
   setStoredNickname,
 } from "../utils/playerIdentity";
 
+import { MAX_NICKNAME_LENGTH } from "../../../shared/logic/nicknameValidation";
 function BoardSession({
   roomId,
   allowMoveAnyPiece,
