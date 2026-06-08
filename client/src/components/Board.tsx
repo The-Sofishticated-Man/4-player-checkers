@@ -7,14 +7,14 @@ import {
 } from "@dnd-kit/core";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import useGameState from "../hooks/useBoard";
-import type { PlayerSlot } from "../types/sideBoardTypes";
+import type { PlayerSlot } from "../types/sideMenuTypes";
 import { useDragAndDrop } from "../hooks/useDragAndDrop";
 import { generateBoardCells } from "../utils/boardRenderer";
 import {
   getBoardRotationForPlayer,
   visualToLogicalPosition,
 } from "../utils/boardOrientation";
-import { getPlayerTheme } from "../utils/sideBoardThemes";
+import { getPlayerTheme } from "../utils/sideMenuThemes";
 import BoardGrid, { type BoardGridOverlay } from "./BoardGrid";
 import PlayerCornerCard from "./PlayerCornerCard";
 import { PieceSvg } from "./Piece";

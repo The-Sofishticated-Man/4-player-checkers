@@ -1,5 +1,5 @@
 import { FiClock, FiUserX, FiUsers, FiWifiOff } from "react-icons/fi";
-import type { PlayerSlot, PlayerTheme } from "../types/sideBoardTypes";
+import type { PlayerSlot, PlayerTheme } from "../types/sideMenuTypes";
 
 type PlayerCornerCardProps = {
   slotNumber: PlayerSlot;

@@ -3,7 +3,7 @@ import { useParams } from "react-router";
 import Board from "../components/Board";
 import GameContextProvider from "../context/BoardContextProvider";
 import { useJoinGame } from "../hooks/useJoinGame";
-import SideBoard, { SideBoardSkeleton } from "../components/SideBoard";
+import SideMenu, { SideMenuSkeleton } from "../components/SideMenu";
 import DevSandboxPanel from "../components/DevSandboxPanel";
 import {
   getDefaultNicknameForPlayerId,
@@ -30,7 +30,7 @@ function BoardSession({
   if (isConnecting) {
     return (
       <>
-        <SideBoardSkeleton />
+        <SideMenuSkeleton />
         <div
           className="min-h-screen flex items-center justify-center p-4"
           style={{ background: "var(--page-bg)" }}
@@ -72,7 +72,7 @@ function BoardSession({
 
   return (
     <>
-      <SideBoard />
+      <SideMenu />
       <Board allowMoveAnyPiece={allowMoveAnyPiece} />
       <DevSandboxPanel
         roomId={roomId}
