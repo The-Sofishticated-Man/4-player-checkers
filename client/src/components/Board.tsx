@@ -17,7 +17,7 @@ import {
 import { getPlayerTheme } from "../utils/sideMenuThemes";
 import BoardGrid, { type BoardGridOverlay } from "./BoardGrid";
 import PlayerCornerCard from "./PlayerCornerCard";
-import { PieceSvg } from "./Piece";
+import PieceSvg from "./PieceSvg";
 
 interface BoardProps {
   allowMoveAnyPiece?: boolean;
