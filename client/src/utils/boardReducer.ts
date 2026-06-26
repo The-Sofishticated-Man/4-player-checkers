@@ -132,6 +132,15 @@ export const boardReducer = (
       };
     }
 
+    case "NEW_CHAT_MESSAGE": {
+      if (!payload || !("message" in payload)) return gameState;
+
+      return {
+        ...gameState,
+        messages: [...(gameState.messages || []), payload.message],
+      };
+    }
+
     default:
       return gameState; // Return current state by default
   }

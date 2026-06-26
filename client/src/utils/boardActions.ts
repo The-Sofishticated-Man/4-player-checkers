@@ -35,6 +35,12 @@ export type BoardAction =
       };
     }
   | {
+      type: "NEW_CHAT_MESSAGE";
+      payload: {
+        message: ChatMessage;
+      };
+    }
+  | {
       type: string;
       payload?: never;
     };

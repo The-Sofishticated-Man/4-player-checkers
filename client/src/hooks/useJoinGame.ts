@@ -456,6 +456,14 @@ export function useJoinGame(roomId: string, nickname: string | null) {
       );
     };
 
+    const handleChatMessage = (message: ChatMessage) => {
+      if (!dispatch) return;
+      dispatch({
+        type: "NEW_CHAT_MESSAGE",
+        payload: { message },
+      });
+    };
+
     socket.on("room-joined", handleRoomJoined);
     socket.on("room-full", handleRoomFull);
     socket.on("room-not-found", handleRoomNotFound);
@@ -468,6 +476,7 @@ export function useJoinGame(roomId: string, nickname: string | null) {
     socket.on("game-started", handleGameStarted);
     socket.on("game-over", handleGameOver);
     socket.on("clock-sync", handleClockSync);
+    socket.on("chat-message", handleChatMessage);
 
     // Register listeners before emitting join-room so the initial response
     // can't race ahead of subscriptions.
@@ -487,6 +496,7 @@ export function useJoinGame(roomId: string, nickname: string | null) {
       socket.off("game-started", handleGameStarted);
       socket.off("game-over", handleGameOver);
       socket.off("clock-sync", handleClockSync);
+      socket.off("chat-message", handleChatMessage);
     };
   }, [socket, roomId, nickname, navigate, dispatch, setPlayerIndex]);
 
