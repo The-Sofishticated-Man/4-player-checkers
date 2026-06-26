@@ -31,6 +31,13 @@ export interface GameClockState {
   paused: boolean;
 }
 
+export interface ChatMessage {
+  playerId: string;
+  senderName: string;
+  text: string;
+  timestamp: number;
+}
+
 export interface GameState {
   boardState: BoardState; // 2D array representing the board
   players: PlayerMap;
@@ -43,6 +50,7 @@ export interface GameState {
   turnsWithoutProgress?: number;
   stallDrawFullRounds?: number;
   clock: GameClockState;
+  messages: ChatMessage[];
 }
 
 export type SerializedGameState = Omit<GameState, "players"> & {

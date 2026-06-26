@@ -2,6 +2,7 @@ import type {
   GameClockState,
   GameState,
   MoveCoordinates,
+  ChatMessage,
 } from "../../../shared/types/gameTypes";
 
 // Type for board actions

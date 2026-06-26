@@ -49,6 +49,7 @@ export const createInitialGameState = (): GameState => ({
   activePlayers: [1, 2, 3, 4],
   turnsWithoutProgress: 0,
   stallDrawFullRounds: 20,
+  messages: [],
   clock: {
     baseTimeMs: DEFAULT_BASE_TIME_MS,
     incrementMs: DEFAULT_INCREMENT_MS,

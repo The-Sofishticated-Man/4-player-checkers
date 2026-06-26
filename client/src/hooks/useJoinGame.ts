@@ -6,6 +6,7 @@ import type {
   BoardState,
   PlayerIndex,
   PlayerState,
+  ChatMessage,
   SerializedGameState,
   SerializedPlayerMap,
 } from "../../../shared/types/gameTypes";
