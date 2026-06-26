@@ -5,6 +5,7 @@ import { Game } from "./models/Game.ts";
 import { setupRoomHandlers } from "./utils/setupRoomHandlers.ts";
 import { setupMoveHandlers } from "./utils/setupMoveHandlers.ts";
 import { setupSandboxHandlers } from "./utils/setupSandboxHandlers.ts";
+import { setupChatHandlers } from "./utils/setupChatHandlers.ts";
 import { MIN_PLAYERS_TO_START, SANDBOX_MODE } from "./utils/devSandbox.ts";
 import {
   DEFAULT_CLOCK_SYNC_INTERVAL_MS,
@@ -83,4 +84,7 @@ io.on("connection", (socket) => {
 
   // Setup sandbox handlers
   setupSandboxHandlers(socket, games);
+
+  // Setup chat handlers
+  setupChatHandlers(socket, games);
 });
