@@ -12,28 +12,29 @@ function RoomLinkField({ roomLink, linkCopied, onCopy }: RoomLinkFieldProps) {
   }
 
   return (
-    <div className="mt-3 rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
-      <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
-        Room Link
+    <div className="border border-slate-700 bg-[#222]">
+      <div className="border-b border-slate-700 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-[#aaa] font-mono">
+        Invite Link
       </div>
-      <div className="relative">
-        <input
-          type="text"
-          readOnly
-          value={roomLink}
-          aria-label="Room link"
-          className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-3 pr-11 font-mono text-[11px] text-slate-700 outline-none"
-          onFocus={(event) => event.currentTarget.select()}
-        />
-        <button
-          type="button"
-          onClick={onCopy}
-          className="absolute inset-y-0 right-0 inline-flex w-10 items-center justify-center rounded-r-xl border-l border-slate-200 bg-slate-100 text-slate-600 transition-transform duration-200 hover:bg-slate-200"
-          aria-label={linkCopied ? "Copied room link" : "Copy room link"}
-          title={linkCopied ? "Copied" : "Copy room link"}
-        >
-          <FiCopy className="h-4 w-4" />
-        </button>
+      <div className="p-3">
+        <div className="flex border border-slate-600 rounded bg-transparent">
+          <input
+            type="text"
+            readOnly
+            value={roomLink}
+            aria-label="Room link"
+            className="flex-1 bg-transparent px-3 py-2 font-mono text-xs text-[#eee] outline-none"
+            onFocus={(event) => event.currentTarget.select()}
+          />
+          <button
+            type="button"
+            onClick={onCopy}
+            className="px-4 border-l border-slate-600 bg-[#2a2a2a] text-xs font-bold text-[#eee] hover:bg-[#333] transition-colors font-mono"
+            title={linkCopied ? "Copied" : "Copy room link"}
+          >
+            {linkCopied ? "COPIED!" : "COPY"}
+          </button>
+        </div>
       </div>
     </div>
   );
