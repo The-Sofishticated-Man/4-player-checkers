@@ -46,58 +46,43 @@ const createEmptyPlayableBoard = (board: BoardState): BoardState =>
 
 const createCaptureChainBoard = (): BoardState => {
   const board = createEmptyPlayableBoard(initialState.boardState);
-
   board[8][4] = 1;
   board[7][5] = 2;
   board[5][7] = 2;
-
   return board;
 };
 
 const createKingPromotionBoard = (): BoardState => {
   const board = createEmptyPlayableBoard(initialState.boardState);
-
   board[1][3] = 1;
   board[10][10] = 2;
-
   return board;
 };
 
 const createSoftCrownBoard = (): BoardState => {
   const board = createEmptyPlayableBoard(initialState.boardState);
-
-  // Player 1 can move from (4,2) -> (3,1), a soft-end square.
   board[4][2] = 1;
   board[10][10] = 2;
-
   return board;
 };
 
 const createStallDrawNextMoveBoard = (): BoardState => {
   const board = createEmptyPlayableBoard(initialState.boardState);
-
-  // Two active players with non-capturing moves available.
   board[8][4] = 1;
   board[5][9] = 2;
-
   return board;
 };
 
 const createOneMoveToWinBoard = (): BoardState => {
   const board = createEmptyPlayableBoard(initialState.boardState);
-
-  // Player 1 can capture player 2 in one move to end the game.
   board[8][4] = 1;
   board[7][5] = 2;
-
   return board;
 };
 
 const createPlayerOneWinsBoard = (): BoardState => {
   const board = createEmptyPlayableBoard(initialState.boardState);
-
   board[8][4] = 1;
-
   return board;
 };
 
@@ -116,6 +101,7 @@ function DevSandboxPanel({
     message: "Ready",
   });
   const [snapshot, setSnapshot] = useState<SandboxRoomSnapshot | null>(null);
+  const [collapsed, setCollapsed] = useState(false); // ← new
   const sandboxEnabled = snapshot?.sandboxMode === true;
 
   useEffect(() => {
@@ -125,9 +111,7 @@ function DevSandboxPanel({
   }, [sandboxEnabled, allowMoveAnyPiece, onToggleMoveAnyPiece]);
 
   useEffect(() => {
-    if (!socket) {
-      return;
-    }
+    if (!socket) return;
 
     const handleMoveError = (message: string) => {
       setStatus({
@@ -150,34 +134,19 @@ function DevSandboxPanel({
     };
 
     const handleSandboxStateApplied = () => {
-      if (!pendingAction) {
-        return;
-      }
-
-      setStatus({
-        kind: "success",
-        message: `${pendingAction} applied`,
-      });
+      if (!pendingAction) return;
+      setStatus({ kind: "success", message: `${pendingAction} applied` });
       setPendingAction(null);
     };
 
     const handleSandboxRoomState = (payload: SandboxRoomSnapshot) => {
-      if (payload.roomID !== roomId) {
-        return;
-      }
-
+      if (payload.roomID !== roomId) return;
       setSnapshot(payload);
     };
 
     const handleMoveMade = () => {
-      if (!pendingAction) {
-        return;
-      }
-
-      setStatus({
-        kind: "success",
-        message: `${pendingAction} applied`,
-      });
+      if (!pendingAction) return;
+      setStatus({ kind: "success", message: `${pendingAction} applied` });
       setPendingAction(null);
     };
 
@@ -197,17 +166,47 @@ function DevSandboxPanel({
   }, [socket, pendingAction, roomId]);
 
   useEffect(() => {
-    if (!socket || !isConnected) {
-      return;
-    }
-
+    if (!socket || !isConnected) return;
     socket.emit("sandbox-get-room-state", { roomID: roomId });
   }, [socket, isConnected, roomId]);
 
-  if (!import.meta.env.DEV) {
-    return null;
+  if (!import.meta.env.DEV) return null;
+
+  // ── Collapsed state: tiny clickable square ──────────────────────────────
+  if (collapsed) {
+    return (
+      <button
+        className="fixed bottom-4 left-4 z-50 flex h-9 w-9 items-center justify-center rounded-lg bg-orange-500 shadow-lg transition-transform hover:scale-110 active:scale-95"
+        onClick={() => setCollapsed(false)}
+        type="button"
+        aria-label="Expand Dev Sandbox"
+        title="Dev Sandbox"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="white"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M9 9v-1a3 3 0 0 1 6 0v1" />
+          <path d="M8 9h8a6 6 0 0 1 1 3v3a5 5 0 0 1-10 0v-3a6 6 0 0 1 1-3" />
+          <line x1="3" y1="13" x2="7" y2="13" />
+          <line x1="17" y1="13" x2="21" y2="13" />
+          <line x1="12" y1="20" x2="12" y2="22" />
+          <line x1="4" y1="19" x2="7.35" y2="16.65" />
+          <line x1="20" y1="19" x2="16.65" y2="16.65" />
+        </svg>
+      </button>
+    );
   }
 
+  // ── Expanded state (original panel + collapse button) ───────────────────
   const emitDebugState = (
     actionLabel: string,
     payload: Omit<DebugSetStatePayload, "roomID">,
@@ -221,10 +220,7 @@ function DevSandboxPanel({
     }
 
     if (!sandboxEnabled) {
-      setStatus({
-        kind: "error",
-        message: "Server sandbox mode is OFF",
-      });
+      setStatus({ kind: "error", message: "Server sandbox mode is OFF" });
       return;
     }
 
@@ -264,7 +260,32 @@ function DevSandboxPanel({
 
   return (
     <div className="fixed bottom-4 left-4 z-50 rounded-xl border border-orange-300 bg-orange-50 p-3 shadow-lg">
-      <p className="text-sm font-semibold text-orange-800">Dev Sandbox</p>
+      <div className="mb-1 flex items-center justify-between">
+        <p className="text-sm font-semibold text-orange-800">Dev Sandbox</p>
+        <button
+          className="ml-4 flex h-5 w-5 items-center justify-center rounded text-orange-700 hover:bg-orange-200 active:bg-orange-300"
+          onClick={() => setCollapsed(true)}
+          type="button"
+          aria-label="Collapse Dev Sandbox"
+          title="Collapse"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+        </button>
+      </div>
+
       <p className="mb-1 text-xs text-orange-700">
         Runs only in Vite dev. Requires CHECKERS_SANDBOX=true on server.
       </p>
