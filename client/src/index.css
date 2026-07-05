@@ -19,6 +19,18 @@
   --app-on-dark: rgba(244, 248, 255, 0.98);
   --app-on-dark-muted: rgba(244, 248, 255, 0.95);
 
+  --menu-surface: rgba(250, 245, 236, 0.96);
+  --menu-surface-strong: rgba(255, 251, 245, 0.985);
+  --menu-header: rgba(255, 255, 255, 0.6);
+  --menu-border: rgba(148, 133, 115, 0.34);
+  --menu-text: #4a443d;
+  --menu-heading: #24201c;
+  --menu-muted: #73695f;
+  --menu-dot-muted: rgba(111, 123, 140, 0.54);
+  --menu-shadow: 0 28px 75px rgba(10, 18, 30, 0.34);
+  --menu-skeleton: rgba(232, 224, 212, 0.9);
+  --menu-skeleton-soft: rgba(242, 236, 227, 0.95);
+
   --status-online: #22c55e;
   --status-forfeited: #586779;
   --status-disconnected: #5b6b7f;
