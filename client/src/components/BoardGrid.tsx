@@ -18,7 +18,7 @@ interface BoardGridProps {
 
 const BoardGrid = ({ cells, boardSize, overlays = [] }: BoardGridProps) => {
   return (
-    <div className="flex h-screen items-center justify-center -translate-x-8 md:-translate-x-12">
+    <div className="flex h-screen items-center justify-center -translate-x-[82px] md:-translate-x-[78px]">
       <div className="relative">
         <div
           className="pointer-events-none absolute inset-0 z-20 grid"
