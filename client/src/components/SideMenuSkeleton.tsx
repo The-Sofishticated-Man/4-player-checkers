@@ -3,7 +3,7 @@ import { panelTheme } from "../utils/sideMenuThemes";
 function SideMenuSkeleton() {
   return (
     <div
-      className="fixed top-4 right-4 w-[340px] max-w-[calc(100vw-2rem)] rounded-3xl border p-4 backdrop-blur-md"
+      className="fixed right-4 top-1/2 w-[340px] max-w-[calc(100vw-2rem)] -translate-y-1/2 rounded-3xl border p-4 backdrop-blur-md"
       style={panelTheme}
     >
       <div className="animate-pulse space-y-3">

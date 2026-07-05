@@ -126,11 +126,11 @@ function SideMenu() {
   };
 
   return (
-    <div className="fixed top-4 right-4 w-[340px] max-w-[calc(100vw-2rem)] border border-slate-700 bg-[#1e1e1e] rounded flex flex-col font-mono text-white shadow-xl overflow-hidden">
+    <div className="fixed right-4 top-1/2 w-[340px] max-w-[calc(100vw-2rem)] -translate-y-1/2 border border-slate-700 bg-[#1e1e1e] rounded flex flex-col font-mono text-white shadow-xl overflow-hidden">
       <div className="bg-[#f0f0f0] p-4 flex justify-between items-center border-b border-slate-700">
         <h1 className="text-3xl font-normal text-slate-800 tracking-tight leading-none mb-0">
           Room <br />
-          <span className="font-light">#{roomId?.slice(-4) || "????"}</span>
+          <span className="font-light">#{roomId || "????"}</span>
         </h1>
         <div className="flex gap-1.5 self-start pt-2">
           {[1, 2, 3, 4].map((slot) => {
@@ -163,18 +163,7 @@ function SideMenu() {
         )}
 
         {!isYouForfeited && isYouDefeated && gameStarted && !gameOver && (
-          <StatusBanner
-            className="mb-3"
-            text="YOU ARE DEFEATED - TURN SKIPPED"
-          />
-        )}
-
-        {!gameStarted && !gameOver && (
-          <StatusBanner
-            className="mb-3 border border-slate-700"
-            icon={<FiClock className="h-4 w-4" />}
-            text={`WAITING FOR PLAYERS (${playerEntries.length}/4)`}
-          />
+          <StatusBanner className="mb-3" text="YOU ARE DEFEATED" />
         )}
 
         {gameOver && (
@@ -187,31 +176,6 @@ function SideMenu() {
             }}
           >
             {isDraw ? "DRAW" : `GAME OVER - PLAYER ${winner} WINS`}
-          </div>
-        )}
-
-        {gameStarted &&
-          !gameOver &&
-          connectedPlayerIds.length < playerEntries.length && (
-            <div className="mb-3 rounded border border-slate-500 bg-[#2a2a2a] px-4 py-3 text-center text-sm font-bold shadow-lg text-white">
-              <span className="inline-flex items-center gap-2">
-                <FiWifiOff className="h-4 w-4" />
-                <span>GAME IN PROGRESS</span>
-              </span>
-              <span className="ml-2 rounded-full bg-white/20 px-2 py-0.5 text-[11px] font-bold">
-                {playerEntries.length - connectedPlayerIds.length} DISCONNECTED
-              </span>
-            </div>
-          )}
-
-        {gameStarted && !gameOver && (
-          <div className="rounded border border-slate-700 bg-[#222] px-4 py-3 text-sm font-bold shadow-sm mb-3">
-            <span className="text-[10px] uppercase tracking-[0.16em] text-[#aaa]">
-              Turn
-            </span>
-            <div className="mt-1 text-base text-white">
-              Player {currentPlayer}
-            </div>
           </div>
         )}
 
