@@ -47,10 +47,10 @@ export const playerThemes: Record<PlayerSlot, PlayerTheme> = {
 export const panelTheme = {
   fontFamily:
     '"Avenir Next", "Nunito", "Segoe UI", "SF Pro Rounded", sans-serif',
-  background: "var(--app-surface-strong)",
-  borderColor: "var(--app-border)",
-  color: "var(--app-text)",
-  boxShadow: "var(--card-shadow)",
+  background: "var(--menu-surface)",
+  borderColor: "var(--menu-border)",
+  color: "var(--menu-text)",
+  boxShadow: "var(--menu-shadow)",
 } as CSSProperties;
 
 export function getPlayerTheme(playerNum: number): PlayerTheme {
