@@ -49,8 +49,8 @@
   --game-result-draw: linear-gradient(135deg, #8f98a7, #6f7884);
   --game-result-win: linear-gradient(135deg, #d8788d, #c86074);
 
-  --board-light: #dadada;
-  --board-dark: #adadad;
+  --board-light: #ddd6cb;
+  --board-dark: #b2a594;
   --board-valid-move-current: #3a7d49;
   --board-valid-move-other: #7b818c;
   --board-promotion-border: #8f6a14;
