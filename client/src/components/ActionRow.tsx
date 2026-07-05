@@ -24,7 +24,12 @@ function ActionRow({
           type="button"
           onClick={onForfeit}
           disabled={isForfeiting || isYouForfeited}
-          className="w-full border border-slate-600 bg-[#2a2a2a] px-4 py-3 text-xs font-bold font-mono tracking-widest text-[#eee] transition-colors duration-200 hover:bg-[#333] disabled:cursor-not-allowed disabled:opacity-50 text-left"
+          className="w-full border px-4 py-3 text-left text-xs font-bold font-mono tracking-widest transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-50"
+          style={{
+            background: "var(--menu-surface-strong)",
+            borderColor: "var(--menu-border)",
+            color: "var(--menu-heading)",
+          }}
         >
           <span className="inline-flex items-center gap-2">
             <FiLogOut className="h-4 w-4" />
@@ -43,7 +48,12 @@ function ActionRow({
         <button
           type="button"
           onClick={onExit}
-          className="w-full border border-slate-600 bg-[#2a2a2a] px-4 py-3 text-xs font-bold font-mono tracking-widest text-[#eee] transition-colors duration-200 hover:bg-[#333] text-left"
+          className="w-full border px-4 py-3 text-left text-xs font-bold font-mono tracking-widest transition-colors duration-200"
+          style={{
+            background: "var(--menu-surface-strong)",
+            borderColor: "var(--menu-border)",
+            color: "var(--menu-heading)",
+          }}
         >
           <span className="inline-flex items-center gap-2">
             <FiLogOut className="h-4 w-4" />
