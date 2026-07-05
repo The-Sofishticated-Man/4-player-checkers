@@ -1,5 +1,3 @@
-import { FiCopy } from "react-icons/fi";
-
 type RoomLinkFieldProps = {
   roomLink: string;
   linkCopied: boolean;

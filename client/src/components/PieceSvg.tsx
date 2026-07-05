@@ -2,7 +2,7 @@ type PiecePalette = {
   fill: string;
 };
 
-export const getPiecePalette = (playerNumber: number): PiecePalette => {
+const getPiecePalette = (playerNumber: number): PiecePalette => {
   switch (playerNumber) {
     case 1:
       return {
