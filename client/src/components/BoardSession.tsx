@@ -61,7 +61,13 @@ function BoardSession({
   }
 
   return (
-    <>
+    <div
+      className="relative min-h-screen overflow-hidden"
+      style={{
+        background:
+          "radial-gradient(circle at top left, var(--game-bg-accent), transparent 40%), radial-gradient(circle at bottom right, var(--game-bg-warmth), transparent 34%), var(--game-bg)",
+      }}
+    >
       <SideMenu />
       <Board allowMoveAnyPiece={allowMoveAnyPiece} />
       <DevSandboxPanel
@@ -69,7 +75,7 @@ function BoardSession({
         allowMoveAnyPiece={allowMoveAnyPiece}
         onToggleMoveAnyPiece={onToggleMoveAnyPiece}
       />
-    </>
+    </div>
   );
 }
 
