@@ -6,7 +6,10 @@
   --ui-white: #ffffff;
   --ui-black: #000000;
 
-  --app-bg: #f4f8ff;
+  --app-bg: #F5F5F5;
+  --game-bg: #F5F5F5;
+  --game-bg-accent: rgba(132, 163, 204, 0.18);
+  --game-bg-warmth: rgba(210, 168, 118, 0.12);
   --app-surface: rgba(255, 252, 248, 0.92);
   --app-surface-strong: rgba(255, 255, 255, 0.96);
   --app-border: rgba(207, 191, 180, 0.62);
