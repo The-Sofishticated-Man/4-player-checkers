@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { FormEvent } from "react";
 import useGameState from "../hooks/useBoard";
 import { useSocket } from "../hooks/useSocket";
 import { FiSend } from "react-icons/fi";
@@ -12,7 +13,10 @@ function ChatBox({ roomId }: { roomId: string }) {
 
   const myPlayerId = getOrCreatePlayerId();
 
-  const messages = gameState.messages || [];
+  const messages = useMemo(
+    () => gameState.messages || [],
+    [gameState.messages],
+  );
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -31,8 +35,21 @@ function ChatBox({ roomId }: { roomId: string }) {
   };
 
   return (
-    <div className="flex flex-col border border-slate-700 bg-[#222] text-[#eee] font-mono text-sm shadow-md mt-4">
-      <div className="border-b border-slate-700 px-3 py-2 text-[10px] uppercase tracking-widest text-[#aaa]">
+    <div
+      className="mt-4 flex flex-col border font-mono text-sm shadow-md"
+      style={{
+        background: "var(--menu-surface-strong)",
+        borderColor: "var(--menu-border)",
+        color: "var(--menu-heading)",
+      }}
+    >
+      <div
+        className="border-b px-3 py-2 text-[10px] uppercase tracking-widest"
+        style={{
+          borderColor: "var(--menu-border)",
+          color: "var(--menu-muted)",
+        }}
+      >
         Chat
       </div>
 
@@ -45,12 +62,18 @@ function ChatBox({ roomId }: { roomId: string }) {
               className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}
             >
               <span
-                className={`text-[10px] font-bold ${isMe ? "text-[#aaa]" : "text-white"}`}
+                className="text-[10px] font-bold"
+                style={{
+                  color: isMe ? "var(--menu-muted)" : "var(--menu-heading)",
+                }}
               >
                 {isMe ? "You" : msg.senderName}
               </span>
               <span
-                className={`mt-0.5 max-w-[85%] text-xs ${isMe ? "text-[#ccc]" : "text-[#eee]"}`}
+                className="mt-0.5 max-w-[85%] text-xs"
+                style={{
+                  color: isMe ? "var(--menu-text)" : "var(--menu-heading)",
+                }}
               >
                 {msg.text}
               </span>
@@ -62,19 +85,28 @@ function ChatBox({ roomId }: { roomId: string }) {
 
       <form
         onSubmit={handleSendMessage}
-        className="flex items-center border-t border-slate-700 bg-[#2a2a2a] p-2 gap-2"
+        className="flex items-center gap-2 border-t p-2"
+        style={{
+          borderColor: "var(--menu-border)",
+          background: "var(--menu-header)",
+        }}
       >
         <input
           type="text"
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
           placeholder="Say something..."
-          className="flex-1 bg-transparent text-[#eee] outline-none text-xs placeholder:text-[#666]"
+          className="flex-1 bg-transparent text-xs outline-none placeholder:opacity-60"
+          style={{ color: "var(--menu-heading)" }}
         />
         <button
           type="submit"
           disabled={!inputText.trim()}
-          className="p-2 border border-slate-600 rounded text-[#eee] hover:bg-[#333] transition-colors disabled:opacity-50"
+          className="rounded border p-2 transition-colors disabled:opacity-50"
+          style={{
+            borderColor: "var(--menu-border)",
+            color: "var(--menu-heading)",
+          }}
         >
           <FiSend className="w-3 h-3" />
         </button>
