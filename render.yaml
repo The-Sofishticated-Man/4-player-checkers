@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: four-player-checkers-client
+    runtime: static
+    rootDir: client
+    buildCommand: npm run build
+    staticPublishPath: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
