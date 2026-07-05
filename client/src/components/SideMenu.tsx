@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { FiClock, FiUserX, FiWifiOff } from "react-icons/fi";
+import { FiUserX } from "react-icons/fi";
 import { useNavigate } from "react-router";
 import useGameState from "../hooks/useBoard";
 import { useSocket } from "../hooks/useSocket";
 import { loadingSlots } from "../types/sideMenuTypes";
+import { getPlayerTheme, panelTheme } from "../utils/sideMenuThemes";
 import RoomLinkField from "./RoomLinkField";
 import ActionRow from "./ActionRow";
 import StatusBanner from "./StatusBanner";
@@ -22,16 +23,11 @@ function SideMenu() {
       winner,
       isDraw,
       activePlayers,
-      currentPlayer,
     },
     playerIndex,
   } = useGameState();
 
   const playerEntries = Array.from(players.entries());
-  const connectedPlayers = playerEntries.filter(
-    ([, player]) => player.isConnected,
-  );
-  const connectedPlayerIds = connectedPlayers.map(([playerId]) => playerId);
   const forfeitedPlayers = loadingSlots.filter((slot) =>
     Boolean(playerEntries[slot - 1]?.[1].leftGame),
   );
@@ -126,34 +122,52 @@ function SideMenu() {
   };
 
   return (
-    <div className="fixed right-4 top-1/2 w-[340px] max-w-[calc(100vw-2rem)] -translate-y-1/2 border border-slate-700 bg-[#1e1e1e] rounded flex flex-col font-mono text-white shadow-xl overflow-hidden">
-      <div className="bg-[#f0f0f0] p-4 flex justify-between items-center border-b border-slate-700">
-        <h1 className="text-3xl font-normal text-slate-800 tracking-tight leading-none mb-0">
+    <div
+      className="fixed right-[66px] top-1/2 z-40 flex w-[340px] max-w-[calc(100vw-2rem)] -translate-y-1/2 flex-col overflow-hidden rounded-2xl border font-mono"
+      style={panelTheme}
+    >
+      <div
+        className="flex items-center justify-between border-b px-4 py-4"
+        style={{
+          background: "var(--menu-header)",
+          borderColor: "var(--menu-border)",
+        }}
+      >
+        <h1
+          className="mb-0 text-3xl font-normal tracking-tight leading-none"
+          style={{ color: "var(--menu-heading)" }}
+        >
           Room <br />
-          <span className="font-light">#{roomId || "????"}</span>
+          <span className="font-light" style={{ color: "var(--menu-muted)" }}>
+            #{roomId || "????"}
+          </span>
         </h1>
         <div className="flex gap-1.5 self-start pt-2">
           {[1, 2, 3, 4].map((slot) => {
-            const isConnected = playerEntries.some(
-              ([, p]) =>
-                p.isConnected &&
-                playerEntries.indexOf(
-                  [playerEntries.find(([, pl]) => pl === p)!][0],
-                ) +
-                  1 ===
-                  slot,
+            const player = playerEntries[slot - 1]?.[1];
+            const isConnected = Boolean(
+              player?.isConnected && !player.leftGame,
             );
+            const dotColor = isConnected
+              ? getPlayerTheme(slot).pieceFill
+              : "var(--menu-dot-muted)";
             return (
               <div
                 key={slot}
-                className={`w-3 h-3 rounded-full ${isConnected ? "bg-slate-700" : "bg-slate-300"}`}
+                className="h-3 w-3 rounded-full border"
+                style={{
+                  backgroundColor: dotColor,
+                  borderColor: isConnected
+                    ? "rgba(255, 255, 255, 0.35)"
+                    : "rgba(128, 140, 156, 0.22)",
+                }}
               />
             );
           })}
         </div>
       </div>
 
-      <div className="p-4 flex flex-col gap-0 bg-[#1e1e1e]">
+      <div className="flex flex-col gap-0 p-4">
         {isYouForfeited && gameStarted && !gameOver && (
           <StatusBanner
             className="mb-3"
