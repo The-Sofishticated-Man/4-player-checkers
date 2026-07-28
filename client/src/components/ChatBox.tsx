@@ -55,7 +55,22 @@ function ChatBox({ roomId }: { roomId: string }) {
 
       <div className="h-48 overflow-y-auto p-3 flex flex-col gap-3">
         {messages.map((msg, idx) => {
+          const isSystemMessage = msg.kind === "system";
           const isMe = msg.playerId === myPlayerId;
+
+          if (isSystemMessage) {
+            return (
+              <div key={idx} className="flex justify-center px-2 text-center">
+                <span
+                  className="max-w-[90%] text-[11px] italic"
+                  style={{ color: "var(--menu-muted)" }}
+                >
+                  {msg.text}
+                </span>
+              </div>
+            );
+          }
+
           return (
             <div
               key={idx}

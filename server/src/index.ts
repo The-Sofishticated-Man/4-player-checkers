@@ -18,6 +18,10 @@ import {
   createClockSyncPayload,
   createGameStateEventPayload,
 } from "./utils/sandboxEvents.ts";
+import {
+  emitSystemChatMessage,
+  getPlayerDisplayName,
+} from "./utils/chatMessages.ts";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -79,13 +83,38 @@ setInterval(() => {
 
     const timedOutPlayer = advanceClock(game.gameState);
     if (timedOutPlayer !== null) {
+      const timedOutPlayerId = Array.from(game.players.keys())[
+        timedOutPlayer - 1
+      ];
       eliminatePlayerFromGame(game, timedOutPlayer);
+
+      if (timedOutPlayerId) {
+        emitSystemChatMessage(
+          io,
+          roomID,
+          game,
+          `${getPlayerDisplayName(game, timedOutPlayerId)} died.`,
+        );
+      }
 
       const payload = createGameStateEventPayload(game);
       io.to(roomID).emit("move-made", payload);
 
       if (payload.gameOver) {
         io.to(roomID).emit("game-over", payload);
+        if (payload.winner) {
+          const winnerPlayerId = Array.from(game.players.keys())[
+            payload.winner - 1
+          ];
+          if (winnerPlayerId) {
+            emitSystemChatMessage(
+              io,
+              roomID,
+              game,
+              `${getPlayerDisplayName(game, winnerPlayerId)} wins the game.`,
+            );
+          }
+        }
       }
 
       continue;

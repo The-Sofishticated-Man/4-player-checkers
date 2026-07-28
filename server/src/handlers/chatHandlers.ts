@@ -1,6 +1,10 @@
 import { Socket } from "socket.io";
 import { Game } from "../models/Game.ts";
 import { ChatMessage } from "../../../shared/types/gameTypes.ts";
+import {
+  createUserChatMessage,
+  emitChatMessage,
+} from "../utils/chatMessages.ts";
 
 export class ChatHandlers {
   private socket: Socket;
@@ -49,28 +53,17 @@ export class ChatHandlers {
       return;
     }
 
-    const newMessage: ChatMessage = {
+    const newMessage: ChatMessage = createUserChatMessage(
       playerId,
-      senderName: playerData.nickname,
-      text: messageText.trim(),
-      timestamp: Date.now(),
-    };
+      playerData.nickname,
+      messageText,
+    );
 
-    if (!Array.isArray(game.gameState.messages)) {
-      console.warn(
-        `[chat] game state for room=${roomId} was missing messages array; initializing it`,
-      );
-      game.gameState.messages = [];
-    }
-
-    game.gameState.messages.push(newMessage);
+    emitChatMessage(this.socket, roomId, game, newMessage);
 
     console.log(
       `[chat] stored message room=${roomId} playerId=${playerId} nickname=${playerData.nickname} totalMessages=${game.gameState.messages.length}`,
     );
-
-    // Broadcast to the room, including the sender so the UI updates immediately.
-    this.socket.nsp.to(roomId).emit("chat-message", newMessage);
 
     if (callback) callback({ ok: true });
   }

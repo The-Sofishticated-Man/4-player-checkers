@@ -13,6 +13,10 @@ import {
   serializeGameState,
 } from "../utils/sandboxEvents.ts";
 import { eliminatePlayerFromGame } from "../utils/gameLifecycle.ts";
+import {
+  emitSystemChatMessage,
+  getPlayerDisplayName,
+} from "../utils/chatMessages.ts";
 
 interface ForfeitAck {
   ok: boolean;
@@ -98,6 +102,13 @@ export class RoomHandlers {
         playerIndex,
       });
 
+      emitSystemChatMessage(
+        this.socket,
+        roomID,
+        game,
+        `${getPlayerDisplayName(game, playerId)} reconnected to the game.`,
+      );
+
       // Broadcast to all other players that someone reconnected
       this.socket.to(roomID).emit("player-reconnected", {
         roomID: game.gameId,
@@ -138,6 +149,13 @@ export class RoomHandlers {
       gameState,
       playerIndex,
     });
+
+    emitSystemChatMessage(
+      this.socket,
+      roomID,
+      game,
+      `${resolvedNickname} joined the game.`,
+    );
 
     // Broadcast to all other players in the room that someone joined
     this.socket.to(roomID).emit("player-joined", {
@@ -201,6 +219,8 @@ export class RoomHandlers {
       return;
     }
 
+    const playerName = getPlayerDisplayName(game, playerId);
+
     if (playerState.leftGame) {
       acknowledge?.({ ok: false, message: "You already forfeited this game" });
       return;
@@ -214,6 +234,13 @@ export class RoomHandlers {
 
     const forfeitedPlayerIndex = playerIndex as PlayerIndex;
     eliminatePlayerFromGame(game, forfeitedPlayerIndex);
+
+    emitSystemChatMessage(
+      this.socket,
+      game.gameId,
+      game,
+      `${playerName} left the game.`,
+    );
 
     const roomPayload = {
       roomID: game.gameId,
@@ -260,6 +287,13 @@ export class RoomHandlers {
 
     const disconnectedPlayerId = game.disconnectPlayer(playerId);
     if (disconnectedPlayerId) {
+      emitSystemChatMessage(
+        this.socket,
+        gameId,
+        game,
+        `${getPlayerDisplayName(game, disconnectedPlayerId)} disconnected.`,
+      );
+
       this.socket.to(gameId).emit("player-disconnected", {
         playerId: disconnectedPlayerId,
         players: Array.from(game.players.keys()),

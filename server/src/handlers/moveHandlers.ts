@@ -6,6 +6,10 @@ import type { MoveCoordinates } from "../../../shared/types/gameTypes.ts";
 import { SANDBOX_MODE } from "../utils/devSandbox.ts";
 import { createGameStateEventPayload } from "../utils/sandboxEvents.ts";
 import {
+  emitSystemChatMessage,
+  getPlayerDisplayName,
+} from "../utils/chatMessages.ts";
+import {
   advanceClock,
   grantIncrement,
   pauseClock,
@@ -46,10 +50,37 @@ export class MoveHandlers {
       return false;
     }
 
+    const timedOutPlayerId = Array.from(game.players.keys())[
+      timedOutPlayer - 1
+    ];
     eliminatePlayerFromGame(game, timedOutPlayer);
 
     const shouldEmitGameOver = game.gameState.gameOver ?? false;
     this.emitGameStateUpdate(roomID, game, shouldEmitGameOver);
+
+    if (timedOutPlayerId) {
+      emitSystemChatMessage(
+        this.socket,
+        roomID,
+        game,
+        `${getPlayerDisplayName(game, timedOutPlayerId)} died.`,
+      );
+    }
+
+    if (game.gameState.gameOver && game.gameState.winner) {
+      const winnerPlayerId = Array.from(game.players.keys())[
+        game.gameState.winner - 1
+      ];
+      if (winnerPlayerId) {
+        emitSystemChatMessage(
+          this.socket,
+          roomID,
+          game,
+          `${getPlayerDisplayName(game, winnerPlayerId)} wins the game.`,
+        );
+      }
+    }
+
     this.socket.emit(
       "move-error",
       "Time expired before your move was submitted",
@@ -101,6 +132,8 @@ export class MoveHandlers {
     }
 
     // Keep turn state resilient if the current player has been eliminated.
+    const previousActivePlayers = [...(game.gameState.activePlayers ?? [])];
+    const previousGameOver = Boolean(game.gameState.gameOver);
     evaluateAndApplyGameStatus(game);
 
     const currentPlayerId = this.socket.data.playerId as string | undefined;
@@ -220,6 +253,41 @@ export class MoveHandlers {
     // Emit new game state to all players in the room (exactly once)
     const shouldEmitGameOver = game.gameState.gameOver ?? false;
     this.emitGameStateUpdate(roomID, game, shouldEmitGameOver);
+
+    const eliminatedPlayers = previousActivePlayers.filter(
+      (playerIndex) => !game.gameState.activePlayers?.includes(playerIndex),
+    );
+
+    for (const eliminatedPlayerIndex of eliminatedPlayers) {
+      const eliminatedPlayerId = Array.from(game.players.keys())[
+        eliminatedPlayerIndex - 1
+      ];
+      if (!eliminatedPlayerId) {
+        continue;
+      }
+
+      emitSystemChatMessage(
+        this.socket,
+        roomID,
+        game,
+        `${getPlayerDisplayName(game, eliminatedPlayerId)} died.`,
+      );
+    }
+
+    if (game.gameState.gameOver && !previousGameOver && game.gameState.winner) {
+      const winnerPlayerId = Array.from(game.players.keys())[
+        game.gameState.winner - 1
+      ];
+      if (winnerPlayerId) {
+        emitSystemChatMessage(
+          this.socket,
+          roomID,
+          game,
+          `${getPlayerDisplayName(game, winnerPlayerId)} wins the game.`,
+        );
+      }
+    }
+
     console.log(
       `✅ Move completed - Room: ${roomID}, Player: ${currentPlayerId}, New turn: Player ${game.gameState.currentPlayer}${
         game.gameState.gameOver

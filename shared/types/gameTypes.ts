@@ -36,6 +36,7 @@ export interface ChatMessage {
   senderName: string;
   text: string;
   timestamp: number;
+  kind: "user" | "system";
 }
 
 export interface GameState {
