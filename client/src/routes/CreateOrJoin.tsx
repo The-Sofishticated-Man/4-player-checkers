@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useCreateGame } from "../hooks/useCreateGame";
+import ConnectionFlag from "../components/ConnectionFlag";
 
 function CreateOrJoin() {
   const [isCreating, setIsCreating] = useState(false);
@@ -17,6 +18,7 @@ function CreateOrJoin() {
       className="min-h-screen flex items-center justify-center p-4"
       style={{ background: "var(--page-bg)" }}
     >
+      <ConnectionFlag />
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">

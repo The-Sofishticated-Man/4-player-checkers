@@ -98,6 +98,13 @@ setInterval(() => {
 io.on("connection", (socket) => {
   console.log(`User connected: ${socket.id}`);
 
+  // Track total connected clients and broadcast to all clients
+  // Note: this is a simple in-memory count for the running process.
+  // It will be reset on server restart.
+  // Increment and broadcast on new connection
+  (io as any).connectedClients = ((io as any).connectedClients || 0) + 1;
+  io.emit("online-count", (io as any).connectedClients);
+
   // Setup room handlers
   setupRoomHandlers(socket, games);
 
@@ -109,4 +116,17 @@ io.on("connection", (socket) => {
 
   // Setup chat handlers
   setupChatHandlers(socket, games);
+
+  socket.on("disconnect", () => {
+    (io as any).connectedClients = Math.max(
+      0,
+      ((io as any).connectedClients || 1) - 1,
+    );
+    io.emit("online-count", (io as any).connectedClients);
+  });
+
+  // Allow clients to request the current online count
+  socket.on("request-online-count", () => {
+    socket.emit("online-count", (io as any).connectedClients || 0);
+  });
 });

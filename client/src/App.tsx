@@ -2,10 +2,12 @@ import { BrowserRouter, Route, Routes } from "react-router";
 import BoardPage from "./routes/BoardPage";
 import CreateOrJoin from "./routes/CreateOrJoin";
 import { SocketProvider } from "./context/SocketProvider";
+import ConnectionFlag from "./components/ConnectionFlag";
 
 function App() {
   return (
     <SocketProvider>
+      <ConnectionFlag />
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<CreateOrJoin />} />
