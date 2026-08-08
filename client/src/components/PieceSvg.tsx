@@ -1,29 +1,24 @@
-type PiecePalette = {
-  fill: string;
-};
+import player1Sprite from "../sprites/player_1_sprite.png";
+import player1PromotedSprite from "../sprites/player_1_sprite_promoted.png";
+import player2Sprite from "../sprites/player_2_sprite.png";
+import player2PromotedSprite from "../sprites/player_2_sprite_promoted.png";
+import player3Sprite from "../sprites/player_3_sprite.png";
+import player3PromotedSprite from "../sprites/player_3_sprite_promoted.png";
+import player4Sprite from "../sprites/player_4_sprite.png";
+import player4PromotedSprite from "../sprites/player_4_sprite_promoted.png";
 
-const getPiecePalette = (playerNumber: number): PiecePalette => {
+const getPieceSprite = (playerNumber: number, isKing: boolean): string => {
   switch (playerNumber) {
     case 1:
-      return {
-        fill: "var(--piece-1-fill)",
-      };
+      return isKing ? player1PromotedSprite : player1Sprite;
     case 2:
-      return {
-        fill: "var(--piece-2-fill)",
-      };
+      return isKing ? player2PromotedSprite : player2Sprite;
     case 3:
-      return {
-        fill: "var(--piece-3-fill)",
-      };
+      return isKing ? player3PromotedSprite : player3Sprite;
     case 4:
-      return {
-        fill: "var(--piece-4-fill)",
-      };
+      return isKing ? player4PromotedSprite : player4Sprite;
     default:
-      return {
-        fill: "var(--piece-default-fill)",
-      };
+      return isKing ? player1PromotedSprite : player1Sprite;
   }
 };
 
@@ -36,27 +31,16 @@ const PieceSvg = ({
   isKing: boolean;
   className?: string;
 }) => {
-  const palette = getPiecePalette(playerNumber);
+  const sprite = getPieceSprite(playerNumber, isKing);
 
   return (
-    <div className={`relative aspect-square ${className}`}>
-      <div
-        className="h-full w-full rounded-full"
-        style={{
-          backgroundColor: palette.fill,
-          border: "4px solid var(--piece-outline)",
-          boxSizing: "border-box",
-        }}
-      />
-      {isKing && (
-        <span
-          className="pointer-events-none absolute inset-0 flex items-center justify-center text-[11px] font-bold"
-          style={{ color: "var(--board-promotion-mark)" }}
-        >
-          ♔
-        </span>
-      )}
-    </div>
+    <img
+      src={sprite}
+      alt=""
+      aria-hidden="true"
+      draggable={false}
+      className={`block select-none object-contain ${className}`}
+    />
   );
 };
 
