@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&display=swap");
 @import "tailwindcss";
 
 :root {
@@ -6,16 +7,10 @@
   --ui-white: #ffffff;
   --ui-black: #000000;
 
-  --app-bg: #F5F5F5;
-  --game-bg: #F5F5F5;
+  --game-bg: #fcfbfb;
   --game-bg-accent: rgba(132, 163, 204, 0.18);
   --game-bg-warmth: rgba(210, 168, 118, 0.12);
-  --app-surface: rgba(255, 252, 248, 0.92);
-  --app-surface-strong: rgba(255, 255, 255, 0.96);
-  --app-border: rgba(207, 191, 180, 0.62);
-  --app-text: #4f433d;
   --app-ink: #111111;
-  --app-muted: #84746c;
   --app-on-dark: rgba(244, 248, 255, 0.98);
   --app-on-dark-muted: rgba(244, 248, 255, 0.95);
 
@@ -24,9 +19,6 @@
   --menu-header: rgba(255, 255, 255, 0.6);
   --menu-border: rgba(148, 133, 115, 0.34);
   --menu-text: #4a443d;
-  --menu-heading: #24201c;
-  --menu-muted: #73695f;
-  --menu-dot-muted: rgba(111, 123, 140, 0.54);
   --menu-shadow: 0 28px 75px rgba(10, 18, 30, 0.34);
   --menu-skeleton: rgba(232, 224, 212, 0.9);
   --menu-skeleton-soft: rgba(242, 236, 227, 0.95);
@@ -46,57 +38,148 @@
   --app-error-border: rgba(225, 164, 170, 0.6);
   --app-error-text: #8f4550;
 
-  --game-result-draw: linear-gradient(135deg, #8f98a7, #6f7884);
-  --game-result-win: linear-gradient(135deg, #d8788d, #c86074);
-
-  --board-light: #ddd6cb;
-  --board-dark: #b2a594;
+  --board-dark: #c4c4c4;
+  --board-light: #ececec;
+  --board-perimeter-border: rgb(182, 182, 182);
   --board-valid-move-current: #3a7d49;
   --board-valid-move-other: #7b818c;
   --board-promotion-border: #8f6a14;
   --board-promotion-mark: #6d520e;
 
-  --piece-1-fill: #d64545;
+  --player-1-color: #e8412b;
+  --player-2-color: #4b76e5;
+  --player-3-color: #219a5f;
+  --player-4-color: #f3a527;
 
-  --piece-2-fill: #2f6fd6;
+  --corner-blue: var(--player-2-color);
+  --corner-orange: var(--player-4-color);
+  --corner-red: var(--player-1-color);
+  --corner-red-dark: color-mix(in srgb, var(--player-1-color) 82%, #000000 18%);
+  --corner-green: var(--player-3-color);
+  --corner-green-dark: color-mix(
+    in srgb,
+    var(--player-3-color) 82%,
+    #000000 18%
+  );
 
-  --piece-3-fill: #1f9a6c;
+  --logo-blue: var(--player-2-color);
+  --logo-red: var(--player-1-color);
+  --logo-green: var(--player-3-color);
+  --logo-yellow: var(--player-4-color);
 
-  --piece-4-fill: #d8891f;
-
-  --piece-default-fill: #a3a3a3;
+  --piece-default-fill: #9ca3af;
   --piece-outline: rgba(0, 0, 0, 0.48);
 
-  --player-1-surface: rgba(252, 231, 232, 0.96);
-  --player-1-surface-strong: rgba(248, 219, 220, 0.98);
-  --player-1-border: #d78288;
-  --player-1-text: #7d4547;
-  --player-1-accent: #be6f78;
-  --player-1-muted: #a17377;
+  --player-1-surface: color-mix(
+    in srgb,
+    var(--player-1-color) 12%,
+    #ffffff 88%
+  );
+  --player-1-surface-strong: color-mix(
+    in srgb,
+    var(--player-1-color) 20%,
+    #ffffff 80%
+  );
+  --player-1-border: color-mix(in srgb, var(--player-1-color) 68%, #000000 32%);
+  --player-1-text: color-mix(in srgb, var(--player-1-color) 46%, #1f2937 54%);
+  --player-1-muted: color-mix(in srgb, var(--player-1-color) 32%, #6b7280 68%);
 
-  --player-2-surface: rgba(232, 242, 252, 0.96);
-  --player-2-surface-strong: rgba(219, 235, 250, 0.98);
-  --player-2-border: #84a9dc;
-  --player-2-text: #44617f;
-  --player-2-accent: #6f97cc;
-  --player-2-muted: #6c849b;
+  --player-2-surface: color-mix(
+    in srgb,
+    var(--player-2-color) 12%,
+    #ffffff 88%
+  );
+  --player-2-surface-strong: color-mix(
+    in srgb,
+    var(--player-2-color) 20%,
+    #ffffff 80%
+  );
+  --player-2-border: color-mix(in srgb, var(--player-2-color) 68%, #000000 32%);
+  --player-2-text: color-mix(in srgb, var(--player-2-color) 46%, #1f2937 54%);
+  --player-2-muted: color-mix(in srgb, var(--player-2-color) 32%, #6b7280 68%);
 
-  --player-3-surface: rgba(232, 249, 240, 0.96);
-  --player-3-surface-strong: rgba(220, 244, 231, 0.98);
-  --player-3-border: #86c7a5;
-  --player-3-text: #47735c;
-  --player-3-accent: #67ac89;
-  --player-3-muted: #6a8d7a;
+  --player-3-surface: color-mix(
+    in srgb,
+    var(--player-3-color) 12%,
+    #ffffff 88%
+  );
+  --player-3-surface-strong: color-mix(
+    in srgb,
+    var(--player-3-color) 20%,
+    #ffffff 80%
+  );
+  --player-3-border: color-mix(in srgb, var(--player-3-color) 68%, #000000 32%);
+  --player-3-text: color-mix(in srgb, var(--player-3-color) 46%, #1f2937 54%);
+  --player-3-muted: color-mix(in srgb, var(--player-3-color) 32%, #6b7280 68%);
 
-  --player-4-surface: rgba(255, 246, 225, 0.96);
-  --player-4-surface-strong: rgba(252, 238, 200, 0.98);
-  --player-4-border: #ddb95b;
-  --player-4-text: #7a612c;
-  --player-4-accent: #caa24a;
-  --player-4-muted: #9a855b;
+  --player-4-surface: color-mix(
+    in srgb,
+    var(--player-4-color) 12%,
+    #ffffff 88%
+  );
+  --player-4-surface-strong: color-mix(
+    in srgb,
+    var(--player-4-color) 20%,
+    #ffffff 80%
+  );
+  --player-4-border: color-mix(in srgb, var(--player-4-color) 68%, #000000 32%);
+  --player-4-text: color-mix(in srgb, var(--player-4-color) 46%, #1f2937 54%);
+  --player-4-muted: color-mix(in srgb, var(--player-4-color) 32%, #6b7280 68%);
 
-  --page-bg: var(--app-bg);
-  --card-shadow: 0 24px 70px rgba(38, 58, 88, 0.2);
+  --page-bg: #f4f2ee;
+  --app-text: #16213e;
+  --app-muted: #6b7280;
+  --app-surface-strong: rgba(255, 255, 255, 0.75);
+  --app-border: #e8e4dc;
+
+  /* Panel */
+  --menu-panel-bg: #ffffff;
+  --menu-panel-border: #eceae4;
+  --menu-panel-shadow: 0 20px 45px rgba(30, 34, 45, 0.12);
+
+  /* Typography */
+  --menu-heading: #1a1f2b; /* "Room" title */
+  --menu-code: #a6adb8; /* room code, e.g. #0CYJV5R */
+  --menu-label: #98a1ae; /* small uppercase labels: INVITE LINK, CHAT */
+  --menu-muted: #9aa2af; /* secondary/placeholder text */
+
+  /* Invite link field */
+  --menu-input-bg: #f7f8fa;
+  --menu-input-border: #e6e8ec;
+  --menu-input-text: #5b6472;
+  --menu-copy-btn-bg: #3b6df0;
+  --menu-copy-btn-bg-hover: #2f5ad9;
+  --menu-copy-btn-text: #ffffff;
+
+  /* Chat */
+  --menu-chat-bg: #f7f8fa;
+  --menu-chat-border: #eef0f3;
+  --menu-chat-icon: #c7cdd7;
+  --menu-chat-empty-title: #303844;
+  --menu-chat-empty-subtitle: #9aa2af;
+  --menu-send-btn-bg: #3b6df0;
+  --menu-send-btn-bg-hover: #2f5ad9;
+
+  /* Leave game button */
+  --menu-leave-bg: #fdeceb;
+  --menu-leave-bg-hover: #fbdfdd;
+  --menu-leave-border: #f8d4d1;
+  --menu-leave-text: #e0433e;
+
+  /* Status banners */
+  --menu-banner-warn-bg: #fef3e6;
+  --menu-banner-warn-border: #fbe3c2;
+  --menu-banner-warn-text: #b5730f;
+  --menu-banner-defeat-bg: #f1f2f5;
+  --menu-banner-defeat-border: #e3e5ea;
+  --menu-banner-defeat-text: #5b6472;
+
+  /* Game over banners */
+  --game-result-win: #22a06b;
+  --game-result-draw: #808a99;
+
+  --menu-dot-muted: #d7dbe1; /* disconnected / empty slot */
+  --menu-dot-ring: rgba(255, 255, 255, 0.6);
 }
 
 html,

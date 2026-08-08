@@ -85,7 +85,7 @@ function BoardPage() {
             className="w-full rounded-md py-2 text-sm font-semibold text-white transition-colors"
             style={{
               background:
-                "linear-gradient(135deg, var(--player-2-accent), var(--player-1-accent))",
+                "linear-gradient(135deg, var(--player-2-color), var(--player-1-color))",
             }}
           >
             Enter Game
