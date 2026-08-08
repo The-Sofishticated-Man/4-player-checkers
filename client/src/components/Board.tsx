@@ -5,7 +5,7 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import useGameState from "../hooks/useBoard";
 import type { PlayerSlot } from "../types/sideMenuTypes";
 import { useDragAndDrop } from "../hooks/useDragAndDrop";
@@ -14,6 +14,8 @@ import {
   getBoardRotationForPlayer,
   visualToLogicalPosition,
 } from "../utils/boardOrientation";
+import { isInMiddleGrid } from "../../../shared/logic/boardForfeit";
+import { getPlayerFromPiece } from "../../../shared/logic/pieceUtils";
 import { getPlayerTheme } from "../utils/sideMenuThemes";
 import BoardGrid, { type BoardGridOverlay } from "./BoardGrid";
 import PlayerCornerCard from "./PlayerCornerCard";
@@ -38,6 +40,11 @@ const Board = ({ allowMoveAnyPiece = false }: BoardProps) => {
     playerIndex,
   } = useGameState();
   const [clockNowMs, setClockNowMs] = useState(() => Date.now());
+  const [deathAnimationTargets, setDeathAnimationTargets] = useState(
+    () => new Set<string>(),
+  );
+  const previousBoardStateRef = useRef(boardState);
+  const previousActivePlayersRef = useRef(activePlayers ?? [1, 2, 3, 4]);
 
   useEffect(() => {
     const intervalId = window.setInterval(() => {
@@ -48,6 +55,57 @@ const Board = ({ allowMoveAnyPiece = false }: BoardProps) => {
       window.clearInterval(intervalId);
     };
   }, []);
+
+  useEffect(() => {
+    const previousBoardState = previousBoardStateRef.current;
+    const previousActivePlayers = previousActivePlayersRef.current;
+    const nextActivePlayers = activePlayers ?? previousActivePlayers;
+
+    previousBoardStateRef.current = boardState;
+    previousActivePlayersRef.current = nextActivePlayers;
+
+    const eliminatedPlayers = previousActivePlayers.filter(
+      (player) => !nextActivePlayers.includes(player),
+    );
+
+    if (eliminatedPlayers.length === 0) {
+      return;
+    }
+
+    const nextTargets = new Set<string>();
+
+    for (const eliminatedPlayer of eliminatedPlayers) {
+      for (let row = 0; row < previousBoardState.length; row++) {
+        for (let col = 0; col < previousBoardState[row].length; col++) {
+          const piece = previousBoardState[row][col];
+
+          if (
+            piece <= 0 ||
+            getPlayerFromPiece(piece) !== eliminatedPlayer ||
+            isInMiddleGrid(row, col)
+          ) {
+            continue;
+          }
+
+          nextTargets.add(`${row},${col}`);
+        }
+      }
+    }
+
+    if (nextTargets.size === 0) {
+      return;
+    }
+
+    setDeathAnimationTargets(nextTargets);
+
+    const timeoutId = window.setTimeout(() => {
+      setDeathAnimationTargets(new Set());
+    }, 600);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [activePlayers, boardState]);
 
   const {
     validMoves,
@@ -253,6 +311,7 @@ const Board = ({ allowMoveAnyPiece = false }: BoardProps) => {
     (gameStarted || false) && !gameOver,
     allowMoveAnyPiece,
     selectedPiece,
+    deathAnimationTargets,
     handlePieceClick,
     handleCellClick,
   );

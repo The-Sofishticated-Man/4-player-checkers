@@ -1,5 +1,6 @@
 import { useDroppable } from "@dnd-kit/core";
 import useGameState from "../hooks/useBoard";
+import deathAnimationGif from "../sprites/death_animation.gif";
 import type { BorderSide } from "../utils/boardPerimeterBorders";
 
 const PERIMETER_BORDER_WIDTH = "2px";
@@ -13,6 +14,7 @@ const Cell = ({
   isValidMove = false,
   isValidCapture = false,
   isSoftPromotionHint = false,
+  showDeathAnimation = false,
   borderSides = [],
   draggedPieceOwner = null,
   onClick,
@@ -25,6 +27,7 @@ const Cell = ({
   isValidMove?: boolean;
   isValidCapture?: boolean;
   isSoftPromotionHint?: boolean;
+  showDeathAnimation?: boolean;
   borderSides?: readonly BorderSide[];
   draggedPieceOwner?: number | null;
   onClick?: () => void;
@@ -216,6 +219,15 @@ const Cell = ({
         />
       ))}
       {softPromotionHintMarkup}
+      {showDeathAnimation && (
+        <img
+          src={deathAnimationGif}
+          alt=""
+          aria-hidden="true"
+          draggable={false}
+          className="pointer-events-none absolute inset-0 z-30 h-full w-full object-contain"
+        />
+      )}
       {children}
       {validMoveMarkup}
     </div>

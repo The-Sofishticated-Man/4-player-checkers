@@ -18,6 +18,7 @@ export const generateBoardCells = (
   gameStarted: boolean = false,
   allowMoveAnyPiece: boolean = false,
   selectedPiece: { row: number; col: number } | null = null,
+  deathAnimationTargets: Set<string> = new Set(),
   onPieceClick: (row: number, col: number) => void = () => {},
   onCellClick: (row: number, col: number) => void = () => {},
   renderInaccessibleCell: (
@@ -65,6 +66,7 @@ export const generateBoardCells = (
       const isSelectedPiece =
         selectedPiece?.row === row && selectedPiece.col === col;
       const isSoftPromotionHint = softPromotionTargets.has(`${row},${col}`);
+      const showDeathAnimation = deathAnimationTargets.has(`${row},${col}`);
       const pieceValue = boardState[row][col];
       const inaccessibleContent =
         pieceValue === -1
@@ -87,6 +89,7 @@ export const generateBoardCells = (
           isValidMove={isValidMove}
           isValidCapture={isValidCapture}
           isSoftPromotionHint={isSoftPromotionHint}
+          showDeathAnimation={showDeathAnimation}
           borderSides={getPerimeterBorderSides(visualRow, visualCol)}
           draggedPieceOwner={draggedPieceOwner}
           inaccessibleContent={inaccessibleContent}
