@@ -20,6 +20,105 @@ import { getPlayerTheme } from "../utils/sideMenuThemes";
 import BoardGrid, { type BoardGridOverlay } from "./BoardGrid";
 import PlayerCornerCard from "./PlayerCornerCard";
 import PieceSvg from "./PieceSvg";
+import movePieceSfx from "../sounds/move-piece.mp3";
+import capturePieceSfx from "../sounds/capture-piece.mp3";
+import playerDeathSfx from "../sounds/player-death.mp3";
+import promotePieceSfx from "../sounds/promote-piece.wav";
+
+const createSound = (src: string, volume: number) => {
+  const audio = new Audio(src);
+  audio.preload = "auto";
+  audio.volume = volume;
+  return audio;
+};
+
+const playSound = (audio: HTMLAudioElement | null, volumeScale = 1) => {
+  if (!audio) return;
+
+  const instance = audio.cloneNode(true) as HTMLAudioElement;
+  instance.currentTime = 0;
+  instance.volume = Math.max(0, Math.min(1, audio.volume * volumeScale));
+  void instance.play().catch(() => {
+    // Autoplay policies can block playback until user interaction.
+  });
+};
+
+const boardStatesEqual = (left: number[][], right: number[][]): boolean => {
+  if (left.length !== right.length) {
+    return false;
+  }
+
+  for (let row = 0; row < left.length; row++) {
+    const leftRow = left[row];
+    const rightRow = right[row];
+
+    if (leftRow.length !== rightRow.length) {
+      return false;
+    }
+
+    for (let col = 0; col < leftRow.length; col++) {
+      if (leftRow[col] !== rightRow[col]) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+};
+
+const countPieces = (boardState: number[][]): number => {
+  let total = 0;
+
+  for (let row = 0; row < boardState.length; row++) {
+    for (let col = 0; col < boardState[row].length; col++) {
+      if (boardState[row][col] > 0) {
+        total += 1;
+      }
+    }
+  }
+
+  return total;
+};
+
+const hasPromotion = (
+  previousBoard: number[][],
+  nextBoard: number[][],
+): boolean => {
+  const kingCountsBefore = new Map<number, number>();
+  const kingCountsAfter = new Map<number, number>();
+
+  for (let row = 0; row < previousBoard.length; row++) {
+    for (let col = 0; col < previousBoard[row].length; col++) {
+      const previousPiece = previousBoard[row][col];
+      const nextPiece = nextBoard[row][col];
+
+      if (previousPiece >= 10) {
+        const owner = Math.floor(previousPiece / 10);
+        kingCountsBefore.set(owner, (kingCountsBefore.get(owner) ?? 0) + 1);
+      }
+
+      if (nextPiece >= 10) {
+        const owner = Math.floor(nextPiece / 10);
+        kingCountsAfter.set(owner, (kingCountsAfter.get(owner) ?? 0) + 1);
+      }
+    }
+  }
+
+  const owners = new Set<number>([
+    ...kingCountsBefore.keys(),
+    ...kingCountsAfter.keys(),
+  ]);
+
+  for (const owner of owners) {
+    if (
+      (kingCountsAfter.get(owner) ?? 0) > (kingCountsBefore.get(owner) ?? 0)
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+};
 
 interface BoardProps {
   allowMoveAnyPiece?: boolean;
@@ -43,8 +142,14 @@ const Board = ({ allowMoveAnyPiece = false }: BoardProps) => {
   const [deathAnimationTargets, setDeathAnimationTargets] = useState(
     () => new Set<string>(),
   );
-  const previousBoardStateRef = useRef(boardState);
+  const moveSoundRef = useRef<HTMLAudioElement | null>(null);
+  const captureSoundRef = useRef<HTMLAudioElement | null>(null);
+  const deathSoundRef = useRef<HTMLAudioElement | null>(null);
+  const promoteSoundRef = useRef<HTMLAudioElement | null>(null);
+  const previousBoardStateForDeathRef = useRef(boardState);
   const previousActivePlayersRef = useRef(activePlayers ?? [1, 2, 3, 4]);
+  const previousBoardStateForSoundRef = useRef(boardState);
+  const hasSoundBaselineRef = useRef(false);
 
   useEffect(() => {
     const intervalId = window.setInterval(() => {
@@ -57,11 +162,60 @@ const Board = ({ allowMoveAnyPiece = false }: BoardProps) => {
   }, []);
 
   useEffect(() => {
-    const previousBoardState = previousBoardStateRef.current;
+    moveSoundRef.current = createSound(movePieceSfx, 0.4);
+    captureSoundRef.current = createSound(capturePieceSfx, 0.55);
+    deathSoundRef.current = createSound(playerDeathSfx, 0.2);
+    promoteSoundRef.current = createSound(promotePieceSfx, 0.5);
+
+    return () => {
+      moveSoundRef.current = null;
+      captureSoundRef.current = null;
+      deathSoundRef.current = null;
+      promoteSoundRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    const previousBoardState = previousBoardStateForSoundRef.current;
+
+    if (!hasSoundBaselineRef.current) {
+      hasSoundBaselineRef.current = true;
+      previousBoardStateForSoundRef.current = boardState;
+      return;
+    }
+
+    if (boardStatesEqual(previousBoardState, boardState)) {
+      previousBoardStateForSoundRef.current = boardState;
+      return;
+    }
+
+    const moveWasPromotion = hasPromotion(previousBoardState, boardState);
+
+    if (moveWasPromotion) {
+      playSound(promoteSoundRef.current);
+      previousBoardStateForSoundRef.current = boardState;
+      return;
+    }
+
+    const previousPieceCount = countPieces(previousBoardState);
+    const nextPieceCount = countPieces(boardState);
+    const moveWasCapture = nextPieceCount < previousPieceCount;
+
+    if (moveWasCapture) {
+      playSound(captureSoundRef.current);
+    } else {
+      playSound(moveSoundRef.current);
+    }
+
+    previousBoardStateForSoundRef.current = boardState;
+  }, [boardState]);
+
+  useEffect(() => {
+    const previousBoardState = previousBoardStateForDeathRef.current;
     const previousActivePlayers = previousActivePlayersRef.current;
     const nextActivePlayers = activePlayers ?? previousActivePlayers;
 
-    previousBoardStateRef.current = boardState;
+    previousBoardStateForDeathRef.current = boardState;
     previousActivePlayersRef.current = nextActivePlayers;
 
     const eliminatedPlayers = previousActivePlayers.filter(
@@ -71,6 +225,8 @@ const Board = ({ allowMoveAnyPiece = false }: BoardProps) => {
     if (eliminatedPlayers.length === 0) {
       return;
     }
+
+    playSound(deathSoundRef.current, 0.35);
 
     const nextTargets = new Set<string>();
 
