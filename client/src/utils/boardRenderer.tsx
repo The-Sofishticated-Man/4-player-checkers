@@ -7,6 +7,7 @@ import {
   getBoardRotationForPlayer,
   visualToLogicalPosition,
 } from "./boardOrientation";
+import { getPerimeterBorderSides } from "./boardPerimeterBorders";
 
 export const generateBoardCells = (
   boardState: BoardState,
@@ -86,6 +87,7 @@ export const generateBoardCells = (
           isValidMove={isValidMove}
           isValidCapture={isValidCapture}
           isSoftPromotionHint={isSoftPromotionHint}
+          borderSides={getPerimeterBorderSides(visualRow, visualCol)}
           draggedPieceOwner={draggedPieceOwner}
           inaccessibleContent={inaccessibleContent}
           onClick={() => onCellClick(row, col)}
