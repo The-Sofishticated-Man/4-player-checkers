@@ -22,6 +22,7 @@ import PlayerCornerCard from "./PlayerCornerCard";
 import PieceSvg from "./PieceSvg";
 import movePieceSfx from "../sounds/move-piece.mp3";
 import capturePieceSfx from "../sounds/capture-piece.mp3";
+import gameStartSfx from "../sounds/game-start.mp3";
 import playerDeathSfx from "../sounds/player-death.mp3";
 import promotePieceSfx from "../sounds/promote-piece.wav";
 
@@ -144,11 +145,13 @@ const Board = ({ allowMoveAnyPiece = false }: BoardProps) => {
   );
   const moveSoundRef = useRef<HTMLAudioElement | null>(null);
   const captureSoundRef = useRef<HTMLAudioElement | null>(null);
+  const gameStartSoundRef = useRef<HTMLAudioElement | null>(null);
   const deathSoundRef = useRef<HTMLAudioElement | null>(null);
   const promoteSoundRef = useRef<HTMLAudioElement | null>(null);
   const previousBoardStateForDeathRef = useRef(boardState);
   const previousActivePlayersRef = useRef(activePlayers ?? [1, 2, 3, 4]);
   const previousBoardStateForSoundRef = useRef(boardState);
+  const previousGameStartedRef = useRef(gameStarted);
   const hasSoundBaselineRef = useRef(false);
 
   useEffect(() => {
@@ -164,16 +167,30 @@ const Board = ({ allowMoveAnyPiece = false }: BoardProps) => {
   useEffect(() => {
     moveSoundRef.current = createSound(movePieceSfx, 0.4);
     captureSoundRef.current = createSound(capturePieceSfx, 0.55);
+    gameStartSoundRef.current = createSound(gameStartSfx, 0.55);
     deathSoundRef.current = createSound(playerDeathSfx, 0.2);
     promoteSoundRef.current = createSound(promotePieceSfx, 0.5);
 
     return () => {
       moveSoundRef.current = null;
       captureSoundRef.current = null;
+      gameStartSoundRef.current = null;
       deathSoundRef.current = null;
       promoteSoundRef.current = null;
     };
   }, []);
+
+  useEffect(() => {
+    const gameStartedJustNow = !previousGameStartedRef.current && gameStarted;
+
+    previousGameStartedRef.current = gameStarted;
+
+    if (!gameStartedJustNow) {
+      return;
+    }
+
+    playSound(gameStartSoundRef.current);
+  }, [gameStarted]);
 
   useEffect(() => {
     const previousBoardState = previousBoardStateForSoundRef.current;
