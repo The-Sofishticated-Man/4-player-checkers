@@ -18,6 +18,16 @@ import {
   getPlayerDisplayName,
 } from "../utils/chatMessages.ts";
 
+type RoomMode = "private" | "quickplay";
+
+interface RoomCreationPayload {
+  roomMode?: RoomMode;
+  playerId?: PlayerId;
+  nickname?: string;
+}
+
+let pendingQuickPlayRoomId: string | null = null;
+
 interface ForfeitAck {
   ok: boolean;
   message?: string;
@@ -51,11 +61,155 @@ export class RoomHandlers {
     this.socket.emit("sandbox-room-state", payload);
   }
 
-  handleRoomCreation = () => {
+  private createRoom(roomMode: RoomMode): Game {
     const roomID = generateID();
-    this.games.set(roomID, new Game(roomID));
+    const minPlayersToStart = roomMode === "quickplay" ? 4 : undefined;
+    const game = new Game(roomID, roomMode === "private", minPlayersToStart);
+    this.games.set(roomID, game);
+    return game;
+  }
 
-    this.socket.emit("room-created", { roomID });
+  private clearPendingQuickPlayRoom(roomID: string): void {
+    if (pendingQuickPlayRoomId === roomID) {
+      pendingQuickPlayRoomId = null;
+    }
+  }
+
+  private getPendingQuickPlayRoom(): Game | null {
+    if (!pendingQuickPlayRoomId) {
+      return null;
+    }
+
+    const pendingGame = this.games.get(pendingQuickPlayRoomId);
+    if (!pendingGame) {
+      pendingQuickPlayRoomId = null;
+      return null;
+    }
+
+    if (
+      pendingGame.gameStarted ||
+      pendingGame.isFull() ||
+      pendingGame.getConnectedPlayerCount() === 0
+    ) {
+      if (pendingGame.getConnectedPlayerCount() === 0) {
+        this.games.delete(pendingQuickPlayRoomId);
+      }
+
+      pendingQuickPlayRoomId = null;
+      return null;
+    }
+
+    return pendingGame;
+  }
+
+  private emitRoomJoined(game: Game, playerId: PlayerId, roomMode: RoomMode) {
+    const playerIndex = game.getPlayerIndexFromId(playerId);
+    const gameState = serializeGameState(game);
+    const playerIds = Array.from(game.players.keys());
+    const connectedPlayers = game.getConnectedPlayerIds();
+
+    this.socket.emit("room-joined", {
+      roomID: game.gameId,
+      gameState,
+      playerIndex,
+      roomMode,
+    });
+
+    return { playerIndex, gameState, playerIds, connectedPlayers };
+  }
+
+  handleRoomCreation = (payload: RoomCreationPayload = {}) => {
+    const roomMode: RoomMode = payload.roomMode ?? "private";
+
+    if (roomMode === "quickplay") {
+      const playerId = payload.playerId;
+      if (!playerId) {
+        this.socket.emit("room-join-denied", "Unable to start quick play");
+        return;
+      }
+
+      const resolvedNickname = this.resolveNickname(playerId, payload.nickname);
+      if (resolvedNickname === null) {
+        this.socket.emit(
+          "room-join-denied",
+          `Nickname must be ${MAX_NICKNAME_LENGTH} characters or fewer`,
+        );
+        return;
+      }
+
+      let game = this.getPendingQuickPlayRoom();
+      if (!game) {
+        game = this.createRoom("quickplay");
+        pendingQuickPlayRoomId = game.gameId;
+      }
+
+      if (game.hasPlayer(playerId)) {
+        const existingPlayerState = game.players.get(playerId);
+        if (existingPlayerState?.leftGame) {
+          this.socket.emit(
+            "room-join-denied",
+            "You already forfeited this game",
+          );
+          return;
+        }
+
+        this.socket.join(game.gameId);
+        game.reconnectPlayer(playerId, resolvedNickname);
+      } else {
+        game.addNewPlayer(playerId, resolvedNickname);
+        this.socket.join(game.gameId);
+      }
+
+      this.socket.data.playerId = playerId;
+      this.socket.data.gameId = game.gameId;
+
+      const joinedPayload = this.emitRoomJoined(game, playerId, "quickplay");
+
+      emitSystemChatMessage(
+        this.socket,
+        game.gameId,
+        game,
+        `${resolvedNickname} joined the game.`,
+      );
+
+      this.socket.to(game.gameId).emit("player-joined", {
+        roomID: game.gameId,
+        playerId,
+        gameState: joinedPayload.gameState,
+        playerIndex: joinedPayload.playerIndex,
+        players: joinedPayload.playerIds,
+        connectedPlayers: joinedPayload.connectedPlayers,
+        gameStarted: game.gameStarted,
+        roomMode: "quickplay",
+      });
+
+      const shouldStartGame = game.shouldStartGame();
+      if (shouldStartGame) {
+        const startGameData = {
+          roomID: game.gameId,
+          ...createGameStateEventPayload(game),
+        };
+
+        this.socket.to(game.gameId).emit("game-started", startGameData);
+        this.socket.emit("game-started", startGameData);
+        this.clearPendingQuickPlayRoom(game.gameId);
+      }
+
+      this.emitSandboxRoomState(game);
+
+      this.socket.emit("room-created", {
+        roomID: game.gameId,
+        roomMode: "quickplay",
+      });
+      return;
+    }
+
+    const game = this.createRoom("private");
+
+    this.socket.emit("room-created", {
+      roomID: game.gameId,
+      roomMode: "private",
+    });
   };
 
   handleRoomJoin = (roomID: string, playerId: PlayerId, nickname?: string) => {
@@ -100,6 +254,7 @@ export class RoomHandlers {
         roomID: game.gameId,
         gameState,
         playerIndex,
+        roomMode: game.isPrivate ? "private" : "quickplay",
       });
 
       emitSystemChatMessage(
@@ -118,6 +273,7 @@ export class RoomHandlers {
         players: playerIds,
         connectedPlayers,
         gameStarted: game.gameStarted,
+        roomMode: game.isPrivate ? "private" : "quickplay",
       });
 
       this.emitSandboxRoomState(game);
@@ -128,6 +284,14 @@ export class RoomHandlers {
     // Check if room is full before adding new player
     if (game.isFull()) {
       this.socket.emit("room-full", roomID);
+      return;
+    }
+
+    if (!game.isPrivate) {
+      this.socket.emit(
+        "room-join-denied",
+        "This quick play game cannot be joined by room link",
+      );
       return;
     }
 
@@ -148,6 +312,7 @@ export class RoomHandlers {
       roomID: game.gameId,
       gameState,
       playerIndex,
+      roomMode: game.isPrivate ? "private" : "quickplay",
     });
 
     emitSystemChatMessage(
@@ -166,6 +331,7 @@ export class RoomHandlers {
       players: playerIds,
       connectedPlayers,
       gameStarted: game.gameStarted,
+      roomMode: game.isPrivate ? "private" : "quickplay",
     });
 
     // Check if game transitioned to started state during this join.
@@ -268,6 +434,11 @@ export class RoomHandlers {
 
     this.emitSandboxRoomState(game);
 
+    if (game.getConnectedPlayerCount() === 0) {
+      this.clearPendingQuickPlayRoom(game.gameId);
+      this.games.delete(game.gameId);
+    }
+
     acknowledge?.({ ok: true });
   };
 
@@ -302,6 +473,11 @@ export class RoomHandlers {
       });
 
       this.emitSandboxRoomState(game);
+
+      if (game.getConnectedPlayerCount() === 0) {
+        this.clearPendingQuickPlayRoom(gameId);
+        this.games.delete(gameId);
+      }
     }
   };
 }

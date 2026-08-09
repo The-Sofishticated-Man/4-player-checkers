@@ -37,9 +37,17 @@ export class Game {
   public playerCount: number = 0;
   public gameState: GameState = createInitialGameState();
   public gameStarted: boolean = false;
+  public isPrivate: boolean;
+  public minPlayersToStart: number;
 
-  constructor(gameId: string) {
+  constructor(
+    gameId: string,
+    isPrivate = true,
+    minPlayersToStart = MIN_PLAYERS_TO_START,
+  ) {
     this.gameId = gameId;
+    this.isPrivate = isPrivate;
+    this.minPlayersToStart = minPlayersToStart;
     resetClock(
       this.gameState,
       SERVER_CLOCK_BASE_TIME_MS,
@@ -61,7 +69,7 @@ export class Game {
     this.playerCount++;
 
     // In sandbox mode, allow instant start with fewer players.
-    if (!this.gameStarted && this.playerCount >= MIN_PLAYERS_TO_START) {
+    if (!this.gameStarted && this.playerCount >= this.minPlayersToStart) {
       this.startGame();
     }
   }
@@ -132,7 +140,7 @@ export class Game {
    * Checks if the game should start (4 players joined)
    */
   shouldStartGame(): boolean {
-    return this.gameStarted && this.playerCount >= MIN_PLAYERS_TO_START;
+    return this.gameStarted && this.playerCount >= this.minPlayersToStart;
   }
 
   /**

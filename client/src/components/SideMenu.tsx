@@ -56,9 +56,12 @@ function SideMenu() {
   const isYouDefeated =
     playerIndex > 0 && defeatedPlayers.includes(playerIndex);
   const roomId = sessionStorage.getItem("currentRoomId");
-  const roomLink = roomId
-    ? new URL(`/game/${roomId}`, window.location.origin).toString()
-    : "";
+  const roomMode = sessionStorage.getItem("currentGameMode");
+  const isQuickPlay = roomMode === "quickplay";
+  const roomLink =
+    !isQuickPlay && roomId
+      ? new URL(`/game/${roomId}`, window.location.origin).toString()
+      : "";
 
   const fallbackCopyToClipboard = (text: string): boolean => {
     const textArea = document.createElement("textarea");
@@ -129,6 +132,7 @@ function SideMenu() {
         }
 
         sessionStorage.removeItem("currentRoomId");
+        sessionStorage.removeItem("currentGameMode");
         navigate("/");
       },
     );
@@ -244,53 +248,54 @@ function SideMenu() {
           </div>
         )}
 
-        {/* Invite link */}
-        <div>
-          <p
-            className="mb-2 text-xs font-semibold uppercase tracking-wider"
-            style={{ color: "var(--menu-label)" }}
-          >
-            Invite link
-          </p>
-          <div className="flex items-center gap-2">
-            <input
-              readOnly
-              value={roomLink}
-              placeholder="Waiting for room…"
-              className="min-w-0 flex-1 truncate rounded-lg border px-3 py-2.5 text-sm outline-none"
-              style={{
-                background: "var(--menu-input-bg)",
-                borderColor: "var(--menu-input-border)",
-                color: "var(--menu-input-text)",
-              }}
-            />
-            <button
-              type="button"
-              onClick={handleCopyGameLink}
-              disabled={!roomLink}
-              aria-label="Copy invite link"
-              className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-lg transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-              style={{
-                background: "var(--menu-copy-btn-bg)",
-                color: "var(--menu-copy-btn-text)",
-              }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.background =
-                  "var(--menu-copy-btn-bg-hover)";
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.background =
-                  "var(--menu-copy-btn-bg)";
-              }}
+        {!isQuickPlay ? (
+          <div>
+            <p
+              className="mb-2 text-xs font-semibold uppercase tracking-wider"
+              style={{ color: "var(--menu-label)" }}
             >
-              {linkCopied ? (
-                <FiCheck className="h-4 w-4" />
-              ) : (
-                <FiCopy className="h-4 w-4" />
-              )}
-            </button>
+              Invite link
+            </p>
+            <div className="flex items-center gap-2">
+              <input
+                readOnly
+                value={roomLink}
+                placeholder="Waiting for room…"
+                className="min-w-0 flex-1 truncate rounded-lg border px-3 py-2.5 text-sm outline-none"
+                style={{
+                  background: "var(--menu-input-bg)",
+                  borderColor: "var(--menu-input-border)",
+                  color: "var(--menu-input-text)",
+                }}
+              />
+              <button
+                type="button"
+                onClick={handleCopyGameLink}
+                disabled={!roomLink}
+                aria-label="Copy invite link"
+                className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-lg transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                style={{
+                  background: "var(--menu-copy-btn-bg)",
+                  color: "var(--menu-copy-btn-text)",
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.background =
+                    "var(--menu-copy-btn-bg-hover)";
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.background =
+                    "var(--menu-copy-btn-bg)";
+                }}
+              >
+                {linkCopied ? (
+                  <FiCheck className="h-4 w-4" />
+                ) : (
+                  <FiCopy className="h-4 w-4" />
+                )}
+              </button>
+            </div>
           </div>
-        </div>
+        ) : null}
 
         {/* Chat */}
         <div className="flex min-h-0 flex-1 flex-col">

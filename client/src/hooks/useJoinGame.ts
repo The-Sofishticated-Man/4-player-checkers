@@ -179,8 +179,10 @@ export function useJoinGame(roomId: string, nickname: string | null) {
       roomID: string;
       gameState: SerializedGameState;
       playerIndex: PlayerIndex;
+      roomMode?: "private" | "quickplay";
     }) => {
       sessionStorage.setItem("currentRoomId", data.roomID);
+      sessionStorage.setItem("currentGameMode", data.roomMode ?? "private");
       setPlayerIndex(data.playerIndex);
 
       const hydratedGameState = hydrateGameState(data.gameState);
@@ -198,6 +200,8 @@ export function useJoinGame(roomId: string, nickname: string | null) {
     const handleRoomFull = (roomID: string) => {
       console.error(`Room ${roomID} is full`);
       setError("Room is full (4 players max)");
+      sessionStorage.removeItem("currentRoomId");
+      sessionStorage.removeItem("currentGameMode");
       alert("Room is full");
       navigate("/");
       setIsConnecting(false);
@@ -206,6 +210,8 @@ export function useJoinGame(roomId: string, nickname: string | null) {
     const handleRoomNotFound = (roomID: string) => {
       console.error(`Room ${roomID} not found`);
       setError("Room not found");
+      sessionStorage.removeItem("currentRoomId");
+      sessionStorage.removeItem("currentGameMode");
       alert("Room not found");
       navigate("/");
       setIsConnecting(false);
@@ -213,6 +219,8 @@ export function useJoinGame(roomId: string, nickname: string | null) {
 
     const handleRoomJoinDenied = (reason: string) => {
       setError(reason);
+      sessionStorage.removeItem("currentRoomId");
+      sessionStorage.removeItem("currentGameMode");
       alert(reason);
       navigate("/");
       setIsConnecting(false);

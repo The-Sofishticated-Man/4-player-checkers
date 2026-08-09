@@ -1,21 +1,53 @@
 import { useNavigate } from "react-router";
 import { useSocket } from "./useSocket";
 import initialState from "../../../server/src/utils/initialGameState";
+import {
+  getOrCreatePlayerId,
+  getStoredNickname,
+  resolveNickname,
+} from "../utils/playerIdentity";
+
+type RoomMode = "private" | "quickplay";
 
 export function useCreateGame() {
   const navigate = useNavigate();
   const { socket } = useSocket();
 
-  const createGame = (afterCreate?: () => void) => {
-    // Get or create persistent player ID
-    socket?.emit("create-room", initialState.boardState);
+  const startGame = (roomMode: RoomMode, afterCreate?: () => void) => {
+    if (!socket) {
+      return;
+    }
 
-    socket?.on("room-created", ({ roomID }: { roomID: string }) => {
-      // todo: implement some way of letting player join multiple games
-      navigate(`/game/${roomID}`);
-      afterCreate?.();
+    const playerId = getOrCreatePlayerId();
+    const nickname = resolveNickname(getStoredNickname(), playerId);
+
+    socket.once(
+      "room-created",
+      ({
+        roomID,
+        roomMode: createdRoomMode,
+      }: {
+        roomID: string;
+        roomMode?: RoomMode;
+      }) => {
+        sessionStorage.setItem("currentRoomId", roomID);
+        sessionStorage.setItem("currentGameMode", createdRoomMode ?? roomMode);
+        navigate(`/game/${roomID}`);
+        afterCreate?.();
+      },
+    );
+
+    socket.emit("create-room", {
+      boardState: initialState.boardState,
+      roomMode,
+      playerId: roomMode === "quickplay" ? playerId : undefined,
+      nickname: roomMode === "quickplay" ? nickname : undefined,
     });
   };
 
-  return { createGame };
+  return {
+    createGame: (afterCreate?: () => void) => startGame("private", afterCreate),
+    quickPlay: (afterCreate?: () => void) =>
+      startGame("quickplay", afterCreate),
+  };
 }
