@@ -46,7 +46,7 @@ function CreateOrJoin() {
               letterSpacing: "0.01em",
             }}
           >
-            4-Player Checkers
+            licheeeeckers
           </h1>
           <p style={{ color: "var(--app-muted)" }}>
             Create a game and share your room code
