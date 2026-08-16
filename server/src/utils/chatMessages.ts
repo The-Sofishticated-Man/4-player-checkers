@@ -2,7 +2,7 @@ import type { Server, Socket } from "socket.io";
 import { Game } from "../models/Game.ts";
 import type { ChatMessage, PlayerId } from "../../../shared/types/gameTypes.ts";
 
-type ChatEmitter = Pick<Server, "to"> | Pick<Socket, "to">;
+type ChatEmitter = Server | Socket;
 
 const ensureMessageList = (game: Game): ChatMessage[] => {
   if (!Array.isArray(game.gameState.messages)) {
@@ -44,8 +44,7 @@ export const emitChatMessage = (
 ): void => {
   appendChatMessage(game, message);
 
-  const roomEmitter =
-    "nsp" in emitter ? emitter.nsp.to(roomId) : emitter.to(roomId);
+  const roomEmitter = emitter.to(roomId);
   roomEmitter.emit("chat-message", message);
 };
 
