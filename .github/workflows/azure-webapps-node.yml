@@ -8,11 +8,15 @@ on:
 
 env:
   AZURE_WEBAPP_NAME: 'licheeeeckers-backend'
-  NODE_VERSION: '24.x'
+  NODE_VERSION: '20.x'
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./server
+
     steps:
       - uses: actions/checkout@v4
 
@@ -21,6 +25,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
+          cache-dependency-path: 'server/package-lock.json'
 
       - name: npm install and build
         run: |
@@ -31,7 +36,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: .
+          path: server
 
   deploy:
     runs-on: ubuntu-latest
