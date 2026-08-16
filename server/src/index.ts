@@ -1,7 +1,5 @@
 import express from "express";
 import cors from "cors";
-import path from "node:path";
-import { existsSync } from "node:fs";
 import { Server } from "socket.io";
 import { Game } from "./models/Game.ts";
 import { setupRoomHandlers } from "./utils/setupRoomHandlers.ts";
@@ -26,8 +24,6 @@ import {
 const app = express();
 const PORT = process.env.PORT || 3000;
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
-const CLIENT_DIST_PATH = path.resolve(process.cwd(), "../client/dist");
-const CLIENT_INDEX_PATH = path.join(CLIENT_DIST_PATH, "index.html");
 
 // Middleware
 app.use(express.json()); // Parse JSON bodies
@@ -40,25 +36,25 @@ app.use(
   }),
 );
 
-if (existsSync(CLIENT_INDEX_PATH)) {
-  app.use(express.static(CLIENT_DIST_PATH));
+// Do NOT serve frontend assets from this process. If the API is opened in
+// a browser, return a small human-readable message instead.
+app.get(/.*/, (req, res, next) => {
+  if (req.method !== "GET" || !req.accepts("html")) {
+    next();
+    return;
+  }
 
-  app.get(/.*/, (req, res, next) => {
-    if (req.method !== "GET" || !req.accepts("html")) {
-      next();
-      return;
-    }
-
-    res.sendFile(CLIENT_INDEX_PATH);
-  });
-}
+  res
+    .status(200)
+    .send(
+      `<!doctype html><html><head><meta charset="utf-8"><title>Not Intended</title></head><body style="font-family:system-ui,Arial,sans-serif;margin:3rem;color:#222"><h1>You're not supposed to be here</h1><p>This endpoint is the game API/Socket server. The frontend is deployed separately.</p></body></html>`,
+    );
+});
 
 const expressServer = app.listen(PORT, () => {
   console.log(`${new Date()} || server running at port: ${PORT}`);
   console.log(
-    existsSync(CLIENT_INDEX_PATH)
-      ? `serving client build from ${CLIENT_DIST_PATH}`
-      : "client build not found; SPA deep links will 404",
+    "not serving client build from this process; frontend is deployed separately",
   );
   console.log(
     `sandbox mode: ${SANDBOX_MODE ? "ON" : "OFF"} (min players to start: ${MIN_PLAYERS_TO_START})`,
