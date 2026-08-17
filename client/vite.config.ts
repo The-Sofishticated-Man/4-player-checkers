@@ -17,5 +17,5 @@ export default defineConfig({
       clientPort: 5173,
     },
   },
-  base: "./",
+  base: "/4-player-checkers/",
 });
