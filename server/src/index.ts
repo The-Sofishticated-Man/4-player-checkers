@@ -67,6 +67,7 @@ const io = new Server(expressServer, {
     methods: ["GET", "POST"],
     credentials: true,
   },
+  perMessageDeflate: false,
 });
 
 const games = new Map<string, Game>();
