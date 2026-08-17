@@ -44,11 +44,7 @@ app.get(/.*/, (req, res, next) => {
     return;
   }
 
-  res
-    .status(200)
-    .send(
-      `<!doctype html><html><head><meta charset="utf-8"><title>Not Intended</title></head><body style="font-family:system-ui,Arial,sans-serif;margin:3rem;color:#222"><h1>You're not supposed to be here</h1><p>This endpoint is the game API/Socket server. The frontend is deployed separately.</p></body></html>`,
-    );
+  res.status(200).send(`You're not supposed to be here! Shoo!`);
 });
 
 const expressServer = app.listen(PORT, () => {
