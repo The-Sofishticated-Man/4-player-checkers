@@ -35,7 +35,7 @@ jobs:
       - name: Install dependencies and build
         working-directory: ./client
         env:
-          VITE_API_URL: ${{ vars.VITE_API_URL }}
+          VITE_BACKEND_URL: ${{ vars.VITE_BACKEND_URL }}
         run: |
           npm ci
           npm run build
