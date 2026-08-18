@@ -4,6 +4,7 @@ import CreateOrJoin from "./routes/CreateOrJoin";
 import { SocketProvider } from "./context/SocketProvider";
 
 function App() {
+  console.log("Bundled Backend URL:", import.meta.env.VITE_BACKEND_URL);
   return (
     <SocketProvider>
       <BrowserRouter basename={import.meta.env.BASE_URL}>
