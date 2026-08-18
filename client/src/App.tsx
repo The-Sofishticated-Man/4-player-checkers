@@ -6,7 +6,7 @@ import { SocketProvider } from "./context/SocketProvider";
 function App() {
   return (
     <SocketProvider>
-      <BrowserRouter>
+      <BrowserRouter basename={import.meta.env.BASE_URL}>
         <Routes>
           <Route path="/" element={<CreateOrJoin />} />
           <Route path="/game/:roomId" element={<BoardPage />} />
