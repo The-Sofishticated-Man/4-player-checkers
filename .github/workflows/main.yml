@@ -37,6 +37,7 @@ jobs:
         env:
           VITE_BACKEND_URL: ${{ vars.VITE_BACKEND_URL }}
         run: |
+          echo "backend url is: ${{ vars.VITE_BACKEND_URL }}"
           npm ci
           npm run build
 
