@@ -49,7 +49,7 @@ function CreateOrJoin() {
             lecheeeeckers
           </h1>
           <p style={{ color: "var(--app-muted)" }}>
-            Create a game and share your room code
+            4 player checkers because why the hell not
           </p>
         </div>
 
