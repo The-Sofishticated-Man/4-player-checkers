@@ -115,10 +115,10 @@ export const boardReducer = (
       };
     }
     case "UPDATE_GAME_STATE": {
-      console.log("Updating game state");
+      //console.log("Updating game state");
       if (!payload) return gameState;
       const { newGameState } = payload;
-      console.log("new game state: ", newGameState);
+      //console.log("new game state: ", newGameState);
 
       return newGameState;
     }
