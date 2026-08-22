@@ -60,7 +60,7 @@ function SideMenu() {
   const isQuickPlay = roomMode === "quickplay";
   const roomLink =
     !isQuickPlay && roomId
-      ? new URL(`/game/${roomId}`, window.location.origin).toString()
+      ? new URL(`/game/4-player-checkers${roomId}`, window.location.origin).toString()
       : "";
 
   const fallbackCopyToClipboard = (text: string): boolean => {
