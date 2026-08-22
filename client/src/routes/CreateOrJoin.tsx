@@ -3,6 +3,7 @@ import { useCreateGame } from "../hooks/useCreateGame";
 import ConnectionFlag from "../components/ConnectionFlag";
 import PageDecorations from "../components/PageDecorations";
 import GameLogo from "../components/GameLogo";
+import Footer from "../components/Footer.tsx"
 import { FiLoader, FiZap, FiUsers } from "react-icons/fi";
 
 function CreateOrJoin() {
@@ -126,6 +127,7 @@ function CreateOrJoin() {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }
